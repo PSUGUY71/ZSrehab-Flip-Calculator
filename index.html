@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZSrehab Flip Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Custom scrollbar for cleaner look in complex data tables */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+      }
+      
+      /* Report Mode Specific - Screen View */
+      .sheet {
+          width: 8.5in;
+          min-height: 11in;
+          margin: 0 auto;
+          background: white;
+          padding: 0.5in;
+          position: relative;
+      }
+
+      /* Print Specific Overrides */
+      @media print {
+        @page {
+            margin: 0.25in;
+            size: auto;
+        }
+
+        body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Hide UI Chrome */
+        .no-print {
+            display: none !important;
+        }
+
+        /* Transform the Screen 'Sheet' into the Actual Page */
+        .sheet {
+            width: 100% !important;
+            max-width: none !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        
+        /* Force Background Colors */
+        .print-color-adjust-exact, 
+        .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-800, .bg-gray-900,
+        .bg-blue-50, .bg-blue-100, .bg-blue-200, .bg-blue-900,
+        .bg-green-200, .bg-green-700, .bg-green-800,
+        .bg-yellow-50, .bg-yellow-100, .bg-yellow-200,
+        .bg-purple-100, .bg-teal-50, .bg-teal-200, .bg-teal-600 {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Ensure Charts Print */
+        .report-chart-container {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        
+        /* Safe breaking for sections */
+        .break-inside-avoid {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        
+        /* Layout resets */
+        .print\:block { display: block !important; }
+        .print\:hidden { display: none !important; }
+        .print\:grid { display: grid !important; }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-50 text-slate-800 antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
