@@ -1,0 +1,17 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "carlospsu71@gmail.com",
+  "loginPassword": "Calvin18$",
+  "executionArgs": {
+    "projectName": "zsrehab-flip-calculator",
+    "projectPath": "C:\\Users\\carlo\\Downloads\\zsrehab-flip-calculator-refactored_1",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-XmWbHzzdW77l3W0Xp2PcJy6mGf61fSgUmiKsrqqgLqBQLO3l39i_3kZ3eHM7cONNO2A9-7BuF4YNSeaps_r5K50Ed1RGJY_nRWX-BFavUgnIHn_BLUtAScgFNo0_FbvVnGc"
+    }
+  }
+}

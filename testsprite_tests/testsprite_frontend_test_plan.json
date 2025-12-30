@@ -1,0 +1,566 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Authentication Success",
+    "description": "Verify that users can successfully sign up, log in, and log out using valid credentials via Supabase authentication.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to signup page"
+      },
+      {
+        "type": "action",
+        "description": "Enter valid user credentials (email, password)"
+      },
+      {
+        "type": "action",
+        "description": "Submit signup form"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm account creation success and redirection to main app"
+      },
+      {
+        "type": "action",
+        "description": "Log out of the application"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter existing valid credentials"
+      },
+      {
+        "type": "action",
+        "description": "Submit login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm successful login and access to user dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Authentication Failure",
+    "description": "Verify that the system properly rejects invalid login attempts with incorrect credentials.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page"
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid email or password"
+      },
+      {
+        "type": "action",
+        "description": "Submit login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Display appropriate error message indicating login failure"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Loan Eligibility and Sizing Calculation",
+    "description": "Verify accurate loan eligibility and sizing calculations based on purchase price, ARV, borrower criteria, with max 75% LTV and LTC constraints.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input property details including purchase price, ARV, rehab budget"
+      },
+      {
+        "type": "action",
+        "description": "Input borrower criteria (FICO score, liquidity, experience)"
+      },
+      {
+        "type": "action",
+        "description": "Run loan eligibility and sizing calculation"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm loan amount does not exceed 75% of ARV (LTV) and conforms to LTC rules"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate eligibility status based on input criteria rules"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Closing Costs Calculation - HIDEOUT Mode",
+    "description": "Verify detailed closing cost breakdown calculation including lender fees, transfer taxes, title insurance, legal fees etc. in HIDEOUT mode.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select HIDEOUT calculation mode for closing costs"
+      },
+      {
+        "type": "action",
+        "description": "Input detailed lender fees (origination points, processing)"
+      },
+      {
+        "type": "action",
+        "description": "Input third-party costs including transfer taxes, title insurance, legal fees, recording fees"
+      },
+      {
+        "type": "action",
+        "description": "Configure title add-ons with CPL fees and endorsements with lender type preset"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm total closing costs equal sum of all detailed fees"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate correct application of rules-based title add-ons"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Closing Costs Calculation - NORMAL Mode",
+    "description": "Verify that closing costs are calculated as a simplified 6% of purchase price in NORMAL mode.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select NORMAL calculation mode for closing costs"
+      },
+      {
+        "type": "action",
+        "description": "Input purchase price"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm closing costs calculated as 6% of purchase price"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Closing Costs Calculation - CUSTOM Mode",
+    "description": "Verify user can manually enter closing cost fees and the system calculates total appropriately in CUSTOM mode.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select CUSTOM mode for closing costs"
+      },
+      {
+        "type": "action",
+        "description": "Manually enter lender fees, third-party fees, title add-ons"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm total closing cost matches manually entered sums"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Tax Proration Calculation for Pennsylvania",
+    "description": "Verify the tax proration engine correctly calculates tax splits based on Pennsylvania millage rates, fee cadences and closing date.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input Pennsylvania county, township, and school district millage rates"
+      },
+      {
+        "type": "action",
+        "description": "Set fee cadence to Annual and enter closing date"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tax proration calculation corresponds to correct fraction of annual tax due"
+      },
+      {
+        "type": "action",
+        "description": "Change fee cadence to Quarterly and verify recalculation updates properly"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm tax proration aligns with correct quarterly period and millage calculation"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Profitability Analysis Metrics Calculation",
+    "description": "Verify the correctness of profit metrics including net profit, ROI, cash-on-cash return, and holding costs for various exit strategies.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input exit strategy parameters such as sell price, refinance terms"
+      },
+      {
+        "type": "action",
+        "description": "Input relevant costs, loan terms, and holding period"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify calculated net profit, ROI, and cash-on-cash returns match expected formulas"
+      },
+      {
+        "type": "assertion",
+        "description": "Check holding cost calculations include interest, taxes, and other carrying costs"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Lender Profile Comparison Functionality",
+    "description": "Verify the ability to save multiple lender profiles and compare them side-by-side including interest rates, points, fees, and total costs.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create multiple lender profiles with distinct fees, interest rates, and terms"
+      },
+      {
+        "type": "action",
+        "description": "Save lender profiles to deal"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to lender comparison tool"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify lender fees and rates appear correctly for each profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm best lender selection logic correctly highlights optimal choice"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Sensitivity Analysis Calculations",
+    "description": "Ensure sensitivity analysis accurately adjusts calculations for holding periods, interest rates, rehab overruns, and break-even targets.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Adjust holding periods and verify profitability recalculates accordingly"
+      },
+      {
+        "type": "action",
+        "description": "Modify interest rates and assess updated loan payment and profit metrics"
+      },
+      {
+        "type": "action",
+        "description": "Simulate rehab cost overruns and validate impact on net profit and ROI"
+      },
+      {
+        "type": "action",
+        "description": "Check break-even analysis calculates required metrics accurately"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate results match expected sensitivity outputs within tolerances"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Deal Management CRUD Operations",
+    "description": "Verify saving, loading, and deleting deals with Supabase backend, ensuring data persistence and correct user association.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Authenticate user successfully"
+      },
+      {
+        "type": "action",
+        "description": "Create and save a deal with complete input parameters"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm deal appears in user’s deal list after save"
+      },
+      {
+        "type": "action",
+        "description": "Load saved deal and verify data integrity and calculation consistency"
+      },
+      {
+        "type": "action",
+        "description": "Delete the saved deal"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify deal no longer appears in user list and is removed from database"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Max Offer Price Calculation",
+    "description": "Validate maximum allowable offer price calculation for target profit or ROI goals is computed correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input target profit and ROI parameters"
+      },
+      {
+        "type": "action",
+        "description": "Execute max offer price calculation"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm max offer price does not violate loan sizing or closing cost constraints"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify calculation output matches expected financial model"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Seller Net Analysis Calculation",
+    "description": "Verify seller-side cost calculations including mortgage payoff, commissions, transfer taxes, and net proceeds accuracy.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input seller mortgage payoff amount, commission rates, transfer taxes"
+      },
+      {
+        "type": "action",
+        "description": "Run seller net proceeds calculation"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm net proceeds reflect correct deductions and are accurate"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Report Mode Printable HUD-Style Statement Generation",
+    "description": "Verify that reports generate correctly formatted HUD-style closing statements with detailed fee breakdowns and PDF-ready formatting.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to report mode for a loaded deal"
+      },
+      {
+        "type": "action",
+        "description": "Generate printable HUD-style statement"
+      },
+      {
+        "type": "assertion",
+        "description": "Check that all fee breakdown details appear correctly"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify formatting adheres to HUD-style statement requirements"
+      },
+      {
+        "type": "assertion",
+        "description": "Export report to PDF and validate PDF integrity and layout"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Real-Time Calculation Updates on Input Changes",
+    "description": "Ensure that any change in input fields triggers real-time recalculations and UI updates without errors or delays.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Update property details input fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify loan eligibility recalculates immediately"
+      },
+      {
+        "type": "action",
+        "description": "Modify lender terms such as interest rate and points"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure closing cost and profitability metrics update instantly"
+      },
+      {
+        "type": "action",
+        "description": "Alter sensitivity analysis parameters"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify corresponding recalculations happen without any UI glitches"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Input Validation and Error Handling",
+    "description": "Check that invalid or missing inputs in all major input forms prompt appropriate error messages and prevent invalid calculations.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Leave required fields empty and attempt calculation"
+      },
+      {
+        "type": "assertion",
+        "description": "Display validation errors indicating missing inputs"
+      },
+      {
+        "type": "action",
+        "description": "Enter out-of-range values (e.g. negative prices, unrealistic interest rates)"
+      },
+      {
+        "type": "assertion",
+        "description": "System rejects invalid inputs with clear error messages"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to save deal with invalid data"
+      },
+      {
+        "type": "assertion",
+        "description": "Prevent save and notify user of validation failures"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Title Add-Ons Manual Override and Rules-Based Validation",
+    "description": "Validate that users can manually override title add-on fees, and that rules-based presets are enforced where applicable.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select lender type with predefined title add-ons"
+      },
+      {
+        "type": "assertion",
+        "description": "Title add-on fees auto-populate based on lender rules"
+      },
+      {
+        "type": "action",
+        "description": "Manually override CPL fees and endorsements"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm overridden values apply correctly to total closing costs"
+      },
+      {
+        "type": "action",
+        "description": "Attempt invalid manual entry (e.g. negative fee)"
+      },
+      {
+        "type": "assertion",
+        "description": "Display validation error and prevent invalid input"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Deals Data Security and User Access Control",
+    "description": "Verify that deals are associated only with their authenticated users and cannot be accessed or manipulated by others.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Authenticate as User A and save a deal"
+      },
+      {
+        "type": "action",
+        "description": "Log out User A and authenticate as User B"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to load, edit, or delete User A’s deal"
+      },
+      {
+        "type": "assertion",
+        "description": "Access denied and operations are prevented for User B"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "UI Responsiveness and Stability under Data Load",
+    "description": "Ensure UI remains responsive and calculations stable with large numbers of deals and lender profiles saved.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Load the app with 100+ saved deals and 50+ lender profiles"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no lag or crashes occur during navigation and calculation updates"
+      },
+      {
+        "type": "action",
+        "description": "Filter and compare lenders"
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure UI updates accurately without timeout or errors"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Cash Flow and Capital Needs Calculation Accuracy",
+    "description": "Verify cash flow requirements and capital needs calculations including monthly payment scenarios are accurate based on inputs.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Input loan terms, holding costs, and payment schedule"
+      },
+      {
+        "type": "action",
+        "description": "Trigger cash flow and capital needs calculations"
+      },
+      {
+        "type": "assertion",
+        "description": "Validate calculated monthly payments and capital requirements are as expected"
+      }
+    ]
+  }
+]
