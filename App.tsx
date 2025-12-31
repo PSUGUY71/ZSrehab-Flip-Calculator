@@ -7,17 +7,17 @@ import { ResultRow } from './components/ResultRow';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { AuthScreen } from './components/AuthScreen';
-
-// Helper component for indented fee breakdown
-const FeeBreakdownItem = ({ label, value }: { label: string, value: number }) => {
-    if (value === 0) return null;
-    return (
-        <div className="flex justify-between items-center text-[10px] text-gray-500 pl-3 py-0.5 border-l-2 border-gray-100 ml-1">
-            <span>{label}</span>
-            <span>{formatCurrency(value)}</span>
-        </div>
-    );
-};
+import {
+  EligibilityAlert,
+  MaxOfferCard,
+  ValuationReturns,
+  LoanEstimateCard,
+  ProfitTable,
+  ClosingProfitCard,
+  SensitivityAnalysis,
+  SellerNetAnalysis,
+  FeeBreakdownItem
+} from './components';
 
 const App: React.FC = () => {
   // --- AUTHENTICATION STATE ---
@@ -401,161 +401,6 @@ const App: React.FC = () => {
     setEditingLender(null);
   };
 
-  // --- COMPONENT: PROFIT TABLE (Shared) ---
-  const ProfitTable = () => (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden print:shadow-none print:border-gray-300 break-inside-avoid">
-          <div className="bg-green-700 px-4 py-2 text-yellow-100 font-bold text-lg uppercase flex justify-between print-color-adjust-exact print:py-1 print:text-base">
-            <span>Profit For House</span>
-            <span className="text-sm text-white font-normal opacity-80">{inputs.address}</span>
-          </div>
-          <div className="text-xs">
-              <div className="grid grid-cols-12 bg-green-800 text-white font-bold py-1 px-2 print-color-adjust-exact">
-                  <div className="col-span-4">Item</div>
-                  <div className="col-span-3 text-right">Cost</div>
-                  <div className="col-span-2 text-center">Months</div>
-                  <div className="col-span-3 text-right">Total</div>
-              </div>
-              
-              {/* Revenue */}
-              <div className="grid grid-cols-12 bg-yellow-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4 font-bold">Sale Price</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.arv)}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right font-bold">{formatCurrency(inputs.arv)}</div>
-              </div>
-
-               {/* Purchase Price Row */}
-               <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Purchase Price</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.purchasePrice)}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.purchasePrice)}</div>
-              </div>
-
-              {/* Rehab Row */}
-               <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Rehab Budget</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.rehabBudget)}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.rehabBudget)}</div>
-              </div>
-
-              {/* Holding Rows */}
-              <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Utilities (Electric)</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.monthlyElectric)}</div>
-                  <div className="col-span-2 text-center">{inputs.holdingPeriodMonths}</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.monthlyElectric * inputs.holdingPeriodMonths)}</div>
-              </div>
-              <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Mortgage Interest</div>
-                  <div className="col-span-3 text-right">{formatCurrency(results.monthlyPayment)}</div>
-                  <div className="col-span-2 text-center">{inputs.holdingPeriodMonths}</div>
-                  <div className="col-span-3 text-right">{formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)}</div>
-              </div>
-
-              {/* Exit Costs - Always Sell */}
-              <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Commission ({inputs.sellingCommissionRate}%)</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingCommissionRate/100))}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingCommissionRate/100))}</div>
-              </div>
-              <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Transfer Tax ({inputs.sellingTransferTaxRate}%)</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate/100))}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate/100))}</div>
-              </div>
-
-               {/* Walker Fees Row */}
-               <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Walker & Walker Fees</div>
-                  <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
-              </div>
-              
-              {/* Closing Fees Row */}
-               <div className="grid grid-cols-12 bg-blue-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-                  <div className="col-span-4">Down Pmt + Other Fees</div>
-                  <div className="col-span-3 text-right">-</div>
-                  <div className="col-span-2 text-center">1</div>
-                  <div className="col-span-3 text-right">{formatCurrency(results.totalCashToClose - results.totalWalkerFees)}</div>
-              </div>
-
-              {/* Net Profit */}
-              <div className="grid grid-cols-12 bg-green-200 py-2 px-2 font-bold text-green-900 border-t border-green-300 print-color-adjust-exact items-center print:py-1">
-                  <div className="col-span-6 text-right pr-4 text-lg print:text-sm">Net Profit</div>
-                  <div className="col-span-3 text-right text-xs bg-green-100 rounded px-1 py-0.5 text-green-800 border border-green-200 inline-block justify-self-end">
-                      ROI {formatPercent(results.roi)}
-                  </div>
-                  <div className="col-span-3 text-right text-lg print:text-sm">{formatCurrency(results.netProfit)}</div>
-              </div>
-          </div>
-      </div>
-  );
-  
-  // --- COMPONENT: CLOSING TABLE PROFIT CARD (Shared) ---
-  const ClosingProfitCard = () => (
-     <div className="bg-teal-50 border border-teal-500 rounded p-4 shadow-sm break-inside-avoid print-color-adjust-exact print:p-2">
-        <div className="flex justify-between items-center border-b border-teal-200 pb-2 mb-2 print:pb-1 print:mb-1">
-             <div className="text-teal-900 font-bold uppercase text-xs">Net Profit (Projected)</div>
-             <div className="flex items-center gap-2">
-                <span className="text-xs bg-teal-200 text-teal-800 px-2 py-0.5 rounded-full shadow-sm border border-teal-300">{formatPercent(results.roi)} ROI</span>
-                <span className="text-teal-900 font-bold text-xl print:text-base">{formatCurrency(results.netProfit)}</span>
-             </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4 text-xs text-teal-800 print:gap-y-1">
-            <div className="flex justify-between"><span className="opacity-70">Revenue</span><span className="font-bold">{formatCurrency(inputs.arv)}</span></div>
-            <div className="flex justify-between"><span className="opacity-70">Ln. Payoff</span><span className="font-bold text-red-600">-{formatCurrency(results.qualifiedLoanAmount)}</span></div>
-            
-            {/* Walker Fees */}
-            <div className="flex justify-between"><span className="opacity-70">Walker Fees</span><span className="font-bold text-red-600">-{formatCurrency(results.totalWalkerFees)}</span></div>
-            
-            {/* Other Buying Costs */}
-            <div className="flex justify-between"><span className="opacity-70">Other Cash Inv.</span><span className="font-bold text-red-600">-{formatCurrency(results.totalBuyingCosts - results.totalWalkerFees)}</span></div>
-
-            {/* Exit Costs Breakdown - Always Sell */}
-            <div className="flex justify-between"><span className="opacity-70">Commission</span><span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingCommissionRate/100))}</span></div>
-            <div className="flex justify-between"><span className="opacity-70">Transfer Tax</span><span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate/100))}</span></div>
-        </div>
-
-        {/* Detailed Holding Cost Section */}
-        <div className="mt-3 bg-teal-100/60 rounded p-2 border border-teal-200 print:mt-1 print:p-1">
-             <div className="text-[10px] font-bold uppercase text-teal-800 mb-1 flex justify-between items-center">
-                <span>Holding Costs Breakdown</span>
-                <span className="text-teal-600 font-normal">{inputs.holdingPeriodMonths} Months</span>
-             </div>
-             <div className="space-y-1 text-xs text-teal-800">
-                 <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                        <span className="opacity-70">Loan Interest</span>
-                        <span className="text-[10px] opacity-50">({formatCurrency(results.monthlyPayment)} / mo)</span>
-                    </div>
-                    <span className="font-medium text-red-600">-{formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)}</span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                        <span className="opacity-70">Utilities</span>
-                        <span className="text-[10px] opacity-50">({formatCurrency(inputs.monthlyElectric)} / mo)</span>
-                    </div>
-                    <span className="font-medium text-red-600">-{formatCurrency(inputs.monthlyElectric * inputs.holdingPeriodMonths)}</span>
-                 </div>
-                 <div className="border-t border-teal-300 pt-1 mt-1 flex justify-between font-bold">
-                    <span>Total Holding</span>
-                    <span className="text-red-700">-{formatCurrency(results.totalHoldingCosts)}</span>
-                 </div>
-             </div>
-        </div>
-
-        <div className="mt-3 pt-2 border-t border-teal-200 text-[10px] text-teal-600 flex justify-between print:mt-1 print:pt-1">
-            <span>Closing Table Check (Before Holding):</span>
-            <span className="font-bold">{formatCurrency(results.closingTableProfit)}</span>
-        </div>
-     </div>
-  );
-
   // --- RENDER: LOGIN ---
   if (isLoading) {
     return (
@@ -717,7 +562,7 @@ const App: React.FC = () => {
 
                     {/* RIGHT: Detailed Profit Table */}
                     <div>
-                        <ProfitTable />
+                        <ProfitTable inputs={inputs} results={results} />
                     </div>
                 </div>
                  
@@ -768,52 +613,17 @@ const App: React.FC = () => {
 
                  {/* 3. Closing Table Profit Card (Detailed) */}
                  <div className="mt-6 break-inside-avoid print:mt-1">
-                    <ClosingProfitCard />
+                    <ClosingProfitCard inputs={inputs} results={results} />
                  </div>
 
                  {/* 4. Sensitivity Analysis */}
-                 <div className="mt-6 border border-gray-300 rounded overflow-hidden break-inside-avoid print-color-adjust-exact print:mt-1">
-                     <div className="bg-gray-100 p-2 text-xs font-bold uppercase text-center text-gray-700 print:p-1 print:text-[10px]">ARV Sensitivity Analysis</div>
-                     <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
-                         <div className="p-1">Scenario</div>
-                         <div className="p-1">ARV</div>
-                         <div className="p-1">Net Profit</div>
-                         <div className="p-1">Diff</div>
-                         <div className="p-1">Close Profit</div>
-                     </div>
-                     {results.profitScenarios.map((s, idx) => (
-                         <div key={idx} className={`grid grid-cols-5 text-[10px] text-center p-1 border-b border-gray-100 last:border-0 ${s.label === 'Baseline' ? 'bg-blue-50 font-bold' : ''} print:text-[9px] print:p-0`}>
-                             <div>{s.label}</div>
-                             <div>{formatCurrency(s.arv)}</div>
-                             <div className={s.netProfit > 0 ? 'text-green-700' : 'text-red-600'}>{formatCurrency(s.netProfit)}</div>
-                             <div className={s.difference >= 0 ? 'text-green-600' : 'text-red-500'}>{formatCurrency(s.difference)}</div>
-                             <div>{formatCurrency(s.closingTableProfit)}</div>
-                         </div>
-                     ))}
+                 <div className="mt-6 break-inside-avoid print:mt-1">
+                    <SensitivityAnalysis results={results} />
                  </div>
                  
                   {/* 5. Seller Net Analysis (New in Report) */}
-                 <div className="mt-6 border border-indigo-300 rounded bg-indigo-50 p-3 print-color-adjust-exact break-inside-avoid print:mt-1 print:p-1">
-                     <div className="flex justify-between items-center border-b border-indigo-200 pb-2 mb-2 print:pb-1 print:mb-1">
-                        <div className="text-indigo-900 font-bold uppercase text-xs">Seller's Estimated Net Proceeds</div>
-                        <div className="text-indigo-900 font-bold text-xl print:text-sm">{formatCurrency(results.sellerNetProceeds)}</div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-xs print:gap-2 print:text-[10px]">
-                        <div className="space-y-1">
-                            <div className="flex justify-between"><span className="opacity-70">Sale Price</span> <span className="font-bold">{formatCurrency(inputs.purchasePrice)}</span></div>
-                            <div className="flex justify-between"><span className="opacity-70">Mortgage Balance</span> <span className="font-bold">-{formatCurrency(inputs.sellerMortgageBalance)}</span></div>
-                            {inputs.sellerLineOfCreditBalance > 0 && (
-                                <div className="flex justify-between"><span className="opacity-70">Line of Credit</span> <span className="font-bold">-{formatCurrency(inputs.sellerLineOfCreditBalance)}</span></div>
-                            )}
-                            <div className="flex justify-between text-[10px] pt-2 border-t border-indigo-200"><span className="opacity-70">Original Purchase</span> <span className="font-medium text-gray-500">{formatCurrency(inputs.sellerOriginalPurchasePrice)}</span></div>
-                        </div>
-                        <div className="space-y-1">
-                             <div className="flex justify-between"><span className="opacity-70">Commission</span> <span className="font-bold text-red-600">-{formatCurrency(results.sellerCommissionCost)}</span></div>
-                             <div className="flex justify-between"><span className="opacity-70">Transfer Tax</span> <span className="font-bold text-red-600">-{formatCurrency(results.sellerTransferTaxCost)}</span></div>
-                             <div className="flex justify-between"><span className="opacity-70">Concessions</span> <span className="font-bold text-red-600">-{formatCurrency(results.sellerConcessionAmount)}</span></div>
-                             <div className="flex justify-between"><span className="opacity-70">Misc Fees</span> <span className="font-bold text-red-600">-{formatCurrency(inputs.sellerMiscFees)}</span></div>
-                        </div>
-                    </div>
+                 <div className="mt-6 break-inside-avoid print:mt-1">
+                    <SellerNetAnalysis inputs={inputs} results={results} />
                  </div>
 
             </div>
@@ -1076,146 +886,16 @@ const App: React.FC = () => {
                  <div className="sticky top-24 space-y-6">
                     
                     {/* Eligibility Alert */}
-                    {!results.isEligible && (
-                        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div className="ml-3">
-                                    <h3 className="text-sm font-medium text-red-800">Review Deal Eligibility</h3>
-                                    <div className="mt-2 text-sm text-red-700">
-                                        <ul className="list-disc pl-5 space-y-1">
-                                            {results.eligibilityReasons.map((reason, idx) => (
-                                                <li key={idx}>{reason}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <EligibilityAlert results={results} />
 
                     {/* Quick Stats - Max Offer */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-500 text-sm font-medium">Max Allowable Offer</span>
-                            <span className="text-xl font-bold text-blue-600">{formatCurrency(results.maxAllowableOffer)}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${Math.min(100, (inputs.purchasePrice / results.maxAllowableOffer) * 100)}%` }}></div>
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
-                            <span>Current: {formatCurrency(inputs.purchasePrice)}</span>
-                            <span>{Math.round((inputs.purchasePrice / results.maxAllowableOffer) * 100)}% of Max</span>
-                        </div>
-                    </div>
+                    <MaxOfferCard inputs={inputs} results={results} />
 
                     {/* Valuation & Returns Section */}
-                    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase mb-3">Valuation & Returns</h3>
-                        <div className="grid grid-cols-2 gap-3 mb-3 border-b border-gray-100 pb-3">
-                             {/* SqFt Metrics */}
-                            <div className="bg-gray-50 rounded p-2 text-center border border-gray-100">
-                                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Buy / SqFt</div>
-                                <div className="text-sm font-bold text-gray-900 mt-1">
-                                    {formatCurrency(results.purchasePricePerSqFt)}
-                                </div>
-                            </div>
-                            <div className="bg-blue-50 rounded p-2 text-center border border-blue-100">
-                                <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Sell / SqFt</div>
-                                <div className="text-sm font-bold text-blue-700 mt-1">
-                                    {formatCurrency(results.arvPerSqFt)}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2">
-                            {/* Cash on Cash (Existing) */}
-                            <div className="bg-green-50 rounded p-2 text-center border border-green-100">
-                                <div className="text-[10px] text-green-600 font-bold uppercase tracking-wide">Cash ROI</div>
-                                <div className="text-sm font-bold text-green-700 mt-1">
-                                    {formatPercent(results.roi)}
-                                </div>
-                                <div className="text-[9px] text-green-500 mt-0.5">Cash on Cash</div>
-                            </div>
-                            
-                            {/* Project ROI (Total Cost) */}
-                            <div className="bg-purple-50 rounded p-2 text-center border border-purple-100">
-                                <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wide">Proj. ROI</div>
-                                <div className="text-sm font-bold text-purple-700 mt-1">
-                                    {formatPercent(results.projectRoi)}
-                                </div>
-                                <div className="text-[9px] text-purple-500 mt-0.5">Return on Cost</div>
-                            </div>
-
-                            {/* Net Margin (Sales Price) */}
-                            <div className="bg-indigo-50 rounded p-2 text-center border border-indigo-100">
-                                <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wide">Margin</div>
-                                <div className="text-sm font-bold text-indigo-700 mt-1">
-                                    {formatPercent(results.netMargin)}
-                                </div>
-                                <div className="text-[9px] text-indigo-500 mt-0.5">Return on Sales</div>
-                            </div>
-                        </div>
-                    </div>
+                    <ValuationReturns results={results} />
 
                     {/* Loan Estimate Card */}
-                    <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-                         <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-white rounded-t-xl">
-                             <h2 className="text-lg font-bold uppercase">{inputs.lenderName || 'BASELINE'} ESTIMATE</h2>
-                             <div className="text-right"><div className="text-xs opacity-70">QUALIFIED LOAN</div><div className="text-2xl font-bold text-green-400">{formatCurrency(results.qualifiedLoanAmount)}</div></div>
-                         </div>
-                         <div className="p-6">
-                             <ResultRow label="Total Loan Amount" value={results.qualifiedLoanAmount} isTotal />
-                             <ResultRow label="Max Allowable Offer" subtext="For 100% Loan" value={results.maxAllowableOffer} />
-                             <ResultRow label="Current LTV" subtext="% of ARV" value={`${results.ltv.toFixed(2)}%`} isCurrency={false} highlight={results.ltv > 75} />
-                             
-                             <ResultRow label="Lender Fees" value={results.totalLenderFees} />
-                             {/* Detailed Lender Fee Breakdown */}
-                             <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
-                             <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
-                             <FeeBreakdownItem label="Processing" value={results.processingFee} />
-                             <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
-                             <FeeBreakdownItem label="Wire" value={results.wireFee} />
-                             <FeeBreakdownItem label="Other Lender Fees" value={results.otherLenderFees} />
-
-                             <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
-                             {/* Detailed Third Party Fee Breakdown Corrected */}
-                             <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
-                             <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
-                             <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
-                             <FeeBreakdownItem label="Recording" value={results.recordingCost} />
-                             <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-                             <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-                             <FeeBreakdownItem label="Hideout Dues (Pro)" value={results.hideoutProratedDues} />
-                             <FeeBreakdownItem label="Roamingwood (Pro)" value={results.roamingwoodProrated} />
-                             <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
-
-                             <div className="my-4 bg-yellow-50 p-4 rounded border border-yellow-200">
-                                 <h3 className="font-bold text-gray-800 uppercase mb-2">Cash Required to Close</h3>
-                                 <ResultRow label="Lender Fees" value={results.totalLenderFees} />
-                                 <ResultRow label="Third Party" value={results.totalThirdPartyFees} />
-                                 <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
-                                 <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
-                                 {results.buyerAgentCommissionCredit > 0 && (
-                                     <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} highlight />
-                                 )}
-                                 <div className="flex justify-between font-bold text-lg pt-2 mt-2 border-t border-yellow-300 text-gray-900">
-                                     <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
-                                     <span className={results.totalCashToClose < 0 ? 'text-green-600' : ''}>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
-                                 </div>
-                                  <div className="mt-2 text-xs text-gray-500 flex justify-between">
-                                     <span>Required Liquidity Evidence:</span>
-                                     <span className={`font-bold ${inputs.liquidity >= results.requiredLiquidity ? 'text-green-600' : 'text-red-600'}`}>
-                                       {formatCurrency(results.requiredLiquidity)}
-                                     </span>
-                                  </div>
-                             </div>
-                         </div>
-                    </div>
+                    <LoanEstimateCard inputs={inputs} results={results} />
 
                     {/* LENDER COMPARISON SECTION */}
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden no-print">
@@ -1311,10 +991,10 @@ const App: React.FC = () => {
                     </div>
 
                     {/* Detailed Profit Table */}
-                    <ProfitTable />
+                    <ProfitTable inputs={inputs} results={results} />
                     
                     {/* Closing Table Profit (Detailed) */}
-                    <ClosingProfitCard />
+                    <ClosingProfitCard inputs={inputs} results={results} />
 
                     {/* Dedicated ARV Section */}
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border-2 border-blue-200 overflow-hidden">
@@ -1436,29 +1116,11 @@ const App: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Sensitivity Analysis */}
+                    <SensitivityAnalysis results={results} />
+
                     {/* Seller Net Analysis Result Card */}
-                    <div className="bg-indigo-50 border border-indigo-300 rounded p-4 shadow-sm">
-                        <div className="flex justify-between items-center border-b border-indigo-200 pb-2 mb-2">
-                             <div className="text-indigo-900 font-bold uppercase text-xs">Seller's Estimated Net Proceeds</div>
-                             <div className="text-indigo-900 font-bold text-xl">{formatCurrency(results.sellerNetProceeds)}</div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-xs text-indigo-800">
-                            <div className="space-y-1">
-                                <div className="flex justify-between"><span className="opacity-70">Sale Price</span><span className="font-bold">{formatCurrency(inputs.purchasePrice)}</span></div>
-                                <div className="flex justify-between"><span className="opacity-70">Mortgage Balance</span><span className="font-bold">-{formatCurrency(inputs.sellerMortgageBalance)}</span></div>
-                                {inputs.sellerLineOfCreditBalance > 0 && (
-                                    <div className="flex justify-between"><span className="opacity-70">Line of Credit</span><span className="font-bold">-{formatCurrency(inputs.sellerLineOfCreditBalance)}</span></div>
-                                )}
-                                <div className="flex justify-between text-[10px] pt-2 border-t border-indigo-200"><span className="opacity-70">Original Purchase</span><span className="font-medium text-gray-500">{formatCurrency(inputs.sellerOriginalPurchasePrice)}</span></div>
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex justify-between"><span className="opacity-70">Commission</span><span className="font-bold text-red-600">-{formatCurrency(results.sellerCommissionCost)}</span></div>
-                                <div className="flex justify-between"><span className="opacity-70">Transfer Tax</span><span className="font-bold text-red-600">-{formatCurrency(results.sellerTransferTaxCost)}</span></div>
-                                <div className="flex justify-between"><span className="opacity-70">Concessions</span><span className="font-bold text-red-600">-{formatCurrency(results.sellerConcessionAmount)}</span></div>
-                                <div className="flex justify-between"><span className="opacity-70">Misc Fees</span><span className="font-bold text-red-600">-{formatCurrency(inputs.sellerMiscFees)}</span></div>
-                            </div>
-                        </div>
-                     </div>
+                    <SellerNetAnalysis inputs={inputs} results={results} />
 
                  </div>
             </div>

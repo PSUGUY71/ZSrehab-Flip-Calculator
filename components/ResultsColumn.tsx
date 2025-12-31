@@ -32,6 +32,7 @@ interface ResultsColumnProps {
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
   onEditLender: (lender: LenderOption) => void;
+  onDuplicateLender: (lender: LenderOption) => void;
   onDeleteLender: (id: string) => void;
 }
 
@@ -45,6 +46,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   onAddLender,
   onApplyLender,
   onEditLender,
+  onDuplicateLender,
   onDeleteLender,
 }) => {
   return (
@@ -73,6 +75,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
           onAddLender={onAddLender}
           onApplyLender={onApplyLender}
           onEditLender={onEditLender}
+          onDuplicateLender={onDuplicateLender}
           onDeleteLender={onDeleteLender}
         />
 

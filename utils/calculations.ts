@@ -29,6 +29,7 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
     hideoutAnnualFee,
     roamingwoodAnnual,
     schoolTaxAnnual,
+    sewerWaterAnnual,
     closingDate,
     sqFt,
     // Profitability Inputs
@@ -68,8 +69,8 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
-  const ltv = (qualifiedLoanAmount / arv) * 100;
-  const ltc = (qualifiedLoanAmount / totalProjectCost) * 100;
+  const ltv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
+  const ltc = totalProjectCost > 0 ? (qualifiedLoanAmount / totalProjectCost) * 100 : 0;
 
   const purchasePricePerSqFt = sqFt > 0 ? purchasePrice / sqFt : 0;
   const arvPerSqFt = sqFt > 0 ? arv / sqFt : 0;
@@ -87,31 +88,96 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
     (otherLenderFees || 0);
 
   // 5. Date Proration Logic
-  // Formula: DaysRemaining = DaysBetween(ClosingDate, December31OfSameYear) + 1
-  let daysRemainingInYear = 0;
+  // Different proration periods:
+  // - City/town taxes (roamingwood): January through December (calendar year)
+  // - School taxes: July through June (school year)
+  // - Dues (hideout): January through December (calendar year)
+  // - Sewer and water: Quarterly billing
+  
+  let daysRemainingInYear = 0; // For calendar year items (city/town taxes, dues)
+  let daysRemainingInSchoolYear = 0; // For school taxes (July-June)
+  let sewerWaterProrated = 0; // Quarterly proration
+  
   if (closingDate) {
     const start = new Date(closingDate);
+    start.setHours(0, 0, 0, 0);
     const year = start.getFullYear();
-    const end = new Date(year, 11, 31); // Dec 31
+    const month = start.getMonth(); // 0-11 (Jan = 0, Dec = 11)
     
-    // Normalize to midnight to avoid hours affecting calculation
-    start.setHours(0,0,0,0);
-    end.setHours(0,0,0,0);
+    // Calendar Year Proration (Jan-Dec): City/town taxes, Dues
+    // Formula: DaysRemaining = DaysBetween(ClosingDate, December31OfSameYear) + 1
+    const calendarYearEnd = new Date(year, 11, 31); // Dec 31
+    calendarYearEnd.setHours(0, 0, 0, 0);
     
-    const diffTime = end.getTime() - start.getTime();
+    const diffTime = calendarYearEnd.getTime() - start.getTime();
     if (diffTime >= 0) {
-        // Calculate days difference
-        const daysBetween = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        // Add 1 as requested (inclusive)
-        daysRemainingInYear = daysBetween + 1;
+      const daysBetween = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      daysRemainingInYear = daysBetween + 1; // Inclusive
+    }
+    
+    // School Year Proration (July-June): School taxes
+    // If closing is Jan-Jun, prorate to June 30 of same year
+    // If closing is Jul-Dec, prorate to June 30 of next year
+    let schoolYearEnd: Date;
+    if (month >= 6) { // July (6) through December (11)
+      // Closing in Jul-Dec: prorate to June 30 of next year
+      schoolYearEnd = new Date(year + 1, 5, 30); // June 30 of next year
+    } else { // January (0) through June (5)
+      // Closing in Jan-Jun: prorate to June 30 of same year
+      schoolYearEnd = new Date(year, 5, 30); // June 30 of same year
+    }
+    schoolYearEnd.setHours(0, 0, 0, 0);
+    
+    const schoolYearDiffTime = schoolYearEnd.getTime() - start.getTime();
+    if (schoolYearDiffTime >= 0) {
+      const daysBetween = Math.ceil(schoolYearDiffTime / (1000 * 60 * 60 * 24));
+      daysRemainingInSchoolYear = daysBetween + 1; // Inclusive
+    }
+    
+    // Quarterly Proration: Sewer and Water
+    // Quarters: Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
+    // Calculate days remaining in the current quarter
+    let quarterStart: Date;
+    let quarterEnd: Date;
+    if (month >= 0 && month <= 2) { // Q1: Jan-Mar
+      quarterStart = new Date(year, 0, 1); // January 1
+      quarterEnd = new Date(year, 2, 31); // March 31
+    } else if (month >= 3 && month <= 5) { // Q2: Apr-Jun
+      quarterStart = new Date(year, 3, 1); // April 1
+      quarterEnd = new Date(year, 5, 30); // June 30
+    } else if (month >= 6 && month <= 8) { // Q3: Jul-Sep
+      quarterStart = new Date(year, 6, 1); // July 1
+      quarterEnd = new Date(year, 8, 30); // September 30
+    } else { // Q4: Oct-Dec
+      quarterStart = new Date(year, 9, 1); // October 1
+      quarterEnd = new Date(year, 11, 31); // December 31
+    }
+    quarterStart.setHours(0, 0, 0, 0);
+    quarterEnd.setHours(0, 0, 0, 0);
+    
+    const quarterDiffTime = quarterEnd.getTime() - start.getTime();
+    if (quarterDiffTime >= 0) {
+      const daysBetween = Math.ceil(quarterDiffTime / (1000 * 60 * 60 * 24));
+      const daysRemainingInQuarter = daysBetween + 1; // Inclusive
+      // Calculate total days in quarter
+      const quarterTotalTime = quarterEnd.getTime() - quarterStart.getTime();
+      const daysInQuarter = Math.ceil(quarterTotalTime / (1000 * 60 * 60 * 24)) + 1;
+      // Quarterly amount = Annual / 4, then prorate by days remaining
+      const quarterlyAmount = sewerWaterAnnual / 4;
+      sewerWaterProrated = (quarterlyAmount / daysInQuarter) * daysRemainingInQuarter;
     }
   }
 
   // Prorate Annual Fees based on formula: DailyRate * DaysRemaining
-  // DailyRate = AnnualFee / 365
-  const hideoutProratedDues = (hideoutAnnualFee / 365) * daysRemainingInYear;
+  // City/town taxes (roamingwood): Calendar year (Jan-Dec)
   const roamingwoodProrated = (roamingwoodAnnual / 365) * daysRemainingInYear;
-  const schoolTaxProrated = (schoolTaxAnnual / 365) * daysRemainingInYear;
+  
+  // Dues (hideout): Calendar year (Jan-Dec)
+  const hideoutProratedDues = (hideoutAnnualFee / 365) * daysRemainingInYear;
+  
+  // School taxes: School year (July-June)
+  // Use 365 days for school year calculation (some years have 366, but 365 is standard)
+  const schoolTaxProrated = (schoolTaxAnnual / 365) * daysRemainingInSchoolYear;
 
   // 6. Third Party Fees Calculation
   const transferTaxCost = purchasePrice * (transferTaxRate / 100);
@@ -128,7 +194,8 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
     hideoutTransferFee + 
     hideoutProratedDues +
     roamingwoodProrated +
-    schoolTaxProrated;
+    schoolTaxProrated +
+    sewerWaterProrated;
 
   // 7. Credits
   const sellerConcessionAmount = purchasePrice * (sellerConcessionRate / 100);
@@ -201,16 +268,38 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
   const baselineFixedCosts = qualifiedLoanAmount + totalBuyingCosts + totalHoldingCosts;
   
   const scenarios: ProfitScenario[] = [];
-  const deltas = [
-      { label: '- $10k', val: -10000 }, 
-      { label: 'Baseline', val: 0 }, 
-      { label: '+ $10k', val: 10000 }, 
-      { label: '+ $20k', val: 20000 }, 
-      { label: '+ $30k', val: 30000 }
+  // ARV scenarios based on percentages: 60%, 65%, 70%, 75% of current ARV
+  const arvPercentages = [
+      { label: '60% ARV', percent: 0.60 }, 
+      { label: '65% ARV', percent: 0.65 }, 
+      { label: '70% ARV', percent: 0.70 }, 
+      { label: '75% ARV', percent: 0.75 }
   ];
 
-  deltas.forEach(d => {
-      const simARV = arv + d.val;
+  // Calculate baseline scenario first
+  const baselineARV = arv;
+  let baselineExitCosts = 0;
+  if (exitStrategy === 'SELL') {
+      baselineExitCosts = (baselineARV * (sellingCommissionRate / 100)) + (baselineARV * (sellingTransferTaxRate / 100));
+  } else {
+      const baselineRefiLoan = baselineARV * (refinanceLTV / 100);
+      baselineExitCosts = (baselineRefiLoan * (refinancePoints / 100)) + refinanceFixedFees;
+  }
+  const baselineTotalCost = baselineFixedCosts + baselineExitCosts;
+  const baselineProfit = baselineARV - baselineTotalCost;
+  const baselineClosingProfit = baselineProfit + totalHoldingCosts;
+
+  scenarios.push({
+      label: 'Baseline',
+      arv: baselineARV,
+      netProfit: baselineProfit,
+      difference: 0,
+      closingTableProfit: baselineClosingProfit
+  });
+
+  // Calculate percentage-based scenarios
+  arvPercentages.forEach(p => {
+      const simARV = arv * p.percent;
       let simExitCosts = 0;
       
       if (exitStrategy === 'SELL') {
@@ -226,10 +315,10 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
       const simClosingProfit = simProfit + totalHoldingCosts;
       
       scenarios.push({
-          label: d.label,
+          label: p.label,
           arv: simARV,
           netProfit: simProfit,
-          difference: simProfit - netProfit,
+          difference: simProfit - baselineProfit,
           closingTableProfit: simClosingProfit
       });
   });
@@ -325,6 +414,7 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
     
     roamingwoodProrated,
     schoolTaxProrated,
+    sewerWaterProrated,
     daysRemainingInYear,
     totalThirdPartyFees,
 
@@ -367,6 +457,9 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
 };
 
 export const formatCurrency = (val: number) => {
+  if (isNaN(val) || !isFinite(val)) {
+    return '$0.00';
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -376,6 +469,9 @@ export const formatCurrency = (val: number) => {
 };
 
 export const formatPercent = (val: number) => {
+  if (isNaN(val) || !isFinite(val)) {
+    return '0.00%';
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'percent',
     minimumFractionDigits: 2,

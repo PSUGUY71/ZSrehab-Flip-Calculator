@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 // Added max prop to interface to allow input constraints and resolve TS errors
 interface InputGroupProps {
@@ -13,6 +13,7 @@ interface InputGroupProps {
   step?: number;
   min?: number;
   max?: number;
+  helpText?: string;
 }
 
 export const InputGroup: React.FC<InputGroupProps> = ({
@@ -25,13 +26,39 @@ export const InputGroup: React.FC<InputGroupProps> = ({
   suffix,
   step,
   min,
-  max // Destructured max prop
+  max,
+  helpText // Help text for tooltip
 }) => {
+  const [showHelp, setShowHelp] = useState(false);
+  
   return (
     <div className="flex flex-col space-y-1">
-      <label htmlFor={id} className="text-xs font-semibold text-gray-500 uppercase tracking-wide print:text-gray-800">
-        {label}
-      </label>
+      <div className="flex items-center gap-1">
+        <label htmlFor={id} className="text-xs font-semibold text-gray-500 uppercase tracking-wide print:text-gray-800">
+          {label}
+        </label>
+        {helpText && (
+          <div className="relative group">
+            <button
+              type="button"
+              className="text-gray-400 hover:text-blue-600 focus:outline-none"
+              onMouseEnter={() => setShowHelp(true)}
+              onMouseLeave={() => setShowHelp(false)}
+              onClick={() => setShowHelp(!showHelp)}
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+            </button>
+            {showHelp && (
+              <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                {helpText}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       <div className="relative rounded-md shadow-sm print:shadow-none">
         {prefix && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 print:pl-0 print:hidden">

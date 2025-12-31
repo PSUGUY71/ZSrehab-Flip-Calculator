@@ -24,6 +24,7 @@ interface LenderComparisonProps {
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
   onEditLender: (lender: LenderOption) => void;
+  onDuplicateLender: (lender: LenderOption) => void;
   onDeleteLender: (id: string) => void;
 }
 
@@ -37,6 +38,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
   onAddLender,
   onApplyLender,
   onEditLender,
+  onDuplicateLender,
   onDeleteLender,
 }) => {
   return (
@@ -85,6 +87,13 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                   className="text-blue-600 text-[10px] font-bold px-2 py-1 bg-blue-50 rounded hover:bg-blue-100"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => onDuplicateLender(l)}
+                  className="text-purple-600 text-[10px] font-bold px-2 py-1 bg-purple-50 rounded hover:bg-purple-100"
+                  title="Duplicate this lender"
+                >
+                  Dup
                 </button>
                 <button
                   onClick={() => onDeleteLender(l.id)}

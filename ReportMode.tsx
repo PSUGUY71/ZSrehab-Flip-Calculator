@@ -5,14 +5,16 @@ import { ResultRow } from './components/ResultRow';
 import { FeeBreakdownItem } from './components/FeeBreakdownItem';
 import { ProfitTable } from './components/ProfitTable';
 import { ClosingProfitCard } from './components/ClosingProfitCard';
+import { Visuals } from './components/Visuals';
 
 interface ReportModeProps {
   inputs: LoanInputs;
   results: CalculatedResults;
+  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
   onClose: () => void;
 }
 
-export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, onClose }) => {
+export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, appVersion = 'HIDEOUT', onClose }) => {
   return (
     <div className="min-h-screen bg-gray-200 font-sans text-slate-800 py-8 print:bg-white print:py-0">
       {/* Toolbar - Hidden on Print */}
@@ -39,7 +41,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, onClose
             <div className="bg-blue-900 text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg">ZS</div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 leading-none print:text-xl">
-                ZSrehab Flip Calculator <span className="text-blue-900 ml-2">Hideout Version</span>
+                ZSrehab Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version</span>
               </h1>
               <span className="text-sm text-gray-500 font-medium tracking-wide block mt-1 print:text-xs">
                 INVESTMENT DEAL ANALYSIS • {new Date().toLocaleDateString()}
@@ -126,9 +128,10 @@ export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, onClose
                 <FeeBreakdownItem label="Recording" value={results.recordingCost} />
                 <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
                 <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-                <FeeBreakdownItem label="Hideout Dues (Pro)" value={results.hideoutProratedDues} />
-                <FeeBreakdownItem label="Roamingwood (Pro)" value={results.roamingwoodProrated} />
+                <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
+                <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
                 <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
+                <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
 
                 <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
                 <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
@@ -153,6 +156,11 @@ export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, onClose
           <div>
             <ProfitTable inputs={inputs} results={results} />
           </div>
+        </div>
+
+        {/* Visuals - Charts (Main Part) */}
+        <div className="mt-6 break-inside-avoid print:mt-1">
+          <Visuals inputs={inputs} results={results} />
         </div>
 
         {/* Valuation & Returns */}

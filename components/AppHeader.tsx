@@ -5,6 +5,8 @@ interface AppHeaderProps {
   currentUser: User;
   savedDeals: SavedDeal[];
   saveNotification: string | null;
+  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+  onVersionChange?: (version: 'NORMAL' | 'HIDEOUT' | 'CUSTOM') => void;
   onNewDeal: () => void;
   onSaveDeal: () => void;
   onOpenDealModal: () => void;
@@ -16,6 +18,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   currentUser,
   savedDeals,
   saveNotification,
+  appVersion = 'HIDEOUT',
+  onVersionChange,
   onNewDeal,
   onSaveDeal,
   onOpenDealModal,
@@ -36,11 +40,54 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </div>
 
-        {/* Centered Hideout Version */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:block">
-          <div className="bg-blue-50 text-blue-800 px-4 py-1 rounded-full text-xs font-bold border border-blue-100 shadow-sm uppercase tracking-wide">
-            Hideout Version
-          </div>
+        {/* Centered Version Selector */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2">
+          {onVersionChange ? (
+            <div className="relative group">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Version:</span>
+                <div className="relative">
+                  <select 
+                    value={appVersion} 
+                    onChange={(e) => onVersionChange(e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM')}
+                    className="bg-blue-50 text-blue-800 px-5 py-1.5 pr-8 rounded-full text-xs font-bold border-2 border-blue-200 shadow-sm uppercase tracking-wide appearance-none cursor-pointer hover:bg-blue-100 hover:border-blue-300 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1"
+                    title="Click to switch between Normal, Hideout, and Custom versions"
+                  >
+                    <option value="NORMAL">Normal Version</option>
+                    <option value="HIDEOUT">Hideout Version</option>
+                    <option value="CUSTOM">Custom Version</option>
+                  </select>
+                  {/* Dropdown Arrow Icon */}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg 
+                      className="w-4 h-4 text-blue-600 group-hover:text-blue-800 transition-colors" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {/* Badge showing number of versions */}
+                  <div className="absolute -top-1 -right-1 bg-blue-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm border border-white">
+                    3
+                  </div>
+                </div>
+              </div>
+              {/* Tooltip on hover */}
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                <div className="bg-gray-900 text-white text-xs py-1.5 px-3 rounded whitespace-nowrap shadow-lg">
+                  <div className="font-semibold mb-0.5">Switch Version</div>
+                  <div className="text-[10px] text-gray-300">3 versions available: Normal, Hideout, Custom</div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-blue-50 text-blue-800 px-4 py-1 rounded-full text-xs font-bold border border-blue-100 shadow-sm uppercase tracking-wide">
+              {appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version
+            </div>
+          )}
         </div>
 
         <div className="flex items-center space-x-2">

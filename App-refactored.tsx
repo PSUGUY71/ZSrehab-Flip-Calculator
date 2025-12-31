@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './types';
 import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
 
 import {
@@ -15,11 +17,12 @@ import {
 
 const App: React.FC = () => {
   // --- AUTHENTICATION STATE ---
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
   const [authMode, setAuthMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
-  const [authUsername, setAuthUsername] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   // --- APP STATE ---
   const [inputs, setInputs] = useState<LoanInputs>(DEFAULT_INPUTS);
@@ -32,50 +35,78 @@ const App: React.FC = () => {
   // Lender Modal State
   const [isLenderModalOpen, setIsLenderModalOpen] = useState(false);
   const [editingLender, setEditingLender] = useState<LenderOption | null>(null);
+  
+  // Version State
+  const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
 
   // --- EFFECTS ---
   useEffect(() => {
-    const usersStr = localStorage.getItem('zsrehab_users');
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    let usersUpdated = false;
+    // Check for existing Supabase session
+    if (isSupabaseConfigured && supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          setCurrentUser({ id: session.user.id, email: session.user.email || '' });
+        }
+        setIsLoading(false);
+      });
 
-    if (!users.find((u) => u.username === 'admin')) {
-      users.push({ username: 'admin', password: 'admin', created: new Date().toISOString() });
-      usersUpdated = true;
-    }
-    if (!users.find((u) => u.username === 'demo')) {
-      users.push({ username: 'demo', password: 'demo', created: new Date().toISOString() });
-      usersUpdated = true;
-    }
-    if (usersUpdated) {
-      localStorage.setItem('zsrehab_users', JSON.stringify(users));
-    }
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          setCurrentUser({ id: session.user.id, email: session.user.email || '' });
+        } else {
+          setCurrentUser(null);
+        }
+      });
 
-    const sessionUser = localStorage.getItem('zsrehab_session_user');
-    if (sessionUser) {
-      setCurrentUser({ username: sessionUser, password: '', created: '' });
+      return () => subscription.unsubscribe();
+    } else {
+      // Fallback to localStorage if Supabase not configured
+      const sessionUser = localStorage.getItem('zsrehab_session_user');
+      if (sessionUser) {
+        setCurrentUser({ id: 'local', email: sessionUser });
+      }
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (currentUser) {
-      const stored = localStorage.getItem(`zsrehab_deals_${currentUser.username}`);
-      if (stored) {
+    const loadDeals = async () => {
+      if (!currentUser) {
+        setSavedDeals([]);
+        return;
+      }
+
+      if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
         try {
-          const parsedDeals = JSON.parse(stored);
-          const migratedDeals = parsedDeals.map((d: SavedDeal) => ({
-            ...d,
-            lenders: d.lenders || [],
-          }));
-          setSavedDeals(migratedDeals);
-        } catch (e) {
-          console.error('Failed to parse saved deals', e);
+          const deals = await getDeals();
+          setSavedDeals(deals);
+        } catch (error) {
+          console.error('Failed to load deals:', error);
           setSavedDeals([]);
         }
       } else {
-        setSavedDeals([]);
+        // Fallback to localStorage
+        const stored = localStorage.getItem(`zsrehab_deals_${currentUser.email}`);
+        if (stored) {
+          try {
+            const parsedDeals = JSON.parse(stored);
+            const migratedDeals = parsedDeals.map((d: SavedDeal) => ({
+              ...d,
+              lenders: d.lenders || [],
+            }));
+            setSavedDeals(migratedDeals);
+          } catch (e) {
+            console.error('Failed to parse saved deals', e);
+            setSavedDeals([]);
+          }
+        } else {
+          setSavedDeals([]);
+        }
       }
-    }
+    };
+
+    loadDeals();
   }, [currentUser]);
 
   // --- CALCULATIONS ---
@@ -103,50 +134,91 @@ const App: React.FC = () => {
   }, [comparisonData, results]);
 
   // --- AUTH HANDLERS ---
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    const usersStr = localStorage.getItem('zsrehab_users');
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    const foundUser = users.find((u) => u.username === authUsername && u.password === authPassword);
-    if (foundUser) {
-      localStorage.setItem('zsrehab_session_user', foundUser.username);
-      setCurrentUser(foundUser);
-      setAuthUsername('');
-      setAuthPassword('');
+    
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+
+        if (error) throw error;
+        if (data.user) {
+          setCurrentUser({ id: data.user.id, email: data.user.email || '' });
+          setAuthEmail('');
+          setAuthPassword('');
+        }
+      } catch (error: any) {
+        setAuthError(error.message || 'Invalid email or password.');
+      }
     } else {
-      setAuthError('Invalid username or password.');
+      // Fallback to localStorage
+      const usersStr = localStorage.getItem('zsrehab_users');
+      const users: any[] = usersStr ? JSON.parse(usersStr) : [];
+      const foundUser = users.find(u => u.email === authEmail && u.password === authPassword);
+      if (foundUser) {
+        localStorage.setItem('zsrehab_session_user', foundUser.email);
+        setCurrentUser({ id: 'local', email: foundUser.email });
+        setAuthEmail('');
+        setAuthPassword('');
+      } else {
+        setAuthError('Invalid email or password.');
+      }
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    if (!authUsername || !authPassword) {
+    
+    if (!authEmail || !authPassword) {
       setAuthError('Please fill in all fields.');
       return;
     }
-    const usersStr = localStorage.getItem('zsrehab_users');
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    if (users.find((u) => u.username === authUsername)) {
-      setAuthError('Username already exists.');
-      return;
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+        });
+
+        if (error) throw error;
+        if (data.user) {
+          setCurrentUser({ id: data.user.id, email: data.user.email || '' });
+          setAuthEmail('');
+          setAuthPassword('');
+        }
+      } catch (error: any) {
+        setAuthError(error.message || 'Failed to create account.');
+      }
+    } else {
+      // Fallback to localStorage
+      const usersStr = localStorage.getItem('zsrehab_users');
+      const users: any[] = usersStr ? JSON.parse(usersStr) : [];
+      if (users.find(u => u.email === authEmail)) {
+        setAuthError('Email already exists.');
+        return;
+      }
+      const newUser = { email: authEmail, password: authPassword, created: new Date().toISOString() };
+      users.push(newUser);
+      localStorage.setItem('zsrehab_users', JSON.stringify(users));
+      localStorage.setItem('zsrehab_session_user', newUser.email);
+      setCurrentUser({ id: 'local', email: newUser.email });
+      setAuthEmail('');
+      setAuthPassword('');
     }
-    const newUser: User = {
-      username: authUsername,
-      password: authPassword,
-      created: new Date().toISOString(),
-    };
-    users.push(newUser);
-    localStorage.setItem('zsrehab_users', JSON.stringify(users));
-    localStorage.setItem('zsrehab_session_user', newUser.username);
-    setCurrentUser(newUser);
-    setAuthUsername('');
-    setAuthPassword('');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('zsrehab_session_user');
+  const handleLogout = async () => {
+    if (isSupabaseConfigured && supabase) {
+      await supabase.auth.signOut();
+    } else {
+      localStorage.removeItem('zsrehab_session_user');
+    }
     setCurrentUser(null);
     setInputs(DEFAULT_INPUTS);
     setLenders([]);
@@ -160,27 +232,39 @@ const App: React.FC = () => {
   };
 
   // --- DEAL HANDLERS ---
-  const handleSaveDeal = () => {
+  const handleSaveDeal = async () => {
     if (!currentUser) return;
+    
+    const dealName = inputs.address || 'Untitled Property';
     const newDeal: SavedDeal = {
-      id: Date.now(),
-      name: inputs.address || 'Untitled Property',
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: dealName,
       date: new Date().toLocaleDateString(),
       data: inputs,
       lenders: lenders,
     };
-    const existingIndex = savedDeals.findIndex((d) => d.name === newDeal.name);
-    let updatedDeals;
-    if (existingIndex >= 0) {
-      updatedDeals = [...savedDeals];
-      updatedDeals[existingIndex] = newDeal;
+    
+    if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+      try {
+        const saved = await saveDeal(newDeal, currentUser.id);
+        // Reload deals to get the updated list
+        const deals = await getDeals();
+        setSavedDeals(deals);
+        setSaveNotification('Property Saved!');
+        setTimeout(() => setSaveNotification(null), 2000);
+      } catch (error) {
+        console.error('Failed to save deal:', error);
+        setSaveNotification('Failed to save deal');
+        setTimeout(() => setSaveNotification(null), 2000);
+      }
     } else {
-      updatedDeals = [newDeal, ...savedDeals];
+      // Fallback to localStorage
+      const updatedDeals = [newDeal, ...savedDeals];
+      setSavedDeals(updatedDeals);
+      localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updatedDeals));
+      setSaveNotification('Property Saved!');
+      setTimeout(() => setSaveNotification(null), 2000);
     }
-    setSavedDeals(updatedDeals);
-    localStorage.setItem(`zsrehab_deals_${currentUser.username}`, JSON.stringify(updatedDeals));
-    setSaveNotification('Property Saved!');
-    setTimeout(() => setSaveNotification(null), 2000);
   };
 
   const handleLoadDeal = (deal: SavedDeal) => {
@@ -189,12 +273,29 @@ const App: React.FC = () => {
     setIsDealModalOpen(false);
   };
 
-  const handleDeleteDeal = (id: number, e: React.MouseEvent) => {
+  const handleDeleteDeal = async (id: number | string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
-    const updated = savedDeals.filter((d) => d.id !== id);
-    setSavedDeals(updated);
-    localStorage.setItem(`zsrehab_deals_${currentUser.username}`, JSON.stringify(updated));
+    if (!window.confirm('Are you sure you want to delete this deal? This cannot be undone.')) {
+      return;
+    }
+    
+    if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+      try {
+        await deleteDeal(id.toString());
+        // Reload deals to get the updated list
+        const deals = await getDeals();
+        setSavedDeals(deals);
+      } catch (error) {
+        console.error('Failed to delete deal:', error);
+        alert('Failed to delete deal');
+      }
+    } else {
+      // Fallback to localStorage
+      const updated = savedDeals.filter((d) => d.id !== id);
+      setSavedDeals(updated);
+      localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updated));
+    }
   };
 
   const handleNewDeal = () => {
@@ -263,6 +364,15 @@ const App: React.FC = () => {
     setIsLenderModalOpen(true);
   };
 
+  const handleDuplicateLender = (lender: LenderOption) => {
+    const dup: LenderOption = {
+      ...lender,
+      id: Date.now().toString(),
+      lenderName: `${lender.lenderName} (Copy)`
+    };
+    setLenders([...lenders, dup]);
+  };
+
   const handleDeleteLender = (id: string) => {
     if (window.confirm('Delete this lender?')) {
       setLenders(lenders.filter((l) => l.id !== id));
@@ -280,16 +390,28 @@ const App: React.FC = () => {
     setEditingLender(null);
   };
 
+  // --- RENDER: LOADING ---
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // --- RENDER: LOGIN ---
   if (!currentUser) {
     return (
       <AuthScreen
         authMode={authMode}
-        authUsername={authUsername}
+        authEmail={authEmail}
         authPassword={authPassword}
         authError={authError}
         setAuthMode={setAuthMode}
-        setAuthUsername={setAuthUsername}
+        setAuthEmail={setAuthEmail}
         setAuthPassword={setAuthPassword}
         setAuthError={setAuthError}
         handleLogin={handleLogin}
@@ -300,7 +422,7 @@ const App: React.FC = () => {
 
   // --- RENDER: REPORT MODE ---
   if (isReportMode) {
-    return <ReportMode inputs={inputs} results={results} onClose={() => setIsReportMode(false)} />;
+    return <ReportMode inputs={inputs} results={results} appVersion={appVersion} onClose={() => setIsReportMode(false)} />;
   }
 
   // --- RENDER: MAIN EDITOR ---
@@ -310,6 +432,8 @@ const App: React.FC = () => {
         currentUser={currentUser}
         savedDeals={savedDeals}
         saveNotification={saveNotification}
+        appVersion={appVersion}
+        onVersionChange={setAppVersion}
         onNewDeal={handleNewDeal}
         onSaveDeal={handleSaveDeal}
         onOpenDealModal={() => setIsDealModalOpen(true)}
@@ -322,6 +446,7 @@ const App: React.FC = () => {
           {/* Left Column - Inputs */}
           <InputSections
             inputs={inputs}
+            results={results}
             onInputChange={handleInputChange}
             onCaptureBaseline={handleCaptureBaseline}
           />
@@ -337,6 +462,7 @@ const App: React.FC = () => {
             onAddLender={handleAddLender}
             onApplyLender={handleApplyLender}
             onEditLender={handleEditLender}
+            onDuplicateLender={handleDuplicateLender}
             onDeleteLender={handleDeleteLender}
           />
         </div>

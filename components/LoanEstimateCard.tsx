@@ -49,14 +49,35 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
         <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-        <FeeBreakdownItem label="Hideout Dues (Pro)" value={results.hideoutProratedDues} />
-        <FeeBreakdownItem label="Roamingwood (Pro)" value={results.roamingwoodProrated} />
+        <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
+        <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
         <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
+        <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
 
         <div className="my-4 bg-yellow-50 p-4 rounded border border-yellow-200">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Cash Required to Close</h3>
           <ResultRow label="Lender Fees" value={results.totalLenderFees} />
+          {/* Detailed Lender Fee Breakdown in Cash Required */}
+          <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
+          <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
+          <FeeBreakdownItem label="Processing" value={results.processingFee} />
+          <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
+          <FeeBreakdownItem label="Wire" value={results.wireFee} />
+          <FeeBreakdownItem label="Other Lender Fees" value={results.otherLenderFees} />
+          
           <ResultRow label="Third Party" value={results.totalThirdPartyFees} />
+          {/* Detailed Third Party Fee Breakdown in Cash Required */}
+          <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
+          <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
+          <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
+          <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+          <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
+          <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+          <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
+          <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
+          <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
+          <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
+          
           <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
           <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
           {results.buyerAgentCommissionCredit > 0 && (

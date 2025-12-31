@@ -44,6 +44,7 @@ export interface LoanInputs {
   sellerConcessionRate: number; // Percentage
   earnestMoneyDeposit: number; // New Escrow/Deposit field
   buyerAgentCommissionRate: number; // New: Realtor commission credit
+  buyerAgentCommissionBrokerRate: number; // Percentage of buyer agent commission that goes to broker
 
   // Borrower Info
   ficoScore: number;
@@ -83,8 +84,9 @@ export interface LoanInputs {
   hideoutTransferFee: number; 
   hideoutAnnualFee: number; 
   
-  roamingwoodAnnual: number;
+  roamingwoodAnnual: number; // City/town taxes
   schoolTaxAnnual: number;
+  sewerWaterAnnual: number; // Sewer and water (quarterly billing)
 
   // Profitability Assumptions
   exitStrategy: 'SELL' | 'REFI';
@@ -173,10 +175,11 @@ export interface CalculatedResults {
   totalWalkerFees: number;
   
   hideoutTransferCost: number;
-  hideoutProratedDues: number;
-  roamingwoodProrated: number;
-  schoolTaxProrated: number;
-  daysRemainingInYear: number;
+    hideoutProratedDues: number;
+    roamingwoodProrated: number; // City/town taxes prorated
+    schoolTaxProrated: number;
+    sewerWaterProrated: number; // Sewer and water prorated (quarterly)
+    daysRemainingInYear: number;
   
   totalThirdPartyFees: number;
 
@@ -247,6 +250,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   sellerConcessionRate: 0,
   earnestMoneyDeposit: 1000,
   buyerAgentCommissionRate: 0,
+  buyerAgentCommissionBrokerRate: 0,
 
   ficoScore: 720,
   experienceLevel: 3,
@@ -276,8 +280,9 @@ export const DEFAULT_INPUTS: LoanInputs = {
   hideoutTransferFee: 2170.00,
   hideoutAnnualFee: 2070.00,
 
-  roamingwoodAnnual: 1600.00,
-  schoolTaxAnnual: 3000.00, 
+  roamingwoodAnnual: 1600.00, // City/town taxes
+  schoolTaxAnnual: 3000.00,
+  sewerWaterAnnual: 0.00, // Sewer and water (quarterly)
 
   exitStrategy: 'SELL',
   holdingPeriodMonths: 6,
