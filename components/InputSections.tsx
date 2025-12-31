@@ -183,7 +183,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           </div>
           {/* Max Offer Analysis */}
           <div className="border-t border-gray-100 pt-4 mt-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Max Offer Analysis</h3>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Max Offer Analysis (75% Main ARV)</h3>
             <div className="mb-3">
               <label className="text-xs font-semibold text-gray-600 block mb-2">Select ARV Percentage:</label>
               <div className="flex gap-2">
@@ -193,35 +193,77 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     onClick={() => onMaxOfferLTVChange(option.value)}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
                       maxOfferLTVPercent === option.value
-                        ? 'bg-blue-600 text-white shadow-md'
+                        ? option.value === 0.75 
+                          ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
+                          : 'bg-blue-600 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {option.label}
+                    {option.label} {option.value === 0.75 && '(Main)'}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-gray-700">Max Allowable Offer</span>
-                <span className="text-lg font-bold text-blue-600">{formatCurrency(maxOfferResults.maxAllowableOffer)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-600">
-                <span>Max Loan ({Math.round(maxOfferLTVPercent * 100)}% of ARV)</span>
-                <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-600">
-                <span>Less: Rehab Budget</span>
-                <span>-{formatCurrency(inputs.rehabBudget)}</span>
-              </div>
-              <button 
-                onClick={() => onInputChange('purchasePrice', Math.max(0, maxOfferResults.maxAllowableOffer))} 
-                className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm transition shadow-sm"
-              >
-                Apply Max Offer to Purchase Price
-              </button>
-            </div>
+            {(() => {
+              const exceedsMax = inputs.purchasePrice > maxOfferResults.maxAllowableOffer;
+              // Calculate required ARV for each percentage to make current purchase price work
+              const calculateRequiredARV = (ltvPercent: number) => {
+                if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
+                // Max Allowable Offer = (ARV * LTV%) - Rehab Budget
+                // Purchase Price = (ARV * LTV%) - Rehab Budget
+                // ARV = (Purchase Price + Rehab Budget) / LTV%
+                return (inputs.purchasePrice + inputs.rehabBudget) / ltvPercent;
+              };
+              
+              return (
+                <div className={`${exceedsMax ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm font-semibold ${exceedsMax ? 'text-red-700' : 'text-gray-700'}`}>Max Allowable Offer</span>
+                    <span className={`text-lg font-bold ${exceedsMax ? 'text-red-600' : 'text-blue-600'}`}>{formatCurrency(maxOfferResults.maxAllowableOffer)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Max Loan ({Math.round(maxOfferLTVPercent * 100)}% of ARV)</span>
+                    <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Less: Rehab Budget</span>
+                    <span>-{formatCurrency(inputs.rehabBudget)}</span>
+                  </div>
+                  {exceedsMax && (
+                    <div className="bg-red-100 border border-red-300 rounded p-2 space-y-2">
+                      <div className="text-xs text-red-700 font-semibold text-center">
+                        ⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer
+                      </div>
+                      <div className="text-[10px] text-red-600 font-medium mt-2">Required ARV to make this deal work (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
+                      <div className="grid grid-cols-2 gap-1.5 mt-1">
+                        {ltvOptions.map((option) => {
+                          const requiredARV = calculateRequiredARV(option.value);
+                          const currentARV = inputs.arv || 0;
+                          const difference = requiredARV - currentARV; // How much higher ARV needs to be
+                          return (
+                            <div key={option.value} className="bg-white border border-red-200 rounded p-1.5">
+                              <div className="text-[9px] text-red-600 font-semibold">{option.label} ARV:</div>
+                              <div className="text-[10px] text-red-700 font-bold">{formatCurrency(requiredARV)}</div>
+                              {currentARV > 0 && difference !== 0 && (
+                                <div className={`text-[9px] font-semibold ${difference > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                  {difference > 0 ? `+${formatCurrency(difference)} higher` : `${formatCurrency(difference)} lower`}
+                                </div>
+                              )}
+                              {currentARV > 0 && difference === 0 && (
+                                <div className="text-[9px] text-green-600 font-semibold">✓ Current ARV works</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="text-[9px] text-red-600 mt-1.5 text-center border-t border-red-200 pt-1.5">
+                        Current Est. ARV: {formatCurrency(inputs.arv || 0)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <div className="border-t border-gray-100 pt-4">
             <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Est. Closing Date</label>

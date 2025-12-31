@@ -1,7 +1,6 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults, LenderOption } from '../types';
 import { EligibilityAlert } from './EligibilityAlert';
-import { MaxOfferCard } from './MaxOfferCard';
 import { ValuationReturns } from './ValuationReturns';
 import { LoanEstimateCard } from './LoanEstimateCard';
 import { LenderComparison } from './LenderComparison';
@@ -25,9 +24,6 @@ interface ComparisonDataItem {
 interface ResultsColumnProps {
   inputs: LoanInputs;
   results: CalculatedResults;
-  maxOfferResults: CalculatedResults;
-  maxOfferLTVPercent: number;
-  onMaxOfferLTVChange: (percent: number) => void;
   lenders: LenderOption[];
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
@@ -42,9 +38,6 @@ interface ResultsColumnProps {
 export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   inputs,
   results,
-  maxOfferResults,
-  maxOfferLTVPercent,
-  onMaxOfferLTVChange,
   lenders,
   comparisonData,
   bestLenderFees,
@@ -60,14 +53,6 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
       <div className="sticky top-24 space-y-6">
         {/* Eligibility Alert */}
         <EligibilityAlert results={results} />
-
-        {/* Quick Stats - Max Offer */}
-        <MaxOfferCard 
-          inputs={inputs} 
-          results={maxOfferResults} 
-          maxOfferLTVPercent={maxOfferLTVPercent}
-          onLTVPercentChange={onMaxOfferLTVChange}
-        />
 
         {/* Valuation & Returns Section */}
         <ValuationReturns results={results} />

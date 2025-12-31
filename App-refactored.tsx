@@ -40,8 +40,8 @@ const App: React.FC = () => {
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
   
-  // Max Offer Analysis - ARV Percentage Selection
-  const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75%
+  // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
+  const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75% (main ARV)
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -608,9 +608,6 @@ const App: React.FC = () => {
           <ResultsColumn
             inputs={inputs}
             results={results}
-            maxOfferResults={maxOfferResults}
-            maxOfferLTVPercent={maxOfferLTVPercent}
-            onMaxOfferLTVChange={setMaxOfferLTVPercent}
             lenders={lenders}
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}
