@@ -393,7 +393,22 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               onChange={(v) => onInputChange('titleInsuranceRate', v)} 
               suffix="%" 
               step={0.01}
-              helpText="Title insurance rate as a percentage of purchase price"
+              helpText="Note: Title insurance is now calculated using PA Title Insurance Rate Table based on total loan amount (purchase + rehab). This field is kept for reference only."
+            />
+            <InputGroup
+              label="CPL Fee" 
+              id="cpl" 
+              value={inputs.cplFee} 
+              onChange={(v) => onInputChange('cplFee', v)} 
+              prefix="$" 
+              helpText="CPL (Certificate of Property Location) fee - always $125 payable directly to Penn Attorneys"
+            />
+            <InputGroup
+              label="Number of Endorsements" 
+              id="endorsements" 
+              value={inputs.numberOfEndorsements} 
+              onChange={(v) => onInputChange('numberOfEndorsements', v)} 
+              helpText="Number of title endorsements at $100 each"
             />
             <InputGroup 
               label="Legal & Settlement" 

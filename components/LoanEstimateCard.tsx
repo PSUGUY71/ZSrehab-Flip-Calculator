@@ -45,6 +45,8 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         {/* Detailed Third Party Fee Breakdown Corrected */}
         <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
         <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
+        <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
+        <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
         <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
@@ -69,6 +71,8 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           {/* Detailed Third Party Fee Breakdown in Cash Required */}
           <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
           <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
+          <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
+          <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
           <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
           <FeeBreakdownItem label="Recording" value={results.recordingCost} />
           <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />

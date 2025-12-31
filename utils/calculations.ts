@@ -1,4 +1,5 @@
 import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
+import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
 
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
@@ -20,6 +21,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     otherLenderFees,
     transferTaxRate,
     titleInsuranceRate,
+    cplFee,
+    numberOfEndorsements,
     legalSettlementFees,
     recordingFees,
     walkerDocPrep,
@@ -181,13 +184,25 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // 6. Third Party Fees Calculation
   const transferTaxCost = purchasePrice * (transferTaxRate / 100);
-  const titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
+  
+  // Title Insurance: Use PA Title Insurance Rate Table based on total loan amount (purchase + rehab)
+  // Source: https://www.alphaadv.net/patitle/parate25.html
+  const totalLoanAmount = purchasePrice + rehabBudget;
+  const titleInsuranceCost = calculatePATitleInsurance(totalLoanAmount);
+  
+  // CPL fee is always $125 payable to Penn Attorneys (default if not specified)
+  const cplFeeCost = cplFee || 125;
+  
+  // Endorsement fees are $100 per endorsement
+  const endorsementCost = (numberOfEndorsements || 0) * 100;
   
   const totalWalkerFees = (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
 
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
+    (cplFeeCost || 0) +
+    (endorsementCost || 0) +
     (legalSettlementFees || 0) + 
     totalWalkerFees +
     (recordingFees || 0) + 
@@ -403,6 +418,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // Third Party Fees
     transferTaxCost,
     titleInsuranceCost,
+    cplFeeCost,
+    endorsementCost,
     legalSettlementCost: legalSettlementFees,
     recordingCost: recordingFees,
     
