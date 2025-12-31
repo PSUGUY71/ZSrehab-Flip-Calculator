@@ -24,6 +24,7 @@ export const rowToSavedDeal = (row: DealRow): SavedDeal => ({
 
 // Convert SavedDeal to database row
 export const savedDealToRow = (deal: SavedDeal, userId: string): Partial<DealRow> => ({
+  user_id: userId,
   name: deal.name,
   address: deal.data.address || '',
   date: deal.date,
@@ -46,13 +47,19 @@ export const getDeals = async (): Promise<SavedDeal[]> => {
   return (data || []).map(rowToSavedDeal);
 };
 
+// Check if a string is a valid UUID format
+const isUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
 // Save a deal (insert or update)
 export const saveDeal = async (deal: SavedDeal, userId: string): Promise<SavedDeal> => {
   const dealData = savedDealToRow(deal, userId);
   
-  // If deal has a UUID string id, try to update; otherwise insert
-  if (deal.id && typeof deal.id === 'string' && deal.id.length > 10) {
-    // It's a UUID, try to update
+  // If deal has a valid UUID id, try to update; otherwise insert as new
+  if (deal.id && typeof deal.id === 'string' && isUUID(deal.id)) {
+    // It's a valid UUID, try to update
     try {
       return await updateDeal(deal.id, deal, userId);
     } catch (error) {
@@ -61,7 +68,8 @@ export const saveDeal = async (deal: SavedDeal, userId: string): Promise<SavedDe
     }
   }
 
-  // Insert new deal
+  // Insert new deal (Supabase will generate a UUID)
+  // Don't include id in dealData - let Supabase generate it
   const { data, error } = await supabase
     .from('deals')
     .insert([dealData])

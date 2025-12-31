@@ -231,75 +231,75 @@ export interface CalculatedResults {
 }
 
 export const DEFAULT_INPUTS: LoanInputs = {
-  lenderName: 'ZSrehab',
-  address: '2773 Rockway Road',
-  state: 'PA',
-  zipCode: '18436',
+  lenderName: '',
+  address: '',
+  state: '',
+  zipCode: '',
   propertyType: 'SFR',
   units: 1,
   
-  sqFt: 2000,
-  beds: 3,
-  baths: 2,
+  sqFt: 0,
+  beds: 0,
+  baths: 0,
   foundationType: 'Basement',
 
-  purchasePrice: 130000, 
-  asIsValue: 130000,
-  rehabBudget: 50000,
-  arv: 300000,
+  purchasePrice: 0, 
+  asIsValue: 0,
+  rehabBudget: 0,
+  arv: 0,
   sellerConcessionRate: 0,
-  earnestMoneyDeposit: 1000,
+  earnestMoneyDeposit: 0,
   buyerAgentCommissionRate: 0,
   buyerAgentCommissionBrokerRate: 0,
 
   ficoScore: 720,
-  experienceLevel: 3,
-  liquidity: 100000,
-  interestRate: 10.99,
-  originationPoints: 2.0,
-  loanTermMonths: 9,
+  experienceLevel: 0,
+  liquidity: 100000, // Default liquidity to avoid eligibility errors on blank form
+  interestRate: 0,
+  originationPoints: 0,
+  loanTermMonths: 12,
   
-  underwritingFee: 500,
-  processingFee: 500,
-  docPrepFee: 1499,
-  wireFee: 45,
+  underwritingFee: 0,
+  processingFee: 0,
+  docPrepFee: 0,
+  wireFee: 0,
   otherLenderFees: 0,
   
-  closingDate: '2025-02-28',
+  closingDate: new Date().toISOString().split('T')[0], // Today's date
   
-  transferTaxRate: 1.0, 
-  titleInsuranceRate: 0.70,
-  legalSettlementFees: 1675.00,
+  transferTaxRate: 0, 
+  titleInsuranceRate: 0,
+  legalSettlementFees: 0,
   
-  walkerDocPrep: 625.00,
-  walkerOvernight: 75.00,
-  walkerWire: 50.00,
+  walkerDocPrep: 0,
+  walkerOvernight: 0,
+  walkerWire: 0,
   
-  recordingFees: 221.75,
+  recordingFees: 0,
 
-  hideoutTransferFee: 2170.00,
-  hideoutAnnualFee: 2070.00,
+  hideoutTransferFee: 0,
+  hideoutAnnualFee: 0,
 
-  roamingwoodAnnual: 1600.00, // City/town taxes
-  schoolTaxAnnual: 3000.00,
-  sewerWaterAnnual: 0.00, // Sewer and water (quarterly)
+  roamingwoodAnnual: 0, // City/town taxes
+  schoolTaxAnnual: 0,
+  sewerWaterAnnual: 0, // Sewer and water (quarterly)
 
   exitStrategy: 'SELL',
   holdingPeriodMonths: 6,
-  monthlyElectric: 300,
-  sellingCommissionRate: 5.0,
-  sellingTransferTaxRate: 1.0,
+  monthlyElectric: 0,
+  sellingCommissionRate: 0,
+  sellingTransferTaxRate: 0,
 
   refinanceLTV: 80.0,
   refinancePoints: 2.0,
-  refinanceFixedFees: 1795.00,
+  refinanceFixedFees: 0,
 
   notes: '',
 
-  sellerOriginalPurchasePrice: 80000,
-  sellerMortgageBalance: 60000,
+  sellerOriginalPurchasePrice: 0,
+  sellerMortgageBalance: 0,
   sellerLineOfCreditBalance: 0,
-  sellerAgentCommissionRate: 5.0,
-  sellerTransferTaxRate: 1.0,
-  sellerMiscFees: 500
+  sellerAgentCommissionRate: 0,
+  sellerTransferTaxRate: 0,
+  sellerMiscFees: 0
 };

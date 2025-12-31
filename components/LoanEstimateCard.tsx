@@ -78,6 +78,8 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
           <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
           
+          <ResultRow label="Gap / Down Payment" value={results.gapAmount} />
+          
           <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
           <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
           {results.buyerAgentCommissionCredit > 0 && (

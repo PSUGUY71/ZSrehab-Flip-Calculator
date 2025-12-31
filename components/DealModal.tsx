@@ -22,22 +22,25 @@ export const DealModal: React.FC<DealModalProps> = ({
           {savedDeals.map((d) => (
             <div
               key={d.id}
-              className="flex justify-between items-center p-3 border rounded hover:bg-gray-50 group"
+              className="flex justify-between items-center p-3 border rounded hover:bg-blue-50 group cursor-pointer transition-colors"
+              onClick={() => onLoadDeal(d)}
             >
-              <div className="flex flex-col overflow-hidden">
+              <div className="flex flex-col overflow-hidden flex-1">
                 <span className="text-sm font-bold truncate text-gray-800">{d.name}</span>
                 <span className="text-[10px] text-gray-400">{d.date}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => onLoadDeal(d)}
                   className="text-blue-600 text-xs font-bold px-2 py-1 bg-blue-50 rounded hover:bg-blue-100"
+                  title="Load this deal"
                 >
                   Load
                 </button>
                 <button
                   onClick={(e) => onDeleteDeal(d.id, e)}
                   className="text-red-600 text-xs font-bold px-2 py-1 bg-red-50 rounded hover:bg-red-100"
+                  title="Delete this deal"
                 >
                   Delete
                 </button>

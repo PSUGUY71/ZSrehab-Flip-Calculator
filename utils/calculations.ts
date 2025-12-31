@@ -163,39 +163,39 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
       const quarterTotalTime = quarterEnd.getTime() - quarterStart.getTime();
       const daysInQuarter = Math.ceil(quarterTotalTime / (1000 * 60 * 60 * 24)) + 1;
       // Quarterly amount = Annual / 4, then prorate by days remaining
-      const quarterlyAmount = sewerWaterAnnual / 4;
+      const quarterlyAmount = (sewerWaterAnnual || 0) / 4;
       sewerWaterProrated = (quarterlyAmount / daysInQuarter) * daysRemainingInQuarter;
     }
   }
 
   // Prorate Annual Fees based on formula: DailyRate * DaysRemaining
   // City/town taxes (roamingwood): Calendar year (Jan-Dec)
-  const roamingwoodProrated = (roamingwoodAnnual / 365) * daysRemainingInYear;
+  const roamingwoodProrated = ((roamingwoodAnnual || 0) / 365) * daysRemainingInYear;
   
   // Dues (hideout): Calendar year (Jan-Dec)
-  const hideoutProratedDues = (hideoutAnnualFee / 365) * daysRemainingInYear;
+  const hideoutProratedDues = ((hideoutAnnualFee || 0) / 365) * daysRemainingInYear;
   
   // School taxes: School year (July-June)
   // Use 365 days for school year calculation (some years have 366, but 365 is standard)
-  const schoolTaxProrated = (schoolTaxAnnual / 365) * daysRemainingInSchoolYear;
+  const schoolTaxProrated = ((schoolTaxAnnual || 0) / 365) * daysRemainingInSchoolYear;
 
   // 6. Third Party Fees Calculation
   const transferTaxCost = purchasePrice * (transferTaxRate / 100);
   const titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
   
-  const totalWalkerFees = walkerDocPrep + walkerOvernight + walkerWire;
+  const totalWalkerFees = (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
 
   const totalThirdPartyFees = 
-    transferTaxCost + 
-    titleInsuranceCost + 
-    legalSettlementFees + 
+    (transferTaxCost || 0) + 
+    (titleInsuranceCost || 0) + 
+    (legalSettlementFees || 0) + 
     totalWalkerFees +
-    recordingFees + 
-    hideoutTransferFee + 
-    hideoutProratedDues +
-    roamingwoodProrated +
-    schoolTaxProrated +
-    sewerWaterProrated;
+    (recordingFees || 0) + 
+    (hideoutTransferFee || 0) + 
+    (hideoutProratedDues || 0) +
+    (roamingwoodProrated || 0) +
+    (schoolTaxProrated || 0) +
+    (sewerWaterProrated || 0);
 
   // 7. Credits
   const sellerConcessionAmount = purchasePrice * (sellerConcessionRate / 100);

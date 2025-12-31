@@ -31,6 +31,7 @@ const App: React.FC = () => {
   const [savedDeals, setSavedDeals] = useState<SavedDeal[]>([]);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
+  const [isClearingOnLogin, setIsClearingOnLogin] = useState(false); // Flag to prevent deal loading during login
 
   // Lender Modal State
   const [isLenderModalOpen, setIsLenderModalOpen] = useState(false);
@@ -70,6 +71,46 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Clear inputs whenever user changes (login/logout)
+  // This MUST run after user is set to ensure inputs are cleared
+  useEffect(() => {
+    if (currentUser) {
+      // Set flag to prevent any deal loading during login
+      setIsClearingOnLogin(true);
+      
+      // Force reset to default inputs when user logs in
+      // Use a longer timeout to ensure this runs AFTER all other effects (deal loading, etc.)
+      const timeoutId = setTimeout(() => {
+        const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
+        setInputs(freshInputs);
+        setLenders([]);
+        console.log('✅ Cleared inputs on login for user:', currentUser.email);
+        console.log('✅ Inputs after clear:', JSON.stringify(freshInputs).substring(0, 100));
+        
+        // Force a second clear after a short delay to catch any race conditions
+        setTimeout(() => {
+          const freshInputs2 = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
+          setInputs(freshInputs2);
+          setLenders([]);
+          console.log('✅ Double-check: Cleared inputs again for user:', currentUser.email);
+          // Clear the flag after we're done clearing
+          setTimeout(() => {
+            setIsClearingOnLogin(false);
+            console.log('✅ Login clearing complete, inputs should be blank');
+          }, 100);
+        }, 200);
+      }, 300); // Longer delay to ensure it runs after deal loading
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      // Clear everything when user logs out
+      const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
+      setInputs(freshInputs);
+      setLenders([]);
+      setIsClearingOnLogin(false);
+    }
+  }, [currentUser?.id, currentUser?.email]); // Trigger when user ID or email changes (login/logout)
+
   useEffect(() => {
     const loadDeals = async () => {
       if (!currentUser) {
@@ -77,33 +118,55 @@ const App: React.FC = () => {
         return;
       }
 
+      // Load from both Supabase and localStorage, then merge
+      let supabaseDeals: SavedDeal[] = [];
+      let localDeals: SavedDeal[] = [];
+
+      // Load from Supabase (if configured and user is not local)
       if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
         try {
-          const deals = await getDeals();
-          setSavedDeals(deals);
+          supabaseDeals = await getDeals();
+          console.log('Loaded deals from Supabase:', supabaseDeals.length);
         } catch (error) {
-          console.error('Failed to load deals:', error);
-          setSavedDeals([]);
-        }
-      } else {
-        // Fallback to localStorage
-        const stored = localStorage.getItem(`zsrehab_deals_${currentUser.email}`);
-        if (stored) {
-          try {
-            const parsedDeals = JSON.parse(stored);
-            const migratedDeals = parsedDeals.map((d: SavedDeal) => ({
-              ...d,
-              lenders: d.lenders || [],
-            }));
-            setSavedDeals(migratedDeals);
-          } catch (e) {
-            console.error('Failed to parse saved deals', e);
-            setSavedDeals([]);
-          }
-        } else {
-          setSavedDeals([]);
+          console.error('Failed to load deals from Supabase:', error);
+          // Continue to load from localStorage
         }
       }
+
+      // Always load from localStorage (for backup and offline access)
+      const stored = localStorage.getItem(`zsrehab_deals_${currentUser.email}`);
+      if (stored) {
+        try {
+          const parsedDeals = JSON.parse(stored);
+          localDeals = parsedDeals.map((d: SavedDeal) => ({
+            ...d,
+            lenders: d.lenders || [],
+          }));
+          console.log('Loaded deals from localStorage:', localDeals.length);
+        } catch (e) {
+          console.error('Failed to parse saved deals from localStorage', e);
+        }
+      }
+
+      // Merge deals: prefer Supabase (cloud) but include unique local deals
+      // Use a Map to deduplicate by ID
+      const dealsMap = new Map<string | number, SavedDeal>();
+      
+      // First add Supabase deals (cloud is source of truth)
+      supabaseDeals.forEach(deal => {
+        dealsMap.set(deal.id, deal);
+      });
+      
+      // Then add local deals that don't exist in Supabase
+      localDeals.forEach(deal => {
+        if (!dealsMap.has(deal.id)) {
+          dealsMap.set(deal.id, deal);
+        }
+      });
+
+      const mergedDeals = Array.from(dealsMap.values());
+      setSavedDeals(mergedDeals);
+      console.log('Total merged deals:', mergedDeals.length);
     };
 
     loadDeals();
@@ -147,6 +210,10 @@ const App: React.FC = () => {
 
         if (error) throw error;
         if (data.user) {
+          // Clear inputs FIRST, then set user (so useEffect can also clear if needed)
+          const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
+          setInputs(freshInputs);
+          setLenders([]);
           setCurrentUser({ id: data.user.id, email: data.user.email || '' });
           setAuthEmail('');
           setAuthPassword('');
@@ -160,6 +227,10 @@ const App: React.FC = () => {
       const users: any[] = usersStr ? JSON.parse(usersStr) : [];
       const foundUser = users.find(u => u.email === authEmail && u.password === authPassword);
       if (foundUser) {
+        // Clear inputs FIRST, then set user (so useEffect can also clear if needed)
+        const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
+        setInputs(freshInputs);
+        setLenders([]);
         localStorage.setItem('zsrehab_session_user', foundUser.email);
         setCurrentUser({ id: 'local', email: foundUser.email });
         setAuthEmail('');
@@ -191,6 +262,9 @@ const App: React.FC = () => {
           setCurrentUser({ id: data.user.id, email: data.user.email || '' });
           setAuthEmail('');
           setAuthPassword('');
+          // Clear all form inputs when signing up
+          setInputs(DEFAULT_INPUTS);
+          setLenders([]);
         }
       } catch (error: any) {
         setAuthError(error.message || 'Failed to create account.');
@@ -210,6 +284,9 @@ const App: React.FC = () => {
       setCurrentUser({ id: 'local', email: newUser.email });
       setAuthEmail('');
       setAuthPassword('');
+      // Clear all form inputs when signing up
+      setInputs(DEFAULT_INPUTS);
+      setLenders([]);
     }
   };
 
@@ -236,39 +313,87 @@ const App: React.FC = () => {
     if (!currentUser) return;
     
     const dealName = inputs.address || 'Untitled Property';
+    
+    // Generate a temporary ID for localStorage (can be any format)
+    const tempId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    let supabaseSuccess = false;
+    let localStorageSuccess = false;
+    let finalDealId: string | number = tempId; // Default to temp ID
+    
+    // Save to Supabase first (if configured and user is not local)
+    if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+      try {
+        // Create deal without ID - let Supabase generate UUID
+        const dealForSupabase: SavedDeal = {
+          id: '', // Empty ID - Supabase will generate UUID
+          name: dealName,
+          date: new Date().toLocaleDateString(),
+          data: inputs,
+          lenders: lenders,
+        };
+        const saved = await saveDeal(dealForSupabase, currentUser.id);
+        // Use the UUID from Supabase
+        finalDealId = saved.id;
+        supabaseSuccess = true;
+        console.log('Deal saved to Supabase successfully with ID:', finalDealId);
+      } catch (error: any) {
+        console.error('Failed to save deal to Supabase:', error);
+        // Continue to save locally even if Supabase fails
+      }
+    }
+    
+    // Always save to localStorage (for backup and offline access)
+    // Use the Supabase UUID if available, otherwise use temp ID
     const newDeal: SavedDeal = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: finalDealId,
       name: dealName,
       date: new Date().toLocaleDateString(),
       data: inputs,
       lenders: lenders,
     };
     
-    if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
-      try {
-        const saved = await saveDeal(newDeal, currentUser.id);
-        // Reload deals to get the updated list
-        const deals = await getDeals();
-        setSavedDeals(deals);
-        setSaveNotification('Property Saved!');
-        setTimeout(() => setSaveNotification(null), 2000);
-      } catch (error) {
-        console.error('Failed to save deal:', error);
-        setSaveNotification('Failed to save deal');
-        setTimeout(() => setSaveNotification(null), 2000);
-      }
-    } else {
-      // Fallback to localStorage
+    try {
       const updatedDeals = [newDeal, ...savedDeals];
       setSavedDeals(updatedDeals);
       localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updatedDeals));
-      setSaveNotification('Property Saved!');
-      setTimeout(() => setSaveNotification(null), 2000);
+      localStorageSuccess = true;
+      console.log('Deal saved to localStorage successfully');
+    } catch (error: any) {
+      console.error('Failed to save deal to localStorage:', error);
     }
+    
+    // Show appropriate notification
+    if (supabaseSuccess && localStorageSuccess) {
+      setSaveNotification('Property Saved! (Synced to cloud & local)');
+    } else if (localStorageSuccess) {
+      setSaveNotification('Property Saved! (Local backup only)');
+    } else {
+      setSaveNotification('Failed to save deal');
+    }
+    
+    // Reload deals from Supabase if it succeeded
+    if (supabaseSuccess && isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+      try {
+        const deals = await getDeals();
+        setSavedDeals(deals);
+      } catch (error) {
+        console.error('Failed to reload deals from Supabase:', error);
+        // Keep the local state we just set
+      }
+    }
+    
+    setTimeout(() => setSaveNotification(null), 3000);
   };
 
   const handleLoadDeal = (deal: SavedDeal) => {
-    setInputs({ ...deal.data, exitStrategy: 'SELL' });
+    // Don't load deal if we're in the middle of clearing on login
+    if (isClearingOnLogin) {
+      console.log('⚠️ Prevented loading deal during login clear');
+      return;
+    }
+    // Merge with DEFAULT_INPUTS to ensure all fields are present (especially new fields added after deal was saved)
+    setInputs({ ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' });
     setLenders(deal.lenders || []);
     setIsDealModalOpen(false);
   };
@@ -280,21 +405,41 @@ const App: React.FC = () => {
       return;
     }
     
+    let supabaseSuccess = false;
+    
+    // Delete from Supabase (if configured and user is not local)
     if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
       try {
         await deleteDeal(id.toString());
-        // Reload deals to get the updated list
-        const deals = await getDeals();
-        setSavedDeals(deals);
+        supabaseSuccess = true;
+        console.log('Deal deleted from Supabase successfully');
       } catch (error) {
-        console.error('Failed to delete deal:', error);
-        alert('Failed to delete deal');
+        console.error('Failed to delete deal from Supabase:', error);
+        // Continue to delete locally even if Supabase fails
       }
-    } else {
-      // Fallback to localStorage
+    }
+    
+    // Always delete from localStorage
+    try {
       const updated = savedDeals.filter((d) => d.id !== id);
       setSavedDeals(updated);
       localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updated));
+      console.log('Deal deleted from localStorage successfully');
+    } catch (error) {
+      console.error('Failed to delete deal from localStorage:', error);
+      alert('Failed to delete deal');
+      return;
+    }
+    
+    // Reload deals from Supabase if it succeeded
+    if (supabaseSuccess && isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+      try {
+        const deals = await getDeals();
+        setSavedDeals(deals);
+      } catch (error) {
+        console.error('Failed to reload deals from Supabase:', error);
+        // Keep the local state we just set
+      }
     }
   };
 
