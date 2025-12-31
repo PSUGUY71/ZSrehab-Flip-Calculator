@@ -25,6 +25,9 @@ interface ComparisonDataItem {
 interface ResultsColumnProps {
   inputs: LoanInputs;
   results: CalculatedResults;
+  maxOfferResults: CalculatedResults;
+  maxOfferLTVPercent: number;
+  onMaxOfferLTVChange: (percent: number) => void;
   lenders: LenderOption[];
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
@@ -39,6 +42,9 @@ interface ResultsColumnProps {
 export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   inputs,
   results,
+  maxOfferResults,
+  maxOfferLTVPercent,
+  onMaxOfferLTVChange,
   lenders,
   comparisonData,
   bestLenderFees,
@@ -56,7 +62,12 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
         <EligibilityAlert results={results} />
 
         {/* Quick Stats - Max Offer */}
-        <MaxOfferCard inputs={inputs} results={results} />
+        <MaxOfferCard 
+          inputs={inputs} 
+          results={maxOfferResults} 
+          maxOfferLTVPercent={maxOfferLTVPercent}
+          onLTVPercentChange={onMaxOfferLTVChange}
+        />
 
         {/* Valuation & Returns Section */}
         <ValuationReturns results={results} />

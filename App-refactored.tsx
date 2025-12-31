@@ -39,6 +39,9 @@ const App: React.FC = () => {
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
+  
+  // Max Offer Analysis - ARV Percentage Selection
+  const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75%
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -174,6 +177,8 @@ const App: React.FC = () => {
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
+  // Calculate max offer with selected LTV percentage
+  const maxOfferResults = useMemo(() => calculateLoan(inputs, maxOfferLTVPercent), [inputs, maxOfferLTVPercent]);
 
   const comparisonData = useMemo(() => {
     return lenders
@@ -592,6 +597,9 @@ const App: React.FC = () => {
           <InputSections
             inputs={inputs}
             results={results}
+            maxOfferResults={maxOfferResults}
+            maxOfferLTVPercent={maxOfferLTVPercent}
+            onMaxOfferLTVChange={setMaxOfferLTVPercent}
             onInputChange={handleInputChange}
             onCaptureBaseline={handleCaptureBaseline}
           />
@@ -600,6 +608,9 @@ const App: React.FC = () => {
           <ResultsColumn
             inputs={inputs}
             results={results}
+            maxOfferResults={maxOfferResults}
+            maxOfferLTVPercent={maxOfferLTVPercent}
+            onMaxOfferLTVChange={setMaxOfferLTVPercent}
             lenders={lenders}
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}

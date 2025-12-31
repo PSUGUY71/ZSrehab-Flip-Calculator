@@ -6,6 +6,9 @@ import { formatCurrency } from '../utils/calculations';
 interface InputSectionsProps {
   inputs: LoanInputs;
   results: CalculatedResults;
+  maxOfferResults: CalculatedResults;
+  maxOfferLTVPercent: number;
+  onMaxOfferLTVChange: (percent: number) => void;
   onInputChange: (field: keyof LoanInputs, value: string | number) => void;
   onCaptureBaseline: () => void;
 }
@@ -13,9 +16,18 @@ interface InputSectionsProps {
 export const InputSections: React.FC<InputSectionsProps> = ({
   inputs,
   results,
+  maxOfferResults,
+  maxOfferLTVPercent,
+  onMaxOfferLTVChange,
   onInputChange,
   onCaptureBaseline,
 }) => {
+  const ltvOptions = [
+    { label: '60%', value: 0.60 },
+    { label: '65%', value: 0.65 },
+    { label: '70%', value: 0.70 },
+    { label: '75%', value: 0.75 },
+  ];
   return (
     <div className="w-full lg:w-1/2 space-y-6">
       {/* Property Info */}
@@ -136,28 +148,6 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <div className="text-[10px] text-gray-400 text-right mt-1 font-medium">
                 {formatCurrency(results.purchasePricePerSqFt)} / SqFt
               </div>
-              <div className="mt-4 bg-blue-50 border border-blue-100 rounded p-3 text-xs space-y-2">
-                <div className="flex justify-between font-bold text-blue-900 uppercase border-b border-blue-200 pb-1 mb-1">
-                  <span>Max Offer Analysis (75% LTV)</span>
-                  <span>{formatCurrency(results.maxAllowableOffer)}</span>
-                </div>
-                <div className="flex justify-between text-blue-800 opacity-80">
-                  <span>Max Loan (75% of ARV)</span>
-                  <span>{formatCurrency(results.maxLoanAmountDollars)}</span>
-                </div>
-                <div className="flex justify-between text-blue-800 opacity-80">
-                  <span>Less: Rehab Budget</span>
-                  <span>-{formatCurrency(inputs.rehabBudget)}</span>
-                </div>
-                <div className="pt-2 text-center">
-                  <button 
-                    onClick={() => onInputChange('purchasePrice', Math.max(0, results.maxAllowableOffer))} 
-                    className="text-blue-600 font-bold hover:underline bg-white px-2 py-1 rounded border border-blue-200 shadow-sm w-full transition hover:shadow"
-                  >
-                    Apply Max Offer to Purchase Price
-                  </button>
-                </div>
-              </div>
             </div>
             <InputGroup 
               label="Rehab Budget" 
@@ -190,6 +180,48 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               prefix="$"
               helpText="Current value of the property before renovations"
             />
+          </div>
+          {/* Max Offer Analysis */}
+          <div className="border-t border-gray-100 pt-4 mt-4">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Max Offer Analysis</h3>
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-gray-600 block mb-2">Select ARV Percentage:</label>
+              <div className="flex gap-2">
+                {ltvOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => onMaxOfferLTVChange(option.value)}
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                      maxOfferLTVPercent === option.value
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-gray-700">Max Allowable Offer</span>
+                <span className="text-lg font-bold text-blue-600">{formatCurrency(maxOfferResults.maxAllowableOffer)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Max Loan ({Math.round(maxOfferLTVPercent * 100)}% of ARV)</span>
+                <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Less: Rehab Budget</span>
+                <span>-{formatCurrency(inputs.rehabBudget)}</span>
+              </div>
+              <button 
+                onClick={() => onInputChange('purchasePrice', Math.max(0, maxOfferResults.maxAllowableOffer))} 
+                className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md text-sm transition shadow-sm"
+              >
+                Apply Max Offer to Purchase Price
+              </button>
+            </div>
           </div>
           <div className="border-t border-gray-100 pt-4">
             <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Est. Closing Date</label>

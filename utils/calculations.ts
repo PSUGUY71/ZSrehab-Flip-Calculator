@@ -1,6 +1,6 @@
 import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
 
-export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
+export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
     purchasePrice,
     rehabBudget,
@@ -50,7 +50,7 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
   } = inputs;
 
   // 1. Constants from PDF/RFG Rules
-  const MAX_LTV_PERCENT = 0.75; // 75% of ARV
+  const MAX_LTV_PERCENT = maxLTVPercent; // Use provided LTV percent (default 75%)
 
   // 2. Loan Sizing Logic
   const totalProjectCost = purchasePrice + rehabBudget;
@@ -59,7 +59,7 @@ export const calculateLoan = (inputs: LoanInputs): CalculatedResults => {
   // The Qualified Loan Amount is the lesser of Cost vs. ARV Limit
   const qualifiedLoanAmount = Math.min(totalProjectCost, maxLoanBasedOnARV);
   
-  // Calculate Max Allowable Offer to maintain 100% funding (stay under 75% LTV)
+  // Calculate Max Allowable Offer to maintain 100% funding (stay under selected LTV)
   const maxAllowableOffer = maxLoanBasedOnARV - rehabBudget;
   
   // Gap / Down Payment
