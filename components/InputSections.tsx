@@ -31,7 +31,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   return (
     <div className="w-full lg:w-1/2 space-y-6">
       {/* Property Info */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Property Information</h2>
           <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">
@@ -129,7 +129,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Economics */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Deal Economics</h2>
         </div>
@@ -323,7 +323,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Seller Side Analysis */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-indigo-50 px-6 py-3 border-b border-indigo-100">
           <h2 className="text-sm font-bold text-indigo-900 uppercase">Seller Side Analysis</h2>
         </div>
@@ -380,7 +380,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Detailed HUD */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Detailed HUD Charges</h2>
         </div>
@@ -511,7 +511,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Exit Strategy */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-yellow-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Exit Strategy</h2>
         </div>
@@ -555,7 +555,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Borrower */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-indigo-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Borrower & Active Loan</h2>
           <button onClick={onCaptureBaseline} className="text-[10px] text-blue-600 hover:text-blue-500 font-bold transition">
@@ -675,7 +675,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Notes */}
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-pink-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Notes</h2>
         </div>

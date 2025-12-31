@@ -52,40 +52,56 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
     <div className="w-full lg:w-1/2 space-y-6">
       <div className="sticky top-24 space-y-6">
         {/* Eligibility Alert */}
-        <EligibilityAlert results={results} />
+        <div className="bg-gray-50 rounded-xl p-2">
+          <EligibilityAlert results={results} />
+        </div>
 
         {/* Valuation & Returns Section */}
-        <ValuationReturns results={results} />
+        <div className="bg-blue-50 rounded-xl p-2">
+          <ValuationReturns results={results} />
+        </div>
 
         {/* Loan Estimate Card */}
-        <LoanEstimateCard inputs={inputs} results={results} />
+        <div className="bg-green-50 rounded-xl p-2">
+          <LoanEstimateCard inputs={inputs} results={results} />
+        </div>
 
         {/* Lender Comparison Section */}
-        <LenderComparison
-          inputs={inputs}
-          results={results}
-          lenders={lenders}
-          comparisonData={comparisonData}
-          bestLenderFees={bestLenderFees}
-          bestMonthlyPayment={bestMonthlyPayment}
-          onAddLender={onAddLender}
-          onApplyLender={onApplyLender}
-          onEditLender={onEditLender}
-          onDuplicateLender={onDuplicateLender}
-          onDeleteLender={onDeleteLender}
-        />
+        <div className="bg-purple-50 rounded-xl p-2">
+          <LenderComparison
+            inputs={inputs}
+            results={results}
+            lenders={lenders}
+            comparisonData={comparisonData}
+            bestLenderFees={bestLenderFees}
+            bestMonthlyPayment={bestMonthlyPayment}
+            onAddLender={onAddLender}
+            onApplyLender={onApplyLender}
+            onEditLender={onEditLender}
+            onDuplicateLender={onDuplicateLender}
+            onDeleteLender={onDeleteLender}
+          />
+        </div>
 
         {/* Detailed Profit Table */}
-        <ProfitTable inputs={inputs} results={results} />
+        <div className="bg-yellow-50 rounded-xl p-2">
+          <ProfitTable inputs={inputs} results={results} />
+        </div>
 
         {/* Closing Table Profit (Detailed) */}
-        <ClosingProfitCard inputs={inputs} results={results} />
+        <div className="bg-indigo-50 rounded-xl p-2">
+          <ClosingProfitCard inputs={inputs} results={results} />
+        </div>
 
         {/* Sensitivity Analysis */}
-        <SensitivityAnalysis results={results} />
+        <div className="bg-pink-50 rounded-xl p-2">
+          <SensitivityAnalysis results={results} />
+        </div>
 
         {/* Seller Net Analysis */}
-        <SellerNetAnalysis inputs={inputs} results={results} />
+        <div className="bg-cyan-50 rounded-xl p-2">
+          <SellerNetAnalysis inputs={inputs} results={results} />
+        </div>
       </div>
     </div>
   );
