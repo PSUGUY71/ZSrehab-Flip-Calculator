@@ -283,15 +283,15 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const baselineFixedCosts = qualifiedLoanAmount + totalBuyingCosts + totalHoldingCosts;
   
   const scenarios: ProfitScenario[] = [];
-  // ARV scenarios based on percentages: 60%, 65%, 70%, 75% of current ARV
-  const arvPercentages = [
-      { label: '60% ARV', percent: 0.60 }, 
-      { label: '65% ARV', percent: 0.65 }, 
-      { label: '70% ARV', percent: 0.70 }, 
-      { label: '75% ARV', percent: 0.75 }
+  // ARV scenarios based on dollar amounts: -10k, baseline, +10k, +20k, +30k
+  const arvVariations = [
+      { label: '-$10k', amount: -10000 }, 
+      { label: '+$10k', amount: 10000 }, 
+      { label: '+$20k', amount: 20000 }, 
+      { label: '+$30k', amount: 30000 }
   ];
 
-  // Calculate baseline scenario first
+  // Calculate baseline scenario first (current deal's actual ARV)
   const baselineARV = arv;
   let baselineExitCosts = 0;
   if (exitStrategy === 'SELL') {
@@ -304,6 +304,28 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const baselineProfit = baselineARV - baselineTotalCost;
   const baselineClosingProfit = baselineProfit + totalHoldingCosts;
 
+  // Calculate -$10k scenario first (before baseline)
+  const minus10kARV = baselineARV - 10000;
+  let minus10kExitCosts = 0;
+  if (exitStrategy === 'SELL') {
+      minus10kExitCosts = (minus10kARV * (sellingCommissionRate / 100)) + (minus10kARV * (sellingTransferTaxRate / 100));
+  } else {
+      const minus10kRefiLoan = minus10kARV * (refinanceLTV / 100);
+      minus10kExitCosts = (minus10kRefiLoan * (refinancePoints / 100)) + refinanceFixedFees;
+  }
+  const minus10kTotalCost = baselineFixedCosts + minus10kExitCosts;
+  const minus10kProfit = minus10kARV - minus10kTotalCost;
+  const minus10kClosingProfit = minus10kProfit + totalHoldingCosts;
+
+  scenarios.push({
+      label: '-$10k',
+      arv: minus10kARV,
+      netProfit: minus10kProfit,
+      difference: minus10kProfit - baselineProfit,
+      closingTableProfit: minus10kClosingProfit
+  });
+
+  // Add baseline scenario
   scenarios.push({
       label: 'Baseline',
       arv: baselineARV,
@@ -312,9 +334,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       closingTableProfit: baselineClosingProfit
   });
 
-  // Calculate percentage-based scenarios
-  arvPercentages.forEach(p => {
-      const simARV = arv * p.percent;
+  // Calculate remaining dollar-amount-based scenarios (+10k, +20k, +30k)
+  arvVariations.slice(1).forEach(v => {
+      const simARV = baselineARV + v.amount;
       let simExitCosts = 0;
       
       if (exitStrategy === 'SELL') {
@@ -330,7 +352,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       const simClosingProfit = simProfit + totalHoldingCosts;
       
       scenarios.push({
-          label: p.label,
+          label: v.label,
           arv: simARV,
           netProfit: simProfit,
           difference: simProfit - baselineProfit,

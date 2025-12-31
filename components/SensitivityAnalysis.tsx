@@ -15,9 +15,9 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
       <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
         <div className="p-2">Scenario</div>
         <div className="p-2">ARV</div>
-        <div className="p-2">Net Profit</div>
+        <div className="p-2">Closing Table Profit</div>
         <div className="p-2">Diff</div>
-        <div className="p-2">Close Profit</div>
+        <div className="p-2">Net Profit</div>
       </div>
       {results.profitScenarios.map((s, idx) => (
         <div
@@ -28,13 +28,13 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
         >
           <div>{s.label}</div>
           <div>{formatCurrency(s.arv)}</div>
-          <div className={s.netProfit > 0 ? 'text-green-700' : 'text-red-600'}>
-            {formatCurrency(s.netProfit)}
+          <div className={s.closingTableProfit > 0 ? 'text-green-700' : 'text-red-600'}>
+            {formatCurrency(s.closingTableProfit)}
           </div>
           <div className={s.difference >= 0 ? 'text-green-600' : 'text-red-500'}>
             {formatCurrency(s.difference)}
           </div>
-          <div>{formatCurrency(s.closingTableProfit)}</div>
+          <div>{formatCurrency(s.netProfit)}</div>
         </div>
       ))}
     </div>
