@@ -65,6 +65,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Calculate Max Allowable Offer to maintain 100% funding (stay under selected LTV)
   const maxAllowableOffer = maxLoanBasedOnARV - rehabBudget;
   
+  // 70% Rule: Maximum Purchase Price = (ARV × 0.70) - Rehab Budget
+  // This is a common house flipping rule to ensure profitability
+  const maxPurchasePrice70Rule = (arv * 0.70) - rehabBudget;
+  const passes70Rule = purchasePrice <= maxPurchasePrice70Rule;
+  
   // Gap / Down Payment
   const gapAmount = Math.max(0, totalProjectCost - qualifiedLoanAmount);
   
@@ -74,6 +79,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 3. Ratios & Metrics
   const ltv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
   const ltc = totalProjectCost > 0 ? (qualifiedLoanAmount / totalProjectCost) * 100 : 0;
+  const ltarv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0; // Loan-to-After-Repair-Value (same as LTV for clarity)
 
   const purchasePricePerSqFt = sqFt > 0 ? purchasePrice / sqFt : 0;
   const arvPerSqFt = sqFt > 0 ? arv / sqFt : 0;
@@ -230,6 +236,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // 10. Profitability Analysis
   const totalMonthlyUtilities = monthlyElectric;
+  const monthlyInterestPayment = monthlyPayment;
+  const monthlyUtilitiesCost = totalMonthlyUtilities;
   const monthlyHoldingCost = monthlyPayment + totalMonthlyUtilities;
   const totalHoldingCosts = monthlyHoldingCost * holdingPeriodMonths;
 
@@ -413,6 +421,58 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     eligibilityReasons.push("Experience cannot be negative.");
   }
 
+  // 15. Work-Backward Mode Calculation
+  // Calculate max purchase price based on target ROI or LTC
+  let workBackwardMaxOffer = 0;
+  
+  if (inputs.useWorkBackwardMode && arv > 0) {
+    if (inputs.workBackwardModeType === 'LTC' && inputs.targetLTC > 0) {
+      // LTC-based: Target LTC% = (Loan Amount / Total Project Cost) * 100
+      // Loan Amount = min(Total Project Cost, ARV * LTV%)
+      // If we want a specific LTC%, solve for Purchase Price:
+      // Target LTC = (ARV * LTV% / (Purchase Price + Rehab Budget)) * 100
+      // Purchase Price = (ARV * LTV% / (Target LTC / 100)) - Rehab Budget
+      const targetLTCDecimal = inputs.targetLTC / 100;
+      const maxLoanAtARV = arv * MAX_LTV_PERCENT;
+      
+      // Calculate purchase price that would give us the target LTC
+      // We need: LTC = Loan Amount / (Purchase Price + Rehab Budget)
+      // Loan Amount = min(Purchase Price + Rehab Budget, ARV * LTV%)
+      // If ARV * LTV% is the limiting factor:
+      if (maxLoanAtARV / targetLTCDecimal >= rehabBudget) {
+        workBackwardMaxOffer = (maxLoanAtARV / targetLTCDecimal) - rehabBudget;
+      } else {
+        // If cost is limiting, we can't achieve target LTC with this ARV
+        workBackwardMaxOffer = 0;
+      }
+    } else if (inputs.workBackwardModeType === 'ROI' && inputs.targetRoi > 0) {
+      // ROI-based: This is more complex as costs depend on purchase price
+      // We'll use an iterative approximation
+      // Target ROI = (Net Profit / Total Cash Invested) * 100
+      // Net Profit = ARV - Total Project Cost Basis
+      // Total Cash Invested = Total Buying Costs + Total Holding Costs
+      
+      // Simplified approach: Use a binary search or approximation
+      // For now, use a simplified formula that estimates based on fixed costs
+      // This is an approximation - a full implementation would iterate
+      
+      // Estimate: Net Profit needed = Target ROI% * Total Cash Invested
+      // We'll use current deal structure as baseline and adjust
+      // This is a simplified calculation - for accuracy, would need iteration
+      
+      // Approximate: If we assume costs scale roughly with purchase price,
+      // we can estimate: Purchase Price ≈ (ARV - Fixed Costs - (Target ROI% * Estimated Cash)) / (1 + Cost Multiplier)
+      // For MVP, we'll use a simpler heuristic based on 70% rule adjusted for ROI
+      const estimatedCostMultiplier = 1.15; // Rough estimate of how costs scale
+      const estimatedFixedCosts = totalHoldingCosts + totalExitCosts; // Costs that don't depend on purchase price
+      const targetNetProfit = (inputs.targetRoi / 100) * (estimatedFixedCosts + (rehabBudget * 0.25)); // Rough estimate
+      const estimatedMaxPurchasePrice = (arv - estimatedFixedCosts - targetNetProfit) / estimatedCostMultiplier;
+      
+      // Ensure it's reasonable (not negative, not above ARV)
+      workBackwardMaxOffer = Math.max(0, Math.min(estimatedMaxPurchasePrice, arv * 0.8));
+    }
+  }
+
   return {
     maxLTVPercent: MAX_LTV_PERCENT * 100,
     maxLoanAmountDollars: maxLoanBasedOnARV,
@@ -421,8 +481,12 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     initialFundedAmount,
     holdbackAmount,
     maxAllowableOffer,
+    maxPurchasePrice70Rule,
+    passes70Rule,
+    workBackwardMaxOffer,
     ltv,
     ltc,
+    ltarv,
     
     // Metrics
     purchasePricePerSqFt,
@@ -473,6 +537,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
     // Profitability
     totalHoldingCosts,
+    monthlyHoldingCost,
+    monthlyInterestPayment,
+    monthlyUtilitiesCost,
     totalExitCosts,
     netProfit,
     closingTableProfit,

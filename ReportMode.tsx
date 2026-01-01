@@ -88,12 +88,35 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               <div className="flex justify-between"><span>Purchase:</span> <span className="font-medium">{formatCurrency(inputs.purchasePrice)}</span></div>
               <div className="flex justify-between text-gray-500 text-xs pl-2 print:text-[9px]"><span>Price/SqFt:</span> <span>{formatCurrency(results.purchasePricePerSqFt)}</span></div>
               <div className="flex justify-between"><span>Rehab:</span> <span className="font-medium">{formatCurrency(inputs.rehabBudget)}</span></div>
+              {inputs.rehabLineItems && inputs.rehabLineItems.length > 0 && (
+                <div className="text-[9px] text-gray-500 pl-2 print:text-[8px]">
+                  ({inputs.rehabLineItems.length} line item{inputs.rehabLineItems.length !== 1 ? 's' : ''})
+                </div>
+              )}
               <div className="flex justify-between text-blue-800 font-bold text-base mt-2 pt-2 border-t border-gray-200 print:text-[10px] print:mt-1 print:pt-1">
                 <span>Total Cost:</span> <span>{formatCurrency(inputs.purchasePrice + inputs.rehabBudget)}</span>
               </div>
               <div className="flex justify-between"><span>Est. ARV:</span> <span className="font-bold text-base print:text-[10px]">{formatCurrency(inputs.arv)}</span></div>
               <div className="flex justify-between text-gray-500 text-xs pl-2 print:text-[9px]"><span>ARV/SqFt:</span> <span>{formatCurrency(results.arvPerSqFt)}</span></div>
               <div className="flex justify-between mt-1 text-xs text-gray-500 print:text-[9px]"><span>Max Allowable Offer:</span> <span className="font-medium">{formatCurrency(results.maxAllowableOffer)}</span></div>
+              <div className="flex justify-between mt-1 text-xs print:text-[9px]">
+                <span className={results.passes70Rule ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
+                  70% Rule Max {results.passes70Rule ? '✓' : '✗'}
+                </span>
+                <span className={`font-bold ${results.passes70Rule ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(results.maxPurchasePrice70Rule)}
+                </span>
+              </div>
+              {inputs.useWorkBackwardMode && results.workBackwardMaxOffer > 0 && (
+                <div className="flex justify-between mt-1 text-xs print:text-[9px]">
+                  <span className="text-purple-700 font-semibold">
+                    Work-Backward Max ({inputs.workBackwardModeType === 'ROI' ? `${inputs.targetRoi}% ROI` : `${inputs.targetLTC}% LTC`})
+                  </span>
+                  <span className="font-bold text-purple-600">
+                    {formatCurrency(results.workBackwardMaxOffer)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 print-color-adjust-exact break-inside-avoid shadow-sm print:p-1">
@@ -138,7 +161,16 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               <ResultRow label="Total Loan" value={results.qualifiedLoanAmount} />
               <ResultRow label="Initial Funding" value={results.initialFundedAmount} />
               <ResultRow label="Rehab Holdback" value={results.holdbackAmount} />
-              <div className="flex justify-between pt-1"><span>LTV</span> <span className="font-bold">{results.ltv.toFixed(2)}%</span></div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="flex justify-between">
+                  <span>LTV / LTARV</span>
+                  <span className={`font-bold ${results.ltv > 75 ? 'text-red-600' : ''}`}>{results.ltv.toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>LTC</span>
+                  <span className="font-bold">{results.ltc.toFixed(2)}%</span>
+                </div>
+              </div>
             </div>
             <div>
               <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
@@ -181,6 +213,95 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Monthly Holding Cost Summary */}
+        <div className="mt-6 border border-gray-300 rounded break-inside-avoid print:mt-1">
+          <div className="bg-blue-900 px-4 py-2 text-white font-bold text-xs uppercase print-color-adjust-exact print:py-1 print:text-[10px]">
+            Monthly Carrying Costs Summary
+          </div>
+          <div className="p-3 space-y-2 text-xs print:text-[10px] print:p-1 print:space-y-1">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-semibold text-gray-700">Loan Interest</div>
+                <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly payment</div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-gray-900">{formatCurrency(results.monthlyInterestPayment)}</div>
+                <div className="text-[9px] text-gray-600 print:text-[8px]">
+                  {formatCurrency(results.monthlyInterestPayment * inputs.holdingPeriodMonths)} total
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="font-semibold text-gray-700">Utilities (Electric)</div>
+                <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-gray-900">{formatCurrency(results.monthlyUtilitiesCost)}</div>
+                <div className="text-[9px] text-gray-600 print:text-[8px]">
+                  {formatCurrency(results.monthlyUtilitiesCost * inputs.holdingPeriodMonths)} total
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between items-center">
+              <span className="font-bold text-blue-900 uppercase">Total Monthly</span>
+              <div className="text-right">
+                <div className="font-bold text-blue-700 text-sm print:text-xs">{formatCurrency(results.monthlyHoldingCost)}</div>
+                <div className="text-[9px] text-blue-600 font-semibold print:text-[8px]">
+                  {formatCurrency(results.totalHoldingCosts)} over {inputs.holdingPeriodMonths} month{inputs.holdingPeriodMonths !== 1 ? 's' : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Itemized Rehab Breakdown */}
+        {inputs.rehabLineItems && inputs.rehabLineItems.length > 0 && (
+          <div className="mt-6 border border-gray-300 rounded break-inside-avoid print:mt-1">
+            <div className="bg-gray-800 px-4 py-2 text-white font-bold text-xs uppercase print-color-adjust-exact print:py-1 print:text-[10px]">
+              Rehab Breakdown
+            </div>
+            <div className="p-3 overflow-x-auto print:p-1">
+              <table className="w-full text-xs print:text-[9px]">
+                <thead className="bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="px-2 py-1 text-left font-semibold text-gray-700">Category</th>
+                    <th className="px-2 py-1 text-left font-semibold text-gray-700">Description</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Unit Cost</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Qty</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inputs.rehabLineItems.map((item) => (
+                    <tr key={item.id} className="border-b border-gray-100">
+                      <td className="px-2 py-1 text-gray-700">{item.category}</td>
+                      <td className="px-2 py-1 text-gray-700">{item.description || '-'}</td>
+                      <td className="px-2 py-1 text-right text-gray-700">{formatCurrency(item.unitCost)}</td>
+                      <td className="px-2 py-1 text-right text-gray-700">{item.quantity}</td>
+                      <td className="px-2 py-1 text-right font-semibold text-gray-900">
+                        {formatCurrency(item.unitCost * item.quantity)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+                  <tr>
+                    <td colSpan={4} className="px-2 py-1 text-right font-bold text-gray-900">
+                      Total:
+                    </td>
+                    <td className="px-2 py-1 text-right font-bold text-gray-900">
+                      {formatCurrency(
+                        inputs.rehabLineItems.reduce((sum, item) => sum + item.unitCost * item.quantity, 0)
+                      )}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Valuation & Returns */}
         <div className="mt-6 break-inside-avoid print:mt-1">

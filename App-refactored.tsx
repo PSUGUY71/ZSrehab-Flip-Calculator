@@ -115,65 +115,57 @@ const App: React.FC = () => {
   }, [currentUser?.id, currentUser?.email]); // Trigger when user ID or email changes (login/logout)
 
   useEffect(() => {
+    let isMounted = true; // Flag to prevent state updates if component unmounts
+    
     const loadDeals = async () => {
       if (!currentUser) {
-        setSavedDeals([]);
+        if (isMounted) setSavedDeals([]);
         return;
       }
 
-      // Load from both Supabase and localStorage, then merge
-      let supabaseDeals: SavedDeal[] = [];
-      let localDeals: SavedDeal[] = [];
-
-      // Load from Supabase (if configured and user is not local)
+      // Use Supabase if configured, otherwise fallback to localStorage
       if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
         try {
-          supabaseDeals = await getDeals();
-          console.log('Loaded deals from Supabase:', supabaseDeals.length);
+          const deals = await getDeals();
+          console.log('✅ Loaded deals from Supabase:', deals.length, 'Setting state...');
+          if (isMounted) {
+            setSavedDeals(deals);
+            console.log('✅ State set with', deals.length, 'deals');
+          }
         } catch (error) {
-          console.error('Failed to load deals from Supabase:', error);
-          // Continue to load from localStorage
+          console.error('❌ Failed to load deals from Supabase:', error);
+          if (isMounted) setSavedDeals([]);
+        }
+      } else {
+        // Fallback to localStorage only when Supabase is not configured
+        const stored = localStorage.getItem(`zsrehab_deals_${currentUser.email}`);
+        if (stored) {
+          try {
+            const parsedDeals = JSON.parse(stored);
+            const migratedDeals = parsedDeals.map((d: SavedDeal) => ({
+              ...d,
+              lenders: d.lenders || [],
+            }));
+            if (isMounted) {
+              setSavedDeals(migratedDeals);
+              console.log('✅ Loaded deals from localStorage:', migratedDeals.length);
+            }
+          } catch (e) {
+            console.error('❌ Failed to parse saved deals from localStorage', e);
+            if (isMounted) setSavedDeals([]);
+          }
+        } else {
+          if (isMounted) setSavedDeals([]);
         }
       }
-
-      // Always load from localStorage (for backup and offline access)
-      const stored = localStorage.getItem(`zsrehab_deals_${currentUser.email}`);
-      if (stored) {
-        try {
-          const parsedDeals = JSON.parse(stored);
-          localDeals = parsedDeals.map((d: SavedDeal) => ({
-            ...d,
-            lenders: d.lenders || [],
-          }));
-          console.log('Loaded deals from localStorage:', localDeals.length);
-        } catch (e) {
-          console.error('Failed to parse saved deals from localStorage', e);
-        }
-      }
-
-      // Merge deals: prefer Supabase (cloud) but include unique local deals
-      // Use a Map to deduplicate by ID
-      const dealsMap = new Map<string | number, SavedDeal>();
-      
-      // First add Supabase deals (cloud is source of truth)
-      supabaseDeals.forEach(deal => {
-        dealsMap.set(deal.id, deal);
-      });
-      
-      // Then add local deals that don't exist in Supabase
-      localDeals.forEach(deal => {
-        if (!dealsMap.has(deal.id)) {
-          dealsMap.set(deal.id, deal);
-        }
-      });
-
-      const mergedDeals = Array.from(dealsMap.values());
-      setSavedDeals(mergedDeals);
-      console.log('Total merged deals:', mergedDeals.length);
     };
 
     loadDeals();
-  }, [currentUser]);
+    
+    return () => {
+      isMounted = false; // Cleanup: prevent state updates after unmount
+    };
+  }, [currentUser?.id, currentUser?.email]); // Only depend on user ID and email, not the whole object
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
@@ -339,6 +331,39 @@ const App: React.FC = () => {
   // --- INPUT HANDLERS ---
   const handleInputChange = (field: keyof LoanInputs, value: string | number) => {
     setInputs((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // --- REHAB LINE ITEM HANDLERS ---
+  const handleRehabLineItemAdd = () => {
+    setInputs((prev) => ({
+      ...prev,
+      rehabLineItems: [
+        ...(prev.rehabLineItems || []),
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          category: 'Other',
+          description: '',
+          unitCost: 0,
+          quantity: 1,
+        },
+      ],
+    }));
+  };
+
+  const handleRehabLineItemUpdate = (id: string, field: keyof import('./types').RehabLineItem, value: string | number) => {
+    setInputs((prev) => ({
+      ...prev,
+      rehabLineItems: (prev.rehabLineItems || []).map((item) =>
+        item.id === id ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const handleRehabLineItemDelete = (id: string) => {
+    setInputs((prev) => ({
+      ...prev,
+      rehabLineItems: (prev.rehabLineItems || []).filter((item) => item.id !== id),
+    }));
   };
 
   // --- DEAL HANDLERS ---
@@ -641,6 +666,9 @@ const App: React.FC = () => {
             onMaxOfferLTVChange={setMaxOfferLTVPercent}
             onInputChange={handleInputChange}
             onCaptureBaseline={handleCaptureBaseline}
+            onRehabLineItemAdd={handleRehabLineItemAdd}
+            onRehabLineItemUpdate={handleRehabLineItemUpdate}
+            onRehabLineItemDelete={handleRehabLineItemDelete}
           />
 
           {/* Right Column - Results */}

@@ -3,6 +3,7 @@ import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency } from '../utils/calculations';
 import { ResultRow } from './ResultRow';
 import { FeeBreakdownItem } from './FeeBreakdownItem';
+import { HelpTooltip } from './HelpTooltip';
 
 interface LoanEstimateCardProps {
   inputs: LoanInputs;
@@ -24,13 +25,53 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
       <div className="p-6">
         <ResultRow label="Total Loan Amount" value={results.qualifiedLoanAmount} isTotal />
         <ResultRow label="Max Allowable Offer" subtext="For 100% Loan" value={results.maxAllowableOffer} />
-        <ResultRow
-          label="Current LTV"
-          subtext="% of ARV"
-          value={`${results.ltv.toFixed(2)}%`}
-          isCurrency={false}
-          highlight={results.ltv > 75}
-        />
+        
+        {/* LTV/LTARV and LTC Dual Display */}
+        <div className="grid grid-cols-2 gap-4 my-2">
+          <div>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-xs font-semibold text-gray-600">LTV / LTARV</span>
+              <HelpTooltip
+                title="LTV / LTARV (Loan-to-Value / Loan-to-After-Repair-Value)"
+                description="This shows what percentage of the property's After Repair Value (ARV) your loan covers. It's a key metric lenders use to assess risk."
+                formula="LTV = (Loan Amount ÷ ARV) × 100"
+                examples={[
+                  "If your loan is $150,000 and ARV is $200,000, LTV = 75%",
+                  "Lenders typically want LTV under 75% for hard money loans",
+                  "Higher LTV means more risk for the lender"
+                ]}
+              />
+            </div>
+            <ResultRow
+              label=""
+              subtext="% of ARV"
+              value={`${results.ltv.toFixed(2)}%`}
+              isCurrency={false}
+              highlight={results.ltv > 75}
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-xs font-semibold text-gray-600">LTC</span>
+              <HelpTooltip
+                title="LTC (Loan-to-Cost)"
+                description="This shows what percentage of your total project cost (purchase price + rehab) the loan covers. It helps you understand how much of your own cash you need."
+                formula="LTC = (Loan Amount ÷ Total Project Cost) × 100"
+                examples={[
+                  "If loan is $150,000 and total cost is $180,000, LTC = 83.3%",
+                  "You'd need $30,000 cash (the remaining 16.7%)",
+                  "Lower LTC means you need more cash upfront"
+                ]}
+              />
+            </div>
+            <ResultRow
+              label=""
+              subtext="% of Cost"
+              value={`${results.ltc.toFixed(2)}%`}
+              isCurrency={false}
+            />
+          </div>
+        </div>
 
         <ResultRow label="Lender Fees" value={results.totalLenderFees} />
         {/* Detailed Lender Fee Breakdown */}

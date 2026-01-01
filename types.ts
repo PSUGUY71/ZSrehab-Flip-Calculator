@@ -1,3 +1,11 @@
+export interface RehabLineItem {
+  id: string;
+  category: string;
+  description: string;
+  unitCost: number;
+  quantity: number;
+}
+
 export interface LenderOption {
   id: string;
   lenderName: string;
@@ -40,7 +48,14 @@ export interface LoanInputs {
   purchasePrice: number;
   asIsValue: number;
   rehabBudget: number;
+  rehabLineItems: RehabLineItem[]; // Itemized rehab breakdown
   arv: number; // After Repair Value
+  
+  // Work-Backward Mode (Max Offer Calculation)
+  useWorkBackwardMode: boolean; // Toggle for backward calculation mode
+  workBackwardModeType: 'ROI' | 'LTC'; // Which metric to target
+  targetRoi: number; // Target ROI percentage (e.g., 20 for 20%)
+  targetLTC: number; // Target LTC percentage (e.g., 75 for 75%)
   sellerConcessionRate: number; // Percentage
   earnestMoneyDeposit: number; // New Escrow/Deposit field
   buyerAgentCommissionRate: number; // New: Realtor commission credit
@@ -149,10 +164,14 @@ export interface CalculatedResults {
   
   // Max Offer Helper
   maxAllowableOffer: number;
+  maxPurchasePrice70Rule: number; // 70% Rule: (ARV × 0.70) - Rehab Budget
+  passes70Rule: boolean; // True if Purchase Price ≤ Max Purchase Price (70% Rule)
+  workBackwardMaxOffer: number; // Max offer calculated backwards from target ROI or LTC
 
   // Ratios
   ltv: number;
   ltc: number;
+  ltarv: number;
   
   // Metrics
   purchasePricePerSqFt: number;
@@ -209,6 +228,9 @@ export interface CalculatedResults {
 
   // Profitability Analysis
   totalHoldingCosts: number;
+  monthlyHoldingCost: number; // Monthly total (interest + utilities)
+  monthlyInterestPayment: number; // Monthly loan interest payment
+  monthlyUtilitiesCost: number; // Monthly utilities cost
   totalExitCosts: number;
   netProfit: number;
   closingTableProfit: number;
@@ -250,7 +272,12 @@ export const DEFAULT_INPUTS: LoanInputs = {
   purchasePrice: 0, 
   asIsValue: 0,
   rehabBudget: 0,
+  rehabLineItems: [],
   arv: 0,
+  useWorkBackwardMode: false,
+  workBackwardModeType: 'ROI',
+  targetRoi: 20, // Default 20% ROI target
+  targetLTC: 75, // Default 75% LTC target
   sellerConcessionRate: 0,
   earnestMoneyDeposit: 0,
   buyerAgentCommissionRate: 0,
