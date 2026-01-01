@@ -215,7 +215,23 @@ const App: React.FC = () => {
 
         if (error) throw error;
         if (data.user) {
-          // Clear inputs FIRST, then set user (so useEffect can also clear if needed)
+          // Check if email is verified before allowing login
+          if (!data.user.email_confirmed_at) {
+            setAuthError('Please verify your email address before logging in. Check your inbox for the verification link.');
+            // Optionally resend verification email
+            try {
+              await supabase.auth.resend({
+                type: 'signup',
+                email: authEmail,
+              });
+              setAuthError('Please verify your email address before logging in. A new verification link has been sent to ' + authEmail);
+            } catch (resendError) {
+              // If resend fails, just show the original message
+            }
+            return;
+          }
+          
+          // Email is verified, proceed with login
           const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
           setInputs(freshInputs);
           setLenders([]);
@@ -260,22 +276,35 @@ const App: React.FC = () => {
         const { data, error } = await supabase.auth.signUp({
           email: authEmail,
           password: authPassword,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
         });
 
         if (error) throw error;
+        
         if (data.user) {
-          setCurrentUser({ id: data.user.id, email: data.user.email || '' });
-          setAuthEmail('');
-          setAuthPassword('');
-          // Clear all form inputs when signing up
-          setInputs(DEFAULT_INPUTS);
-          setLenders([]);
+          // Check if email is verified
+          if (data.user.email_confirmed_at) {
+            // Email already verified, log them in
+            setCurrentUser({ id: data.user.id, email: data.user.email || '' });
+            setAuthEmail('');
+            setAuthPassword('');
+            setInputs(DEFAULT_INPUTS);
+            setLenders([]);
+          } else {
+            // Email not verified yet - require verification
+            setAuthError('Please check your email to verify your account before logging in. A verification link has been sent to ' + authEmail);
+            setAuthEmail('');
+            setAuthPassword('');
+            // Don't log them in - they need to verify first
+          }
         }
       } catch (error: any) {
         setAuthError(error.message || 'Failed to create account.');
       }
     } else {
-      // Fallback to localStorage
+      // Fallback to localStorage (no email verification for local storage)
       const usersStr = localStorage.getItem('zsrehab_users');
       const users: any[] = usersStr ? JSON.parse(usersStr) : [];
       if (users.find(u => u.email === authEmail)) {
@@ -289,7 +318,6 @@ const App: React.FC = () => {
       setCurrentUser({ id: 'local', email: newUser.email });
       setAuthEmail('');
       setAuthPassword('');
-      // Clear all form inputs when signing up
       setInputs(DEFAULT_INPUTS);
       setLenders([]);
     }
@@ -572,7 +600,18 @@ const App: React.FC = () => {
 
   // --- RENDER: REPORT MODE ---
   if (isReportMode) {
-    return <ReportMode inputs={inputs} results={results} appVersion={appVersion} onClose={() => setIsReportMode(false)} />;
+    return (
+      <ReportMode 
+        inputs={inputs} 
+        results={results} 
+        appVersion={appVersion}
+        lenders={lenders}
+        comparisonData={comparisonData}
+        bestLenderFees={bestLenderFees}
+        bestMonthlyPayment={bestMonthlyPayment}
+        onClose={() => setIsReportMode(false)} 
+      />
+    );
   }
 
   // --- RENDER: MAIN EDITOR ---

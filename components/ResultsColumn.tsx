@@ -4,7 +4,6 @@ import { EligibilityAlert } from './EligibilityAlert';
 import { ValuationReturns } from './ValuationReturns';
 import { LoanEstimateCard } from './LoanEstimateCard';
 import { LenderComparison } from './LenderComparison';
-import { ProfitTable } from './ProfitTable';
 import { ClosingProfitCard } from './ClosingProfitCard';
 import { SensitivityAnalysis } from './SensitivityAnalysis';
 import { SellerNetAnalysis } from './SellerNetAnalysis';
@@ -81,11 +80,6 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
             onDuplicateLender={onDuplicateLender}
             onDeleteLender={onDeleteLender}
           />
-        </div>
-
-        {/* Detailed Profit Table */}
-        <div className="bg-yellow-50 rounded-xl p-2">
-          <ProfitTable inputs={inputs} results={results} />
         </div>
 
         {/* Closing Table Profit (Detailed) */}

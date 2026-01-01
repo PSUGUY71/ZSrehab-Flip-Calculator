@@ -323,7 +323,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Seller Side Analysis */}
-      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-cyan-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-indigo-50 px-6 py-3 border-b border-indigo-100">
           <h2 className="text-sm font-bold text-indigo-900 uppercase">Seller Side Analysis</h2>
         </div>

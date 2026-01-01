@@ -1,20 +1,45 @@
 import React from 'react';
-import { LoanInputs, CalculatedResults } from './types';
+import { LoanInputs, CalculatedResults, LenderOption } from './types';
 import { formatCurrency, formatPercent } from './utils/calculations';
 import { ResultRow } from './components/ResultRow';
 import { FeeBreakdownItem } from './components/FeeBreakdownItem';
-import { ProfitTable } from './components/ProfitTable';
 import { ClosingProfitCard } from './components/ClosingProfitCard';
-import { Visuals } from './components/Visuals';
+import { EligibilityAlert } from './components/EligibilityAlert';
+import { ValuationReturns } from './components/ValuationReturns';
+
+interface LenderComparisonResult {
+  lenderUpfrontFeesAdjusted: number;
+  comparisonMonthlyPayment: number;
+  totalCostOverHoldDeltaVsBase: number;
+  netProfit: number;
+}
+
+interface ComparisonDataItem {
+  lender: LenderOption;
+  results: LenderComparisonResult;
+}
 
 interface ReportModeProps {
   inputs: LoanInputs;
   results: CalculatedResults;
   appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+  lenders?: LenderOption[];
+  comparisonData?: ComparisonDataItem[];
+  bestLenderFees?: number | null;
+  bestMonthlyPayment?: number | null;
   onClose: () => void;
 }
 
-export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, appVersion = 'HIDEOUT', onClose }) => {
+export const ReportMode: React.FC<ReportModeProps> = ({ 
+  inputs, 
+  results, 
+  appVersion = 'HIDEOUT', 
+  lenders = [],
+  comparisonData = [],
+  bestLenderFees = null,
+  bestMonthlyPayment = null,
+  onClose 
+}) => {
   return (
     <div className="min-h-screen bg-gray-200 font-sans text-slate-800 py-8 print:bg-white print:py-0">
       {/* Toolbar - Hidden on Print */}
@@ -99,101 +124,162 @@ export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, appVers
           </div>
         )}
 
-        {/* 2. Main Tables (Side by Side) */}
-        <div className="grid grid-cols-2 gap-8 break-inside-avoid print:gap-2">
-          {/* LEFT: Loan Estimate */}
-          <div className="border border-gray-300 break-inside-avoid">
-            <div className="bg-gray-800 text-white font-bold p-1 text-center text-xs uppercase print-color-adjust-exact">Loan Estimate</div>
-            <div className="p-2 space-y-3 text-xs print:space-y-1 print:p-1">
-              <div>
-                <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Funds</h4>
-                <ResultRow label="Total Loan" value={results.qualifiedLoanAmount} />
-                <ResultRow label="Initial Funding" value={results.initialFundedAmount} />
-                <ResultRow label="Rehab Holdback" value={results.holdbackAmount} />
-                <div className="flex justify-between pt-1"><span>LTV</span> <span className="font-bold">{results.ltv.toFixed(2)}%</span></div>
+        {/* Eligibility Alert */}
+        <div className="mb-6 break-inside-avoid print:mb-1">
+          <EligibilityAlert results={results} />
+        </div>
+
+        {/* 2. Loan Estimate */}
+        <div className="border border-gray-300 break-inside-avoid">
+          <div className="bg-gray-800 text-white font-bold p-1 text-center text-xs uppercase print-color-adjust-exact">Loan Estimate</div>
+          <div className="p-2 space-y-3 text-xs print:space-y-1 print:p-1">
+            <div>
+              <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Funds</h4>
+              <ResultRow label="Total Loan" value={results.qualifiedLoanAmount} />
+              <ResultRow label="Initial Funding" value={results.initialFundedAmount} />
+              <ResultRow label="Rehab Holdback" value={results.holdbackAmount} />
+              <div className="flex justify-between pt-1"><span>LTV</span> <span className="font-bold">{results.ltv.toFixed(2)}%</span></div>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
+              <ResultRow label="Lender Fees" value={results.totalLenderFees} />
+              <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
+              <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
+              <FeeBreakdownItem label="Processing" value={results.processingFee} />
+              <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
+              <FeeBreakdownItem label="Wire" value={results.wireFee} />
+
+              <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
+              <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
+              <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
+              <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
+              <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
+              <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
+              <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+              <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
+              <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+              <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
+              <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
+              <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
+              <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
+
+              <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
+              <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
+              {results.buyerAgentCommissionCredit > 0 && (
+                <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
+              )}
+              <div className="flex justify-between border-t border-gray-300 pt-1 mt-1 font-bold text-sm print:text-xs">
+                <span>{results.totalCashToClose >= 0 ? 'Cash to Close' : 'Cash Back'}</span>
+                <span>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
               </div>
-              <div>
-                <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
-                <ResultRow label="Lender Fees" value={results.totalLenderFees} />
-                <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
-                <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
-                <FeeBreakdownItem label="Processing" value={results.processingFee} />
-                <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
-                <FeeBreakdownItem label="Wire" value={results.wireFee} />
-
-                <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
-                <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
-                <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
-                <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
-                <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
-                <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
-                <FeeBreakdownItem label="Recording" value={results.recordingCost} />
-                <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-                <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-                <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
-                <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
-                <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
-                <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
-
-                <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
-                <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
-                {results.buyerAgentCommissionCredit > 0 && (
-                  <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
-                )}
-                <div className="flex justify-between border-t border-gray-300 pt-1 mt-1 font-bold text-sm print:text-xs">
-                  <span>{results.totalCashToClose >= 0 ? 'Cash to Close' : 'Cash Back'}</span>
-                  <span>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
-                </div>
-                <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                  <span>Req. Liquidity:</span>
-                  <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
-                    {formatCurrency(results.requiredLiquidity)}
-                  </span>
-                </div>
+              <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                <span>Req. Liquidity:</span>
+                <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
+                  {formatCurrency(results.requiredLiquidity)}
+                </span>
               </div>
             </div>
           </div>
-
-          {/* RIGHT: Detailed Profit Table */}
-          <div>
-            <ProfitTable inputs={inputs} results={results} />
-          </div>
-        </div>
-
-        {/* Visuals - Charts (Main Part) */}
-        <div className="mt-6 break-inside-avoid print:mt-1">
-          <Visuals inputs={inputs} results={results} />
         </div>
 
         {/* Valuation & Returns */}
         <div className="mt-6 break-inside-avoid print:mt-1">
-          <h3 className="font-bold text-gray-900 text-sm uppercase border-b border-gray-300 pb-2 mb-3 print:mb-1 print:pb-1 print:text-[10px]">Valuation & Returns</h3>
-          <div className="grid grid-cols-5 gap-4 print:gap-1">
-            <div className="bg-gray-50 rounded p-3 text-center border border-gray-200 print:p-1">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wide print:text-[9px]">Buy / SqFt</div>
-              <div className="text-lg font-bold text-gray-900 mt-1 print:text-[10px]">{formatCurrency(results.purchasePricePerSqFt)}</div>
-            </div>
-            <div className="bg-blue-50 rounded p-3 text-center border border-blue-200 print:p-1">
-              <div className="text-xs text-blue-600 font-bold uppercase tracking-wide print:text-[9px]">Sell / SqFt</div>
-              <div className="text-lg font-bold text-blue-700 mt-1 print:text-[10px]">{formatCurrency(results.arvPerSqFt)}</div>
-            </div>
-            <div className="bg-green-50 rounded p-3 text-center border border-green-200 print:p-1">
-              <div className="text-xs text-green-700 font-bold uppercase tracking-wide print:text-[9px]">Cash ROI</div>
-              <div className="text-lg font-bold text-green-700 mt-1 print:text-[10px]">{formatPercent(results.roi)}</div>
-              <div className="text-[10px] text-green-600 mt-0.5 print:text-[8px]">Cash on Cash</div>
-            </div>
-            <div className="bg-purple-50 rounded p-3 text-center border border-purple-200 print:p-1">
-              <div className="text-xs text-purple-700 font-bold uppercase tracking-wide print:text-[9px]">Proj. ROI</div>
-              <div className="text-lg font-bold text-purple-700 mt-1 print:text-[10px]">{formatPercent(results.projectRoi)}</div>
-              <div className="text-[10px] text-purple-600 mt-0.5 print:text-[8px]">Return on Cost</div>
-            </div>
-            <div className="bg-indigo-50 rounded p-3 text-center border border-indigo-200 print:p-1">
-              <div className="text-xs text-indigo-700 font-bold uppercase tracking-wide print:text-[9px]">Net Margin</div>
-              <div className="text-lg font-bold text-indigo-700 mt-1 print:text-[10px]">{formatPercent(results.netMargin)}</div>
-              <div className="text-[10px] text-indigo-600 mt-0.5 print:text-[8px]">Return on Sales</div>
+          <ValuationReturns results={results} />
+        </div>
+
+        {/* Lender Comparison */}
+        {lenders.length > 0 && comparisonData.length > 0 && (
+          <div className="mt-6 border border-gray-300 rounded overflow-hidden break-inside-avoid print-color-adjust-exact print:mt-1">
+            <div className="bg-blue-900 px-4 py-2 text-white font-bold text-xs uppercase print-color-adjust-exact print:py-1 print:text-[10px]">Lender Comparison</div>
+            <div className="p-2">
+              {/* Lender List */}
+              <div className="mb-3 text-[10px] print:text-[9px]">
+                <div className="font-bold text-gray-700 mb-1">Comparison Lenders:</div>
+                <div className="space-y-1">
+                  {lenders.filter(l => l.includeInComparison).map((l) => (
+                    <div key={l.id} className="flex items-center gap-2">
+                      <span className="font-medium">{l.lenderName}</span>
+                      {inputs.lenderName === l.lenderName && (
+                        <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase">Active</span>
+                      )}
+                      <span className="text-gray-500">({l.interestRate}% Rate • {l.originationPoints} pts)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comparison Table */}
+              <div className="border border-gray-100 rounded-lg overflow-x-auto">
+                <table className="w-full text-[10px] text-left print:text-[9px]">
+                  <thead className="bg-gray-50 text-gray-500 uppercase">
+                    <tr>
+                      <th className="px-2 py-2">Quick View</th>
+                      <th className="px-2 py-2 border-l">ACTIVE</th>
+                      {comparisonData.map((c) => (
+                        <th key={c.lender.id} className="px-2 py-2 border-l bg-blue-50/30 font-bold">
+                          {c.lender.lenderName}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    <tr>
+                      <td className="px-2 py-1.5 font-medium">Lender Fees</td>
+                      <td className="px-2 py-1.5 border-l">{formatCurrency(results.totalLenderFees)}</td>
+                      {comparisonData.map((c) => (
+                        <td
+                          key={c.lender.id}
+                          className={`px-2 py-1.5 border-l ${
+                            c.results.lenderUpfrontFeesAdjusted === bestLenderFees
+                              ? 'bg-green-50 font-bold'
+                              : ''
+                          }`}
+                        >
+                          {formatCurrency(c.results.lenderUpfrontFeesAdjusted)}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="px-2 py-1.5 font-medium">Monthly Pmt</td>
+                      <td className="px-2 py-1.5 border-l">{formatCurrency(results.monthlyPayment)}</td>
+                      {comparisonData.map((c) => (
+                        <td
+                          key={c.lender.id}
+                          className={`px-2 py-1.5 border-l ${
+                            c.results.comparisonMonthlyPayment === bestMonthlyPayment
+                              ? 'bg-green-50 font-bold'
+                              : ''
+                          }`}
+                        >
+                          {formatCurrency(c.results.comparisonMonthlyPayment)}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-2 py-1.5 font-bold">Proj. Profit</td>
+                      <td className="px-2 py-1.5 border-l font-bold">
+                        {formatCurrency(results.netProfit)}
+                      </td>
+                      {comparisonData.map((c) => (
+                        <td key={c.lender.id} className="px-2 py-1.5 border-l font-bold">
+                          <span
+                            className={
+                              c.results.netProfit > results.netProfit
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }
+                          >
+                            {formatCurrency(c.results.netProfit)}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 3. Closing Table Profit Card */}
         <div className="mt-6 break-inside-avoid print:mt-1">
@@ -206,17 +292,17 @@ export const ReportMode: React.FC<ReportModeProps> = ({ inputs, results, appVers
           <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
             <div className="p-1">Scenario</div>
             <div className="p-1">ARV</div>
-            <div className="p-1">Net Profit</div>
+            <div className="p-1">Closing Table Profit</div>
             <div className="p-1">Diff</div>
-            <div className="p-1">Close Profit</div>
+            <div className="p-1">Net Profit</div>
           </div>
           {results.profitScenarios.map((s, idx) => (
             <div key={idx} className={`grid grid-cols-5 text-[10px] text-center p-1 border-b border-gray-100 last:border-0 ${s.label === 'Baseline' ? 'bg-blue-50 font-bold' : ''} print:text-[9px] print:p-0`}>
               <div>{s.label}</div>
               <div>{formatCurrency(s.arv)}</div>
-              <div className={s.netProfit > 0 ? 'text-green-700' : 'text-red-600'}>{formatCurrency(s.netProfit)}</div>
+              <div className={s.closingTableProfit > 0 ? 'text-green-700' : 'text-red-600'}>{formatCurrency(s.closingTableProfit)}</div>
               <div className={s.difference >= 0 ? 'text-green-600' : 'text-red-500'}>{formatCurrency(s.difference)}</div>
-              <div>{formatCurrency(s.closingTableProfit)}</div>
+              <div>{formatCurrency(s.netProfit)}</div>
             </div>
           ))}
         </div>
