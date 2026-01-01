@@ -6,6 +6,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     purchasePrice,
     rehabBudget,
     arv,
+    financingPercentage,
+    useCustomFinancing,
+    customFinancingPercentage,
     sellerConcessionRate,
     earnestMoneyDeposit,
     buyerAgentCommissionRate,
@@ -59,8 +62,16 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const totalProjectCost = purchasePrice + rehabBudget;
   const maxLoanBasedOnARV = arv * MAX_LTV_PERCENT;
   
-  // The Qualified Loan Amount is the lesser of Cost vs. ARV Limit
-  const qualifiedLoanAmount = Math.min(totalProjectCost, maxLoanBasedOnARV);
+  // Get financing percentage (use custom if enabled, otherwise use selected percentage)
+  const financingPercent = useCustomFinancing 
+    ? customFinancingPercentage 
+    : financingPercentage;
+  
+  // Calculate loan amount based on financing percentage
+  // Loan amount = min(Total Cost × Financing%, ARV × LTV%)
+  // This ensures loan doesn't exceed ARV limit, but respects financing percentage
+  const loanAmountByFinancing = totalProjectCost * (financingPercent / 100);
+  const qualifiedLoanAmount = Math.min(loanAmountByFinancing, maxLoanBasedOnARV);
   
   // Calculate Max Allowable Offer to maintain 100% funding (stay under selected LTV)
   const maxAllowableOffer = maxLoanBasedOnARV - rehabBudget;
@@ -71,13 +82,22 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const passes70Rule = purchasePrice <= maxPurchasePrice70Rule;
   
   // Gap / Down Payment
-  const gapAmount = Math.max(0, totalProjectCost - qualifiedLoanAmount);
+  // Gap = Purchase Price - (Purchase Price × Financing %)
+  // This represents the cash down payment needed for the purchase price only
+  // Example: Purchase $100k at 80% financing = $20k gap
+  const loanForPurchasePrice = purchasePrice * (financingPercent / 100);
+  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice);
   
   const holdbackAmount = rehabBudget;
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
   const ltv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
+  // LTC = Loan Amount / Total Project Cost
+  // Total Project Cost = Purchase Price + Rehab Budget
+  // qualifiedLoanAmount = min(totalProjectCost, maxLoanBasedOnARV)
+  // If totalProjectCost <= maxLoanBasedOnARV: qualifiedLoanAmount = totalProjectCost, so LTC = 100%
+  // If maxLoanBasedOnARV < totalProjectCost: qualifiedLoanAmount = maxLoanBasedOnARV, so LTC < 100%
   const ltc = totalProjectCost > 0 ? (qualifiedLoanAmount / totalProjectCost) * 100 : 0;
   const ltarv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0; // Loan-to-After-Repair-Value (same as LTV for clarity)
 

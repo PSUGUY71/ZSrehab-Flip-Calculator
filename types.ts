@@ -50,6 +50,9 @@ export interface LoanInputs {
   rehabBudget: number;
   rehabLineItems: RehabLineItem[]; // Itemized rehab breakdown
   arv: number; // After Repair Value
+  financingPercentage: number; // Financing percentage (100, 95, 90, 85, 80, or custom)
+  useCustomFinancing: boolean; // Whether using custom financing percentage
+  customFinancingPercentage: number; // Custom financing percentage value
   
   // Work-Backward Mode (Max Offer Calculation)
   useWorkBackwardMode: boolean; // Toggle for backward calculation mode
@@ -274,6 +277,9 @@ export const DEFAULT_INPUTS: LoanInputs = {
   rehabBudget: 0,
   rehabLineItems: [],
   arv: 0,
+  financingPercentage: 100, // Default 100% financing
+  useCustomFinancing: false,
+  customFinancingPercentage: 100,
   useWorkBackwardMode: false,
   workBackwardModeType: 'ROI',
   targetRoi: 20, // Default 20% ROI target

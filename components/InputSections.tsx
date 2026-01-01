@@ -142,6 +142,54 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           <h2 className="text-sm font-bold text-gray-800 uppercase">Deal Economics</h2>
         </div>
         <div className="p-6 grid grid-cols-1 gap-6">
+          {/* Financing Percentage Selector */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <label className="text-xs font-semibold text-gray-600 block mb-3">Financing Percentage:</label>
+            <div className="flex gap-2 mb-3">
+              {[100, 95, 90, 85, 80].map((percent) => (
+                <button
+                  key={percent}
+                  onClick={() => {
+                    onInputChange('financingPercentage', percent);
+                    onInputChange('useCustomFinancing', false);
+                  }}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                    !inputs.useCustomFinancing && inputs.financingPercentage === percent
+                      ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {percent}%
+                </button>
+              ))}
+              <button
+                onClick={() => onInputChange('useCustomFinancing', true)}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                  inputs.useCustomFinancing
+                    ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+            {inputs.useCustomFinancing && (
+              <div className="mt-2">
+                <InputGroup
+                  label="Custom Financing %"
+                  id="customFinancingPercentage"
+                  type="number"
+                  value={inputs.customFinancingPercentage}
+                  onChange={(v) => {
+                    onInputChange('customFinancingPercentage', v);
+                    onInputChange('financingPercentage', v);
+                  }}
+                  suffix="%"
+                  helpText="Enter custom financing percentage (0-100)"
+                />
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <InputGroup 
@@ -213,276 +261,6 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Current value of the property before renovations"
             />
           </div>
-          {/* Max Offer Analysis */}
-          <div className="border-t border-gray-100 pt-4 mt-4">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase">Max Offer Analysis (75% Main ARV)</h3>
-                <HelpTooltip
-                  title="Max Offer Analysis"
-                  description="This calculates the maximum purchase price you can offer while still getting 100% financing (no cash down). It's based on your selected ARV percentage and rehab budget."
-                  formula="Max Offer = (ARV × LTV%) - Rehab Budget"
-                  examples={[
-                    "ARV: $200,000, LTV: 75%, Rehab: $30,000 → Max Offer = $120,000",
-                    "If you offer more than this, you'll need cash for the difference",
-                    "Use the percentage buttons to see different scenarios"
-                  ]}
-                />
-              </div>
-              {/* 70% Rule Indicator Badge */}
-              <div className="flex items-center gap-2">
-                <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                  maxOfferResults.passes70Rule 
-                    ? 'bg-green-100 text-green-700 border border-green-300' 
-                    : 'bg-red-100 text-red-700 border border-red-300'
-                }`}>
-                  {maxOfferResults.passes70Rule ? '✓ 70% Rule Pass' : '✗ 70% Rule Fail'}
-                </div>
-                <HelpTooltip
-                  title="70% Rule"
-                  description="A quick rule of thumb used by house flippers to estimate the maximum purchase price for a profitable deal. If your purchase price exceeds this, the deal may be less profitable."
-                  formula="70% Rule Max = (ARV × 70%) - Rehab Budget"
-                  examples={[
-                    "ARV: $200,000, Rehab: $30,000 → 70% Rule Max = $110,000",
-                    "If you pay $120,000, you're $10,000 over the rule",
-                    "This is a guideline, not a hard limit - use it as a starting point"
-                  ]}
-                />
-              </div>
-            </div>
-            {/* Work-Backward Mode Toggle */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-gray-600">Calculation Mode:</label>
-                  <HelpTooltip
-                    title="Work-Backward Mode"
-                    description="Instead of calculating what your max offer is, this mode calculates what purchase price you need to achieve a specific target ROI or LTC. Useful when you know your profit goals."
-                    examples={[
-                      "Forward Mode: 'What's my max offer?' → Shows $120,000",
-                      "Work-Backward Mode: 'I want 25% ROI' → Shows you need to pay $110,000",
-                      "Use this to negotiate: 'I can only pay $X to hit my profit target'"
-                    ]}
-                  />
-                </div>
-                <button
-                  onClick={() => onInputChange('useWorkBackwardMode', !inputs.useWorkBackwardMode)}
-                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                    inputs.useWorkBackwardMode
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {inputs.useWorkBackwardMode ? 'Work-Backward' : 'Forward'}
-                </button>
-              </div>
-              {inputs.useWorkBackwardMode && (
-                <div className="bg-purple-50 border border-purple-200 rounded p-2 space-y-2 mb-3">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onInputChange('workBackwardModeType', 'ROI')}
-                      className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
-                        inputs.workBackwardModeType === 'ROI'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-700 border border-purple-200'
-                      }`}
-                    >
-                      Target ROI
-                    </button>
-                    <button
-                      onClick={() => onInputChange('workBackwardModeType', 'LTC')}
-                      className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
-                        inputs.workBackwardModeType === 'LTC'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-700 border border-purple-200'
-                      }`}
-                    >
-                      Target LTC
-                    </button>
-                  </div>
-                  {inputs.workBackwardModeType === 'ROI' ? (
-                    <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <label className="text-xs font-semibold text-gray-600">Target ROI %</label>
-                        <HelpTooltip
-                          title="Target ROI (Return on Investment)"
-                          description="Enter the percentage return you want to make on your cash investment. The calculator will show you what purchase price you need to achieve this return."
-                          formula="ROI = (Net Profit ÷ Total Cash Invested) × 100"
-                          examples={[
-                            "Target 20% ROI: You want to make $20 for every $100 you invest",
-                            "If you invest $50,000 cash, you want $10,000 profit (20%)",
-                            "The calculator finds the purchase price that gives you this return"
-                          ]}
-                        />
-                      </div>
-                      <InputGroup
-                        label=""
-                        id="targetRoi"
-                        type="number"
-                        value={inputs.targetRoi}
-                        onChange={(v) => onInputChange('targetRoi', v)}
-                        suffix="%"
-                        helpText="Desired return on investment percentage"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <label className="text-xs font-semibold text-gray-600">Target LTC %</label>
-                        <HelpTooltip
-                          title="Target LTC (Loan-to-Cost)"
-                          description="Enter the percentage of your total project cost you want the loan to cover. The calculator will show you what purchase price allows this loan-to-cost ratio."
-                          formula="LTC = (Loan Amount ÷ Total Project Cost) × 100"
-                          examples={[
-                            "Target 80% LTC: You want the loan to cover 80% of total cost",
-                            "If total cost is $200,000, you want a $160,000 loan",
-                            "You'd need $40,000 cash (the remaining 20%)"
-                          ]}
-                        />
-                      </div>
-                      <InputGroup
-                        label=""
-                        id="targetLTC"
-                        type="number"
-                        value={inputs.targetLTC}
-                        onChange={(v) => onInputChange('targetLTC', v)}
-                        suffix="%"
-                        helpText="Desired loan-to-cost percentage"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-gray-600 block mb-2">Select ARV Percentage:</label>
-              <div className="flex gap-2">
-                {ltvOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => onMaxOfferLTVChange(option.value)}
-                    className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
-                      maxOfferLTVPercent === option.value
-                        ? option.value === 0.75 
-                          ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
-                          : 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {option.label} {option.value === 0.75 && '(Main)'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {(() => {
-              const exceedsMax = inputs.purchasePrice > maxOfferResults.maxAllowableOffer;
-              // Calculate required ARV for each percentage to make current purchase price work
-              const calculateRequiredARV = (ltvPercent: number) => {
-                if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
-                // Max Allowable Offer = (ARV * LTV%) - Rehab Budget
-                // Purchase Price = (ARV * LTV%) - Rehab Budget
-                // ARV = (Purchase Price + Rehab Budget) / LTV%
-                return (inputs.purchasePrice + inputs.rehabBudget) / ltvPercent;
-              };
-              
-              return (
-                <div className={`${exceedsMax ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
-                  {inputs.useWorkBackwardMode ? (
-                    // Work-Backward Mode Display
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold text-purple-700">
-                          Work-Backward Max Offer ({inputs.workBackwardModeType === 'ROI' ? `${inputs.targetRoi}% ROI` : `${inputs.targetLTC}% LTC`})
-                        </span>
-                        <span className={`text-lg font-bold ${maxOfferResults.workBackwardMaxOffer > 0 ? 'text-purple-600' : 'text-red-600'}`}>
-                          {maxOfferResults.workBackwardMaxOffer > 0 ? formatCurrency(maxOfferResults.workBackwardMaxOffer) : 'N/A'}
-                        </span>
-                      </div>
-                      {maxOfferResults.workBackwardMaxOffer > 0 && (
-                        <div className="text-[10px] text-purple-600 bg-purple-50 border border-purple-200 rounded p-2">
-                          {inputs.workBackwardModeType === 'ROI' 
-                            ? `Purchase price needed to achieve ${inputs.targetRoi}% ROI based on current deal structure`
-                            : `Purchase price needed to achieve ${inputs.targetLTC}% LTC based on ARV and LTV%`}
-                        </div>
-                      )}
-                      {maxOfferResults.workBackwardMaxOffer <= 0 && (
-                        <div className="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded p-2">
-                          Cannot achieve target {inputs.workBackwardModeType === 'ROI' ? 'ROI' : 'LTC'} with current ARV and parameters
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    // Forward Mode Display (Original)
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-sm font-semibold ${exceedsMax ? 'text-red-700' : 'text-gray-700'}`}>Max Allowable Offer</span>
-                        <span className={`text-lg font-bold ${exceedsMax ? 'text-red-600' : 'text-blue-600'}`}>{formatCurrency(maxOfferResults.maxAllowableOffer)}</span>
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Max Loan ({Math.round(maxOfferLTVPercent * 100)}% of ARV)</span>
-                    <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-600">
-                    <span>Less: Rehab Budget</span>
-                    <span>-{formatCurrency(inputs.rehabBudget)}</span>
-                  </div>
-                  {/* 70% Rule Display */}
-                  <div className="border-t border-gray-300 pt-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-xs font-semibold ${maxOfferResults.passes70Rule ? 'text-green-700' : 'text-red-700'}`}>
-                          70% Rule Max
-                        </span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${maxOfferResults.passes70Rule ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {maxOfferResults.passes70Rule ? 'PASS' : 'FAIL'}
-                        </span>
-                      </div>
-                      <span className={`text-sm font-bold ${maxOfferResults.passes70Rule ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatCurrency(maxOfferResults.maxPurchasePrice70Rule)}
-                      </span>
-                    </div>
-                    <div className="text-[9px] text-gray-500 mt-0.5">
-                      (ARV × 70%) - Rehab
-                    </div>
-                  </div>
-                  {exceedsMax && (
-                    <div className="bg-red-100 border border-red-300 rounded p-2 space-y-2">
-                      <div className="text-xs text-red-700 font-semibold text-center">
-                        ⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer
-                      </div>
-                      <div className="text-[10px] text-red-600 font-medium mt-2">Required ARV to make this deal work (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
-                      <div className="grid grid-cols-2 gap-1.5 mt-1">
-                        {ltvOptions.map((option) => {
-                          const requiredARV = calculateRequiredARV(option.value);
-                          const currentARV = inputs.arv || 0;
-                          const difference = requiredARV - currentARV; // How much higher ARV needs to be
-                          return (
-                            <div key={option.value} className="bg-white border border-red-200 rounded p-1.5">
-                              <div className="text-[9px] text-red-600 font-semibold">{option.label} ARV:</div>
-                              <div className="text-[10px] text-red-700 font-bold">{formatCurrency(requiredARV)}</div>
-                              {currentARV > 0 && difference !== 0 && (
-                                <div className={`text-[9px] font-semibold ${difference > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                  {difference > 0 ? `+${formatCurrency(difference)} higher` : `${formatCurrency(difference)} lower`}
-                                </div>
-                              )}
-                              {currentARV > 0 && difference === 0 && (
-                                <div className="text-[9px] text-green-600 font-semibold">✓ Current ARV works</div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="text-[9px] text-red-600 mt-1.5 text-center border-t border-red-200 pt-1.5">
-                        Current Est. ARV: {formatCurrency(inputs.arv || 0)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
           <div className="border-t border-gray-100 pt-4">
             <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Est. Closing Date</label>
             <input 
@@ -537,6 +315,242 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <p className="text-[10px] text-yellow-700 mt-1">If you are a realtor, this commission is credited towards your closing costs.</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Max Offer Analysis */}
+      <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-gray-800 uppercase">Max Offer Analysis</h2>
+            <HelpTooltip
+              title="Max Offer Analysis"
+              description="This calculates the maximum purchase price you can offer while still getting 100% financing (no cash down). It's based on your selected ARV percentage and rehab budget."
+              formula="Max Offer = (ARV × LTV%) - Rehab Budget"
+              examples={[
+                "ARV: $200,000, LTV: 75%, Rehab: $30,000 → Max Offer = $120,000",
+                "If you offer more than this, you'll need cash for the difference",
+                "Use the percentage buttons to see different scenarios"
+              ]}
+            />
+          </div>
+        </div>
+        <div className="p-6 space-y-4">
+          {/* Work-Backward Mode Toggle */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-gray-600">Calculation Mode:</label>
+                <HelpTooltip
+                  title="Work-Backward Mode"
+                  description="Instead of calculating what your max offer is, this mode calculates what purchase price you need to achieve a specific target ROI or LTC. Useful when you know your profit goals."
+                  examples={[
+                    "Forward Mode: 'What's my max offer?' → Shows $120,000",
+                    "Work-Backward Mode: 'I want 25% ROI' → Shows you need to pay $110,000",
+                    "Use this to negotiate: 'I can only pay $X to hit my profit target'"
+                  ]}
+                />
+              </div>
+              <button
+                onClick={() => onInputChange('useWorkBackwardMode', !inputs.useWorkBackwardMode)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                  inputs.useWorkBackwardMode
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {inputs.useWorkBackwardMode ? 'Work-Backward' : 'Forward'}
+              </button>
+            </div>
+            {inputs.useWorkBackwardMode && (
+              <div className="bg-purple-50 border border-purple-200 rounded p-2 space-y-2 mb-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onInputChange('workBackwardModeType', 'ROI')}
+                    className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
+                      inputs.workBackwardModeType === 'ROI'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 border border-purple-200'
+                    }`}
+                  >
+                    Target ROI
+                  </button>
+                  <button
+                    onClick={() => onInputChange('workBackwardModeType', 'LTC')}
+                    className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
+                      inputs.workBackwardModeType === 'LTC'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 border border-purple-200'
+                    }`}
+                  >
+                    Target LTC
+                  </button>
+                </div>
+                {inputs.workBackwardModeType === 'ROI' ? (
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <label className="text-xs font-semibold text-gray-600">Target ROI %</label>
+                      <HelpTooltip
+                        title="Target ROI (Return on Investment)"
+                        description="Enter the percentage return you want to make on your cash investment. The calculator will show you what purchase price you need to achieve this return."
+                        formula="ROI = (Net Profit ÷ Total Cash Invested) × 100"
+                        examples={[
+                          "Target 20% ROI: You want to make $20 for every $100 you invest",
+                          "If you invest $50,000 cash, you want $10,000 profit (20%)",
+                          "The calculator finds the purchase price that gives you this return"
+                        ]}
+                      />
+                    </div>
+                    <InputGroup
+                      label=""
+                      id="targetRoi"
+                      type="number"
+                      value={inputs.targetRoi}
+                      onChange={(v) => onInputChange('targetRoi', v)}
+                      suffix="%"
+                      helpText="Desired return on investment percentage"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-1 mb-1">
+                      <label className="text-xs font-semibold text-gray-600">Target LTC %</label>
+                      <HelpTooltip
+                        title="Target LTC (Loan-to-Cost)"
+                        description="Enter the percentage of your total project cost you want the loan to cover. The calculator will show you what purchase price allows this loan-to-cost ratio."
+                        formula="LTC = (Loan Amount ÷ Total Project Cost) × 100"
+                        examples={[
+                          "Target 80% LTC: You want the loan to cover 80% of total cost",
+                          "If total cost is $200,000, you want a $160,000 loan",
+                          "You'd need $40,000 cash (the remaining 20%)"
+                        ]}
+                      />
+                    </div>
+                    <InputGroup
+                      label=""
+                      id="targetLTC"
+                      type="number"
+                      value={inputs.targetLTC}
+                      onChange={(v) => onInputChange('targetLTC', v)}
+                      suffix="%"
+                      helpText="Desired loan-to-cost percentage"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <label className="text-xs font-semibold text-gray-600 block mb-2">Select ARV Percentage:</label>
+            <div className="flex gap-2">
+              {ltvOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => onMaxOfferLTVChange(option.value)}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                    maxOfferLTVPercent === option.value
+                      ? option.value === 0.75 
+                        ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
+                        : 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {option.label} {option.value === 0.75 && '(Main)'}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {(() => {
+            const exceedsMax = inputs.purchasePrice > maxOfferResults.maxAllowableOffer;
+            // Calculate required ARV for each percentage to make current purchase price work
+            const calculateRequiredARV = (ltvPercent: number) => {
+              if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
+              // Max Allowable Offer = (ARV * LTV%) - Rehab Budget
+              // Purchase Price = (ARV * LTV%) - Rehab Budget
+              // ARV = (Purchase Price + Rehab Budget) / LTV%
+              return (inputs.purchasePrice + inputs.rehabBudget) / ltvPercent;
+            };
+            
+            return (
+              <div className={`${exceedsMax ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
+                {inputs.useWorkBackwardMode ? (
+                  // Work-Backward Mode Display
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-purple-700">
+                        Work-Backward Max Offer ({inputs.workBackwardModeType === 'ROI' ? `${inputs.targetRoi}% ROI` : `${inputs.targetLTC}% LTC`})
+                      </span>
+                      <span className={`text-lg font-bold ${maxOfferResults.workBackwardMaxOffer > 0 ? 'text-purple-600' : 'text-red-600'}`}>
+                        {maxOfferResults.workBackwardMaxOffer > 0 ? formatCurrency(maxOfferResults.workBackwardMaxOffer) : 'N/A'}
+                      </span>
+                    </div>
+                    {maxOfferResults.workBackwardMaxOffer > 0 && (
+                      <div className="text-[10px] text-purple-600 bg-purple-50 border border-purple-200 rounded p-2">
+                        {inputs.workBackwardModeType === 'ROI' 
+                          ? `Purchase price needed to achieve ${inputs.targetRoi}% ROI based on current deal structure`
+                          : `Purchase price needed to achieve ${inputs.targetLTC}% LTC based on ARV and LTV%`}
+                      </div>
+                    )}
+                    {maxOfferResults.workBackwardMaxOffer <= 0 && (
+                      <div className="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                        Cannot achieve target {inputs.workBackwardModeType === 'ROI' ? 'ROI' : 'LTC'} with current ARV and parameters
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // Forward Mode Display (Original)
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className={`text-sm font-semibold ${exceedsMax ? 'text-red-700' : 'text-gray-700'}`}>Max Allowable Offer</span>
+                      <span className={`text-lg font-bold ${exceedsMax ? 'text-red-600' : 'text-blue-600'}`}>{formatCurrency(maxOfferResults.maxAllowableOffer)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Max Loan ({Math.round(maxOfferLTVPercent * 100)}% of ARV)</span>
+                  <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>Less: Rehab Budget</span>
+                  <span>-{formatCurrency(inputs.rehabBudget)}</span>
+                </div>
+                {exceedsMax && (
+                  <div className="bg-red-100 border border-red-300 rounded p-2 space-y-2">
+                    <div className="text-xs text-red-700 font-semibold text-center">
+                      ⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer
+                    </div>
+                    <div className="text-[10px] text-red-600 font-medium mt-2">Required ARV to make this deal work (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
+                    <div className="grid grid-cols-2 gap-1.5 mt-1">
+                      {ltvOptions.map((option) => {
+                        const requiredARV = calculateRequiredARV(option.value);
+                        const currentARV = inputs.arv || 0;
+                        const difference = requiredARV - currentARV; // How much higher ARV needs to be
+                        return (
+                          <div key={option.value} className="bg-white border border-red-200 rounded p-1.5">
+                            <div className="text-[9px] text-red-600 font-semibold">{option.label} ARV:</div>
+                            <div className="text-[10px] text-red-700 font-bold">{formatCurrency(requiredARV)}</div>
+                            {currentARV > 0 && difference !== 0 && (
+                              <div className={`text-[9px] font-semibold ${difference > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                {difference > 0 ? `+${formatCurrency(difference)} higher` : `${formatCurrency(difference)} lower`}
+                              </div>
+                            )}
+                            {currentARV > 0 && difference === 0 && (
+                              <div className="text-[9px] text-green-600 font-semibold">✓ Current ARV works</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="text-[9px] text-red-600 mt-1.5 text-center border-t border-red-200 pt-1.5">
+                      Current Est. ARV: {formatCurrency(inputs.arv || 0)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </section>
 

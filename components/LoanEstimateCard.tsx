@@ -26,11 +26,11 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <ResultRow label="Total Loan Amount" value={results.qualifiedLoanAmount} isTotal />
         <ResultRow label="Max Allowable Offer" subtext="For 100% Loan" value={results.maxAllowableOffer} />
         
-        {/* LTV/LTARV and LTC Dual Display */}
-        <div className="grid grid-cols-2 gap-4 my-2">
-          <div>
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-xs font-semibold text-gray-600">LTV / LTARV</span>
+        {/* LTV/LTARV and LTC Separate Display */}
+        <div className="space-y-2 my-2">
+          <div className="py-2 border-b border-gray-100">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-sm font-semibold text-gray-700">LTV / LTARV</span>
               <HelpTooltip
                 title="LTV / LTARV (Loan-to-Value / Loan-to-After-Repair-Value)"
                 description="This shows what percentage of the property's After Repair Value (ARV) your loan covers. It's a key metric lenders use to assess risk."
@@ -42,17 +42,16 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 ]}
               />
             </div>
-            <ResultRow
-              label=""
-              subtext="% of ARV"
-              value={`${results.ltv.toFixed(2)}%`}
-              isCurrency={false}
-              highlight={results.ltv > 75}
-            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">% of ARV</span>
+              <span className={`text-sm font-bold ${results.ltv > 75 ? 'text-red-600' : 'text-gray-900'}`}>
+                {results.ltv.toFixed(2)}%
+              </span>
+            </div>
           </div>
-          <div>
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-xs font-semibold text-gray-600">LTC</span>
+          <div className="py-2 border-b border-gray-100">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-sm font-semibold text-gray-700">LTC</span>
               <HelpTooltip
                 title="LTC (Loan-to-Cost)"
                 description="This shows what percentage of your total project cost (purchase price + rehab) the loan covers. It helps you understand how much of your own cash you need."
@@ -64,12 +63,12 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 ]}
               />
             </div>
-            <ResultRow
-              label=""
-              subtext="% of Cost"
-              value={`${results.ltc.toFixed(2)}%`}
-              isCurrency={false}
-            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">% of Cost</span>
+              <span className="text-sm font-bold text-gray-900">
+                {results.ltc.toFixed(2)}%
+              </span>
+            </div>
           </div>
         </div>
 
