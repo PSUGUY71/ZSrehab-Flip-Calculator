@@ -28,6 +28,10 @@ interface ResultsColumnProps {
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
   bestMonthlyPayment: number | null;
+  bestProfit?: number | null;
+  bestDownPayment?: number | null;
+  bestCashToClose?: number | null;
+  bestOverallLender?: string | null;
   originalBaselineLenderName?: string | null;
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
@@ -40,10 +44,15 @@ interface ResultsColumnProps {
 export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   inputs,
   results,
+  baselineResults,
   lenders,
   comparisonData,
   bestLenderFees,
   bestMonthlyPayment,
+  bestProfit,
+  bestDownPayment,
+  bestCashToClose,
+  bestOverallLender,
   originalBaselineLenderName,
   onAddLender,
   onApplyLender,
@@ -80,10 +89,15 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
           <LenderComparison
             inputs={inputs}
             results={results}
+            baselineResults={baselineResults}
             lenders={lenders}
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}
             bestMonthlyPayment={bestMonthlyPayment}
+            bestProfit={bestProfit}
+            bestDownPayment={bestDownPayment}
+            bestCashToClose={bestCashToClose}
+            bestOverallLender={bestOverallLender}
             originalBaselineLenderName={originalBaselineLenderName}
             onAddLender={onAddLender}
             onApplyLender={onApplyLender}

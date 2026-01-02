@@ -21,6 +21,10 @@ interface LenderComparisonProps {
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
   bestMonthlyPayment: number | null;
+  bestProfit?: number | null;
+  bestDownPayment?: number | null;
+  bestCashToClose?: number | null;
+  bestOverallLender?: string | null;
   originalBaselineLenderName?: string | null;
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
@@ -33,10 +37,15 @@ interface LenderComparisonProps {
 export const LenderComparison: React.FC<LenderComparisonProps> = ({
   inputs,
   results,
+  baselineResults,
   lenders,
   comparisonData,
   bestLenderFees,
   bestMonthlyPayment,
+  bestProfit,
+  bestDownPayment,
+  bestCashToClose,
+  bestOverallLender,
   originalBaselineLenderName,
   onAddLender,
   onApplyLender,
@@ -45,6 +54,8 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
   onDuplicateLender,
   onDeleteLender,
 }) => {
+  // Use baseline results for baseline column, current results for active comparison
+  const baselineData = baselineResults || results;
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden no-print">
       <div className="bg-blue-900 px-6 py-3 flex justify-between items-center text-white">
@@ -123,29 +134,42 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                 <tr>
                   <th className="px-2 py-2">Quick View</th>
                   <th className={`px-2 py-2 border-l ${
-                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName) 
-                      ? 'bg-green-50' 
+                    bestOverallLender === (originalBaselineLenderName || inputs.lenderName || 'BASELINE')
+                      ? 'bg-yellow-200 border-2 border-yellow-500'
+                      : originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName
+                      ? 'bg-green-50'
                       : 'bg-gray-100'
                   }`}>
-                    <div className="flex flex-col items-center">
-                      <span className="font-bold">{inputs.lenderName || 'BASELINE'}</span>
-                      {!comparisonData.some(c => inputs.lenderName === c.lender.lenderName) && (
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="font-bold">{originalBaselineLenderName || inputs.lenderName || 'BASELINE'}</span>
+                      {bestOverallLender === (originalBaselineLenderName || inputs.lenderName || 'BASELINE') && (
+                        <span className="text-[8px] bg-yellow-400 text-yellow-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
+                      )}
+                      {originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName && bestOverallLender !== (originalBaselineLenderName || inputs.lenderName || 'BASELINE') && (
                         <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
                       )}
                     </div>
                   </th>
                   {comparisonData.map((c) => {
                     const isActive = inputs.lenderName === c.lender.lenderName;
+                    const isBest = bestOverallLender === c.lender.lenderName;
                     return (
                       <th 
                         key={c.lender.id} 
                         className={`px-2 py-2 border-l font-bold ${
-                          isActive ? 'bg-green-50' : 'bg-blue-50/30'
+                          isBest
+                            ? 'bg-yellow-200 border-2 border-yellow-500'
+                            : isActive 
+                            ? 'bg-green-50' 
+                            : 'bg-blue-50/30'
                         }`}
                       >
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center gap-1">
                           <span>{c.lender.lenderName}</span>
-                          {isActive && (
+                          {isBest && (
+                            <span className="text-[8px] bg-yellow-400 text-yellow-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
+                          )}
+                          {isActive && !isBest && (
                             <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
                           )}
                         </div>
@@ -162,7 +186,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                       ? 'bg-green-50/30'
                       : ''
                   }`}>
-                    {formatCurrency(results.totalLenderFees)}
+                    {formatCurrency(baselineData.totalLenderFees)}
                   </td>
                   {comparisonData.map((c) => {
                     const isActive = inputs.lenderName === c.lender.lenderName;
@@ -185,11 +209,11 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                 <tr>
                   <td className="px-2 py-1.5 font-medium">Monthly Pmt</td>
                   <td className={`px-2 py-1.5 border-l ${
-                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName)
+                    originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName
                       ? 'bg-green-50/30'
                       : ''
                   }`}>
-                    {formatCurrency(results.monthlyPayment)}
+                    {formatCurrency(baselineData.monthlyPayment)}
                   </td>
                   {comparisonData.map((c) => {
                     const isActive = inputs.lenderName === c.lender.lenderName;
@@ -214,28 +238,125 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                   <td className={`px-2 py-1.5 border-l font-bold ${
                     !comparisonData.some(c => inputs.lenderName === c.lender.lenderName)
                       ? 'bg-green-50/30'
+                      : results.netProfit === bestProfit
+                      ? 'bg-green-100 font-bold border-2 border-green-400'
                       : ''
                   }`}>
-                    {formatCurrency(results.netProfit)}
+                    <div className="flex items-center gap-1">
+                      {results.netProfit === bestProfit && (
+                        <span className="text-green-600 text-xs">🏆</span>
+                      )}
+                      <span className={results.netProfit === bestProfit ? 'text-green-700' : ''}>
+                        {formatCurrency(results.netProfit)}
+                      </span>
+                    </div>
                   </td>
                   {comparisonData.map((c) => {
                     const isActive = inputs.lenderName === c.lender.lenderName;
+                    const isBestProfit = c.results.netProfit === bestProfit;
                     return (
                       <td 
                         key={c.lender.id} 
                         className={`px-2 py-1.5 border-l font-bold ${
-                          isActive ? 'bg-green-50/30' : ''
+                          isActive ? 'bg-green-50/30' : isBestProfit ? 'bg-green-100 border-2 border-green-400' : ''
                         }`}
                       >
-                        <span
-                          className={
-                            c.results.netProfit > results.netProfit
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }
-                        >
-                          {formatCurrency(c.results.netProfit)}
-                        </span>
+                        <div className="flex items-center gap-1">
+                          {isBestProfit && (
+                            <span className="text-green-600 text-xs">🏆</span>
+                          )}
+                          <span className={isBestProfit ? 'text-green-700' : c.results.netProfit > results.netProfit ? 'text-green-600' : 'text-red-600'}>
+                            {formatCurrency(c.results.netProfit)}
+                          </span>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  <td className="px-2 py-1.5 font-medium">Down Payment</td>
+                  <td className={`px-2 py-1.5 border-l ${
+                    originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName
+                      ? 'bg-green-50/30'
+                      : baselineData.gapAmount === bestDownPayment
+                      ? 'bg-green-100 font-bold border-2 border-green-400'
+                      : ''
+                  }`}>
+                    <div className="flex items-center gap-1">
+                      {baselineData.gapAmount === bestDownPayment && (
+                        <span className="text-green-600 text-xs">💰</span>
+                      )}
+                      <span className={baselineData.gapAmount === bestDownPayment ? 'text-green-700 font-bold' : ''}>
+                        {formatCurrency(baselineData.gapAmount)}
+                      </span>
+                    </div>
+                  </td>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    const isBestDown = c.results.gapAmount === bestDownPayment;
+                    return (
+                      <td
+                        key={c.lender.id}
+                        className={`px-2 py-1.5 border-l ${
+                          isActive
+                            ? 'bg-green-50/30'
+                            : isBestDown
+                            ? 'bg-green-100 font-bold border-2 border-green-400'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          {isBestDown && (
+                            <span className="text-green-600 text-xs">💰</span>
+                          )}
+                          <span className={isBestDown ? 'text-green-700 font-bold' : ''}>
+                            {formatCurrency(c.results.gapAmount)}
+                          </span>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  <td className="px-2 py-1.5 font-medium">Cash to Close</td>
+                  <td className={`px-2 py-1.5 border-l ${
+                    originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName
+                      ? 'bg-green-50/30'
+                      : baselineData.totalCashToClose === bestCashToClose
+                      ? 'bg-green-100 font-bold border-2 border-green-400'
+                      : ''
+                  }`}>
+                    <div className="flex items-center gap-1">
+                      {baselineData.totalCashToClose === bestCashToClose && (
+                        <span className="text-green-600 text-xs">💰</span>
+                      )}
+                      <span className={baselineData.totalCashToClose === bestCashToClose ? 'text-green-700 font-bold' : ''}>
+                        {formatCurrency(baselineData.totalCashToClose)}
+                      </span>
+                    </div>
+                  </td>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    const isBestCash = c.results.totalCashToClose === bestCashToClose;
+                    return (
+                      <td
+                        key={c.lender.id}
+                        className={`px-2 py-1.5 border-l ${
+                          isActive
+                            ? 'bg-green-50/30'
+                            : isBestCash
+                            ? 'bg-green-100 font-bold border-2 border-green-400'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          {isBestCash && (
+                            <span className="text-green-600 text-xs">💰</span>
+                          )}
+                          <span className={isBestCash ? 'text-green-700 font-bold' : ''}>
+                            {formatCurrency(c.results.totalCashToClose)}
+                          </span>
+                        </div>
                       </td>
                     );
                   })}

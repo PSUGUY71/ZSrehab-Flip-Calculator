@@ -179,6 +179,14 @@ const App: React.FC = () => {
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
   // Calculate max offer with selected LTV percentage
   const maxOfferResults = useMemo(() => calculateLoan(inputs, maxOfferLTVPercent), [inputs, maxOfferLTVPercent]);
+  
+  // Calculate baseline results for comparison (always use original baseline inputs if available)
+  const baselineResults = useMemo(() => {
+    if (originalBaselineInputs) {
+      return calculateLoan(originalBaselineInputs);
+    }
+    return results; // Fallback to current results if no baseline stored
+  }, [originalBaselineInputs, results]);
 
   const comparisonData = useMemo(() => {
     return lenders
@@ -200,6 +208,64 @@ const App: React.FC = () => {
     const allPayments = [results.monthlyPayment, ...comparisonData.map((c) => c.results.comparisonMonthlyPayment)];
     return Math.min(...allPayments);
   }, [comparisonData, results]);
+
+  const bestProfit = useMemo(() => {
+    if (comparisonData.length === 0) return null;
+    const allProfits = [results.netProfit, ...comparisonData.map((c) => c.results.netProfit)];
+    return Math.max(...allProfits);
+  }, [comparisonData, results]);
+
+  const bestDownPayment = useMemo(() => {
+    if (comparisonData.length === 0) return null;
+    const allDownPayments = [results.gapAmount, ...comparisonData.map((c) => c.results.gapAmount)];
+    return Math.min(...allDownPayments);
+  }, [comparisonData, results]);
+
+  const bestCashToClose = useMemo(() => {
+    if (comparisonData.length === 0) return null;
+    const allCashToClose = [results.totalCashToClose, ...comparisonData.map((c) => c.results.totalCashToClose)];
+    return Math.min(...allCashToClose);
+  }, [comparisonData, results]);
+
+  // Determine best overall lender
+  // Priority: 1) Highest profit, 2) Lowest down payment, 3) Lowest cash to close
+  const bestOverallLender = useMemo(() => {
+    if (comparisonData.length === 0) return null;
+    
+    // Get all lenders with their metrics
+    const allLenders = [
+      {
+        name: inputs.lenderName || 'BASELINE',
+        isBaseline: true,
+        profit: results.netProfit,
+        downPayment: results.gapAmount,
+        cashToClose: results.totalCashToClose,
+      },
+      ...comparisonData.map((c) => ({
+        name: c.lender.lenderName,
+        isBaseline: false,
+        profit: c.results.netProfit,
+        downPayment: c.results.gapAmount,
+        cashToClose: c.results.totalCashToClose,
+      })),
+    ];
+
+    // Sort by: profit (desc), then down payment (asc), then cash to close (asc)
+    const sorted = [...allLenders].sort((a, b) => {
+      // First priority: profit (higher is better)
+      if (Math.abs(a.profit - b.profit) > 100) { // If profit difference is significant (>$100)
+        return b.profit - a.profit;
+      }
+      // Second priority: down payment (lower is better)
+      if (Math.abs(a.downPayment - b.downPayment) > 100) { // If down payment difference is significant (>$100)
+        return a.downPayment - b.downPayment;
+      }
+      // Third priority: cash to close (lower is better)
+      return a.cashToClose - b.cashToClose;
+    });
+
+    return sorted[0]?.name || null;
+  }, [comparisonData, results, inputs.lenderName]);
 
   // --- AUTH HANDLERS ---
   const handleLogin = async (e: React.FormEvent) => {
@@ -544,8 +610,16 @@ const App: React.FC = () => {
   // --- LENDER HANDLERS ---
   const handleApplyLender = (lender: LenderOption) => {
     // Store baseline inputs before switching if this is the first time switching away from baseline
-    const isCurrentlyBaseline = !comparisonData.some(c => inputs.lenderName === c.lender.lenderName);
-    if (isCurrentlyBaseline && !originalBaselineInputs) {
+    // Check if current lender is baseline (not in comparison data)
+    const isCurrentlyBaseline = !comparisonData.some(c => c.lender.lenderName === inputs.lenderName);
+    
+    // Only store baseline if:
+    // 1. We're currently on baseline (not a comparison lender)
+    // 2. We haven't stored baseline yet
+    // 3. We're switching TO a comparison lender (the lender we're switching to IS in comparison)
+    const isSwitchingToComparison = comparisonData.some(c => c.lender.id === lender.id);
+    
+    if (isCurrentlyBaseline && isSwitchingToComparison && !originalBaselineInputs) {
       // We're currently on baseline, about to switch to a comparison lender
       // Store the current inputs as baseline
       setOriginalBaselineInputs({ ...inputs });
@@ -555,9 +629,10 @@ const App: React.FC = () => {
       console.log('✅ Stored baseline inputs before switching:', inputs.lenderName);
     }
     
+    // Always update inputs with the selected lender's data
     setInputs((prev) => ({
       ...prev,
-      lenderName: lender.lenderName,
+      lenderName: lender.lenderName, // Use lender's name, not prev.lenderName
       interestRate: lender.interestRate,
       originationPoints: lender.originationPoints,
       underwritingFee: lender.underwritingFee,
@@ -566,6 +641,8 @@ const App: React.FC = () => {
       wireFee: lender.wireFee,
       otherLenderFees: lender.otherFees,
     }));
+    
+    console.log('🔄 Switched to lender:', lender.lenderName);
   };
 
   const handleRestoreBaseline = () => {
@@ -749,6 +826,10 @@ const App: React.FC = () => {
         comparisonData={comparisonData}
         bestLenderFees={bestLenderFees}
         bestMonthlyPayment={bestMonthlyPayment}
+        bestProfit={bestProfit}
+        bestDownPayment={bestDownPayment}
+        bestCashToClose={bestCashToClose}
+        bestOverallLender={bestOverallLender}
         onClose={() => setIsReportMode(false)} 
       />
     );
@@ -790,10 +871,15 @@ const App: React.FC = () => {
           <ResultsColumn
             inputs={inputs}
             results={results}
+            baselineResults={baselineResults}
             lenders={lenders}
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}
             bestMonthlyPayment={bestMonthlyPayment}
+            bestProfit={bestProfit}
+            bestDownPayment={bestDownPayment}
+            bestCashToClose={bestCashToClose}
+            bestOverallLender={bestOverallLender}
             originalBaselineLenderName={originalBaselineLenderName}
             onAddLender={handleAddLender}
             onApplyLender={handleApplyLender}
