@@ -720,6 +720,11 @@ const App: React.FC = () => {
       wireFee: 45,
       otherFees: 0,
       loanAmountOverride: 0,
+      financingPercentage: inputs.financingPercentage || 100,
+      useCustomFinancing: inputs.useCustomFinancing || false,
+      customFinancingPercentage: inputs.customFinancingPercentage || 100,
+      maxARVPercent: 75, // Default to 75% ARV
+      maxLoanToCostPercent: 100, // Default to 100% LTC
       includeInComparison: true,
       notes: '',
     };
@@ -741,6 +746,11 @@ const App: React.FC = () => {
       wireFee: inputs.wireFee,
       otherFees: inputs.otherLenderFees || 0,
       loanAmountOverride: 0,
+      financingPercentage: inputs.financingPercentage || 100,
+      useCustomFinancing: inputs.useCustomFinancing || false,
+      customFinancingPercentage: inputs.customFinancingPercentage || 100,
+      maxARVPercent: 75, // Default to 75% ARV
+      maxLoanToCostPercent: 100, // Default to 100% LTC
       includeInComparison: true,
       notes: 'Captured from deal baseline',
     };

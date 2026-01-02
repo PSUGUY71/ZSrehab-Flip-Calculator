@@ -76,6 +76,101 @@ export const LenderModal: React.FC<LenderModalProps> = ({
             />
           </div>
 
+          {/* Financing Terms */}
+          <div className="pt-4 border-t border-gray-100">
+            <h4 className="text-sm font-bold text-gray-700 mb-3">Financing Terms</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase">Funding %</label>
+                <div className="flex gap-2">
+                  {[100, 95, 90, 85, 80].map((percent) => (
+                    <button
+                      key={percent}
+                      type="button"
+                      onClick={() =>
+                        setEditingLender({
+                          ...editingLender,
+                          financingPercentage: percent,
+                          useCustomFinancing: false,
+                        })
+                      }
+                      className={`flex-1 px-2 py-1.5 text-xs font-bold rounded border transition ${
+                        !editingLender.useCustomFinancing &&
+                        editingLender.financingPercentage === percent
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {percent}%
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="lCustomFin"
+                    checked={editingLender.useCustomFinancing}
+                    onChange={(e) =>
+                      setEditingLender({
+                        ...editingLender,
+                        useCustomFinancing: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="lCustomFin" className="text-xs font-medium text-gray-700">
+                    Custom
+                  </label>
+                </div>
+                {editingLender.useCustomFinancing && (
+                  <InputGroup
+                    label="Custom %"
+                    id="lCustomFinPct"
+                    value={editingLender.customFinancingPercentage || 100}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onChange={(v) =>
+                      setEditingLender({
+                        ...editingLender,
+                        customFinancingPercentage: v as number,
+                      })
+                    }
+                    suffix="%"
+                  />
+                )}
+              </div>
+              <div className="space-y-4">
+                <InputGroup
+                  label="Max ARV %"
+                  id="lMaxARV"
+                  value={editingLender.maxARVPercent || 75}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(v) =>
+                    setEditingLender({ ...editingLender, maxARVPercent: v as number })
+                  }
+                  suffix="%"
+                  helpText="Maximum loan amount as percentage of ARV"
+                />
+                <InputGroup
+                  label="Max Loan to Cost %"
+                  id="lMaxLTC"
+                  value={editingLender.maxLoanToCostPercent || 100}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onChange={(v) =>
+                    setEditingLender({ ...editingLender, maxLoanToCostPercent: v as number })
+                  }
+                  suffix="%"
+                  helpText="Maximum loan amount as percentage of total project cost"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <InputGroup
               label="Underwriting Fee"

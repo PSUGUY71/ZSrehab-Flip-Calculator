@@ -20,8 +20,15 @@ export interface LenderOption {
   wireFee: number;
   otherFees: number;
 
-  // Optional. If 0, use current app’s loanAmount logic from calculateLoan.
+  // Optional. If 0, use current app's loanAmount logic from calculateLoan.
   loanAmountOverride: number;
+
+  // Financing terms
+  financingPercentage: number; // 100, 95, 90, 85, 80, or custom
+  useCustomFinancing: boolean; // Whether using custom financing percentage
+  customFinancingPercentage: number; // Custom financing percentage value
+  maxARVPercent: number; // Max allowed ARV percentage (e.g., 75 for 75%)
+  maxLoanToCostPercent: number; // Max loan to cost percentage (e.g., 100 for 100%)
 
   includeInComparison: boolean;
   notes: string;
