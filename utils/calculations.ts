@@ -256,10 +256,46 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // 10. Profitability Analysis
   const totalMonthlyUtilities = monthlyElectric;
-  const monthlyInterestPayment = monthlyPayment;
+  
+  // Calculate monthly interest based on progressive draws
+  // Month 1: Purchase price only
+  // Month 2: Purchase price + 25% of rehab
+  // Month 3: Purchase price + 50% of rehab
+  // Month 4: Purchase price + 75% of rehab
+  // Month 5+: Purchase price + 100% of rehab (full loan amount)
+  const calculateMonthlyInterest = (month: number): number => {
+    let drawnAmount = purchasePrice; // Month 1 starts with purchase price
+    
+    if (month >= 2) {
+      const rehabDrawPercent = Math.min((month - 1) * 0.25, 1.0); // 25%, 50%, 75%, then 100%
+      drawnAmount = purchasePrice + (rehabBudget * rehabDrawPercent);
+    }
+    
+    // Cap at qualified loan amount
+    drawnAmount = Math.min(drawnAmount, qualifiedLoanAmount);
+    
+    // Calculate monthly interest: (drawn amount × annual interest rate) / 12
+    const annualInterest = drawnAmount * (interestRate / 100);
+    return annualInterest / 12;
+  };
+  
+  // Calculate total holding costs with progressive draws
+  let totalInterestCosts = 0;
+  const monthlyInterestPayments: number[] = [];
+  for (let month = 1; month <= holdingPeriodMonths; month++) {
+    const monthInterest = calculateMonthlyInterest(month);
+    monthlyInterestPayments.push(monthInterest);
+    totalInterestCosts += monthInterest;
+  }
+  
+  // Average monthly interest for display (backward compatibility)
+  const monthlyInterestPayment = holdingPeriodMonths > 0 
+    ? totalInterestCosts / holdingPeriodMonths 
+    : 0;
+  
   const monthlyUtilitiesCost = totalMonthlyUtilities;
-  const monthlyHoldingCost = monthlyPayment + totalMonthlyUtilities;
-  const totalHoldingCosts = monthlyHoldingCost * holdingPeriodMonths;
+  const monthlyHoldingCost = monthlyInterestPayment + totalMonthlyUtilities;
+  const totalHoldingCosts = totalInterestCosts + (totalMonthlyUtilities * holdingPeriodMonths);
 
   let totalExitCosts = 0;
   let refinanceLoanAmount = 0;
@@ -560,6 +596,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     monthlyHoldingCost,
     monthlyInterestPayment,
     monthlyUtilitiesCost,
+    monthlyInterestPayments,
     totalExitCosts,
     netProfit,
     closingTableProfit,

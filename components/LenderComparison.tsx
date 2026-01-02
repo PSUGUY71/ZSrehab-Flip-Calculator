@@ -21,8 +21,10 @@ interface LenderComparisonProps {
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
   bestMonthlyPayment: number | null;
+  originalBaselineLenderName?: string | null;
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
+  onRestoreBaseline?: () => void;
   onEditLender: (lender: LenderOption) => void;
   onDuplicateLender: (lender: LenderOption) => void;
   onDeleteLender: (id: string) => void;
@@ -35,8 +37,10 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
   comparisonData,
   bestLenderFees,
   bestMonthlyPayment,
+  originalBaselineLenderName,
   onAddLender,
   onApplyLender,
+  onRestoreBaseline,
   onEditLender,
   onDuplicateLender,
   onDeleteLender,
@@ -118,55 +122,111 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
               <thead className="bg-gray-50 text-gray-500 uppercase">
                 <tr>
                   <th className="px-2 py-2">Quick View</th>
-                  <th className="px-2 py-2 border-l">ACTIVE</th>
-                  {comparisonData.map((c) => (
-                    <th key={c.lender.id} className="px-2 py-2 border-l bg-blue-50/30 font-bold">
-                      {c.lender.lenderName}
-                    </th>
-                  ))}
+                  <th className={`px-2 py-2 border-l ${
+                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName) 
+                      ? 'bg-green-50' 
+                      : 'bg-gray-100'
+                  }`}>
+                    <div className="flex flex-col items-center">
+                      <span className="font-bold">{inputs.lenderName || 'BASELINE'}</span>
+                      {!comparisonData.some(c => inputs.lenderName === c.lender.lenderName) && (
+                        <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
+                      )}
+                    </div>
+                  </th>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    return (
+                      <th 
+                        key={c.lender.id} 
+                        className={`px-2 py-2 border-l font-bold ${
+                          isActive ? 'bg-green-50' : 'bg-blue-50/30'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center">
+                          <span>{c.lender.lenderName}</span>
+                          {isActive && (
+                            <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 <tr>
                   <td className="px-2 py-1.5 font-medium">Lender Fees</td>
-                  <td className="px-2 py-1.5 border-l">{formatCurrency(results.totalLenderFees)}</td>
-                  {comparisonData.map((c) => (
-                    <td
-                      key={c.lender.id}
-                      className={`px-2 py-1.5 border-l ${
-                        c.results.lenderUpfrontFeesAdjusted === bestLenderFees
-                          ? 'bg-green-50 font-bold'
-                          : ''
-                      }`}
-                    >
-                      {formatCurrency(c.results.lenderUpfrontFeesAdjusted)}
-                    </td>
-                  ))}
+                  <td className={`px-2 py-1.5 border-l ${
+                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName)
+                      ? 'bg-green-50/30'
+                      : ''
+                  }`}>
+                    {formatCurrency(results.totalLenderFees)}
+                  </td>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    return (
+                      <td
+                        key={c.lender.id}
+                        className={`px-2 py-1.5 border-l ${
+                          isActive
+                            ? 'bg-green-50/30'
+                            : c.results.lenderUpfrontFeesAdjusted === bestLenderFees
+                            ? 'bg-green-50 font-bold'
+                            : ''
+                        }`}
+                      >
+                        {formatCurrency(c.results.lenderUpfrontFeesAdjusted)}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr>
                   <td className="px-2 py-1.5 font-medium">Monthly Pmt</td>
-                  <td className="px-2 py-1.5 border-l">{formatCurrency(results.monthlyPayment)}</td>
-                  {comparisonData.map((c) => (
-                    <td
-                      key={c.lender.id}
-                      className={`px-2 py-1.5 border-l ${
-                        c.results.comparisonMonthlyPayment === bestMonthlyPayment
-                          ? 'bg-green-50 font-bold'
-                          : ''
-                      }`}
-                    >
-                      {formatCurrency(c.results.comparisonMonthlyPayment)}
-                    </td>
-                  ))}
+                  <td className={`px-2 py-1.5 border-l ${
+                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName)
+                      ? 'bg-green-50/30'
+                      : ''
+                  }`}>
+                    {formatCurrency(results.monthlyPayment)}
+                  </td>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    return (
+                      <td
+                        key={c.lender.id}
+                        className={`px-2 py-1.5 border-l ${
+                          isActive
+                            ? 'bg-green-50/30'
+                            : c.results.comparisonMonthlyPayment === bestMonthlyPayment
+                            ? 'bg-green-50 font-bold'
+                            : ''
+                        }`}
+                      >
+                        {formatCurrency(c.results.comparisonMonthlyPayment)}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="px-2 py-1.5 font-bold">Proj. Profit</td>
-                  <td className="px-2 py-1.5 border-l font-bold">
+                  <td className={`px-2 py-1.5 border-l font-bold ${
+                    !comparisonData.some(c => inputs.lenderName === c.lender.lenderName)
+                      ? 'bg-green-50/30'
+                      : ''
+                  }`}>
                     {formatCurrency(results.netProfit)}
                   </td>
-                  {comparisonData.map((c) => (
-                    <td key={c.lender.id} className="px-2 py-1.5 border-l font-bold">
-                      <div className="flex flex-col">
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    return (
+                      <td 
+                        key={c.lender.id} 
+                        className={`px-2 py-1.5 border-l font-bold ${
+                          isActive ? 'bg-green-50/30' : ''
+                        }`}
+                      >
                         <span
                           className={
                             c.results.netProfit > results.netProfit
@@ -176,15 +236,64 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                         >
                           {formatCurrency(c.results.netProfit)}
                         </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="bg-gray-100 border-t-2 border-gray-300">
+                  <td className="px-2 py-2 font-bold">Switch Lender</td>
+                  <td className="px-2 py-2 border-l">
+                    {(() => {
+                      // Check if baseline is active: 
+                      // 1. Current lenderName matches original baseline name, OR
+                      // 2. Current lenderName is NOT in comparisonData
+                      const isBaselineActive = 
+                        (originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName) ||
+                        !comparisonData.some(c => inputs.lenderName === c.lender.lenderName);
+                      
+                      return (
+                        <button
+                          onClick={() => {
+                            if (isBaselineActive) {
+                              // Already active, do nothing
+                              return;
+                            }
+                            // Try to restore baseline - always use the restore function
+                            if (onRestoreBaseline) {
+                              onRestoreBaseline();
+                            }
+                          }}
+                          className={`w-full text-[9px] font-bold px-2 py-1.5 rounded transition ${
+                            isBaselineActive
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {isBaselineActive ? '✓ Active' : 'Switch →'}
+                        </button>
+                      );
+                    })()}
+                  </td>
+                  {comparisonData.map((c) => {
+                    const isActive = inputs.lenderName === c.lender.lenderName;
+                    return (
+                      <td 
+                        key={c.lender.id} 
+                        className="px-2 py-2 border-l"
+                      >
                         <button
                           onClick={() => onApplyLender(c.lender)}
-                          className="text-[8px] text-blue-600 underline mt-0.5 text-left hover:text-blue-800"
+                          className={`w-full text-[9px] font-bold px-2 py-1.5 rounded transition ${
+                            isActive
+                              ? 'bg-green-600 text-white hover:bg-green-700'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
                         >
-                          Apply terms
+                          {isActive ? '✓ Active' : 'Switch →'}
                         </button>
-                      </div>
-                    </td>
-                  ))}
+                      </td>
+                    );
+                  })}
                 </tr>
               </tbody>
             </table>

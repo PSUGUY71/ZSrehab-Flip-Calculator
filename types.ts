@@ -231,9 +231,10 @@ export interface CalculatedResults {
 
   // Profitability Analysis
   totalHoldingCosts: number;
-  monthlyHoldingCost: number; // Monthly total (interest + utilities)
-  monthlyInterestPayment: number; // Monthly loan interest payment
+  monthlyHoldingCost: number; // Monthly total (interest + utilities) - average
+  monthlyInterestPayment: number; // Monthly loan interest payment - average
   monthlyUtilitiesCost: number; // Monthly utilities cost
+  monthlyInterestPayments: number[]; // Array of monthly interest payments (progressive draws)
   totalExitCosts: number;
   netProfit: number;
   closingTableProfit: number;

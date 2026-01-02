@@ -32,6 +32,12 @@ const App: React.FC = () => {
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
   const [isClearingOnLogin, setIsClearingOnLogin] = useState(false); // Flag to prevent deal loading during login
+  const [currentDealId, setCurrentDealId] = useState<string | number | null>(null); // Track which deal is currently loaded
+  const [originalBaselineLenderName, setOriginalBaselineLenderName] = useState<string | null>(DEFAULT_INPUTS.lenderName || null); // Track original baseline lender name
+  const [originalBaselineInputs, setOriginalBaselineInputs] = useState<LoanInputs | null>(() => {
+    // Initialize with default inputs so we always have a baseline to restore to
+    return { ...DEFAULT_INPUTS };
+  }); // Store original baseline inputs to restore
 
   // Lender Modal State
   const [isLenderModalOpen, setIsLenderModalOpen] = useState(false);
@@ -87,6 +93,7 @@ const App: React.FC = () => {
         const freshInputs = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
         setInputs(freshInputs);
         setLenders([]);
+        setCurrentDealId(null); // Clear current deal ID on login
         console.log('✅ Cleared inputs on login for user:', currentUser.email);
         console.log('✅ Inputs after clear:', JSON.stringify(freshInputs).substring(0, 100));
         
@@ -95,6 +102,7 @@ const App: React.FC = () => {
           const freshInputs2 = JSON.parse(JSON.stringify(DEFAULT_INPUTS));
           setInputs(freshInputs2);
           setLenders([]);
+          setCurrentDealId(null); // Clear current deal ID again
           console.log('✅ Double-check: Cleared inputs again for user:', currentUser.email);
           // Clear the flag after we're done clearing
           setTimeout(() => {
@@ -325,6 +333,7 @@ const App: React.FC = () => {
     setInputs(DEFAULT_INPUTS);
     setLenders([]);
     setSavedDeals([]);
+    setCurrentDealId(null); // Clear current deal ID on logout
     setIsReportMode(false);
   };
 
@@ -377,24 +386,28 @@ const App: React.FC = () => {
     
     let supabaseSuccess = false;
     let localStorageSuccess = false;
-    let finalDealId: string | number = tempId; // Default to temp ID
+    let finalDealId: string | number = currentDealId || tempId; // Use current deal ID if exists, otherwise temp ID
+    
+    // If we have a current deal ID, we're updating; otherwise creating new
+    const isUpdating = currentDealId !== null;
     
     // Save to Supabase first (if configured and user is not local)
     if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
       try {
-        // Create deal without ID - let Supabase generate UUID
+        // Use current deal ID if updating, otherwise let Supabase generate UUID
         const dealForSupabase: SavedDeal = {
-          id: '', // Empty ID - Supabase will generate UUID
+          id: isUpdating && typeof currentDealId === 'string' ? currentDealId : '', // Use current ID if updating
           name: dealName,
           date: new Date().toLocaleDateString(),
           data: inputs,
           lenders: lenders,
         };
         const saved = await saveDeal(dealForSupabase, currentUser.id);
-        // Use the UUID from Supabase
+        // Use the UUID from Supabase (either existing or newly generated)
         finalDealId = saved.id;
+        setCurrentDealId(saved.id); // Update tracked ID
         supabaseSuccess = true;
-        console.log('Deal saved to Supabase successfully with ID:', finalDealId);
+        console.log(isUpdating ? 'Deal updated in Supabase:' : 'Deal saved to Supabase:', finalDealId);
       } catch (error: any) {
         console.error('Failed to save deal to Supabase:', error);
         // Continue to save locally even if Supabase fails
@@ -403,7 +416,7 @@ const App: React.FC = () => {
     
     // Always save to localStorage (for backup and offline access)
     // Use the Supabase UUID if available, otherwise use temp ID
-    const newDeal: SavedDeal = {
+    const dealToSave: SavedDeal = {
       id: finalDealId,
       name: dealName,
       date: new Date().toLocaleDateString(),
@@ -412,20 +425,34 @@ const App: React.FC = () => {
     };
     
     try {
-      const updatedDeals = [newDeal, ...savedDeals];
+      let updatedDeals: SavedDeal[];
+      if (isUpdating && currentDealId) {
+        // Update existing deal in the list
+        updatedDeals = savedDeals.map(deal => 
+          deal.id === currentDealId ? dealToSave : deal
+        );
+        // If deal not found in list, add it
+        if (!updatedDeals.find(d => d.id === currentDealId)) {
+          updatedDeals = [dealToSave, ...updatedDeals];
+        }
+      } else {
+        // Create new deal
+        updatedDeals = [dealToSave, ...savedDeals];
+      }
+      
       setSavedDeals(updatedDeals);
       localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updatedDeals));
       localStorageSuccess = true;
-      console.log('Deal saved to localStorage successfully');
+      console.log(isUpdating ? 'Deal updated in localStorage:' : 'Deal saved to localStorage:', finalDealId);
     } catch (error: any) {
       console.error('Failed to save deal to localStorage:', error);
     }
     
     // Show appropriate notification
     if (supabaseSuccess && localStorageSuccess) {
-      setSaveNotification('Property Saved! (Synced to cloud & local)');
+      setSaveNotification(isUpdating ? 'Deal Updated! (Synced to cloud & local)' : 'Property Saved! (Synced to cloud & local)');
     } else if (localStorageSuccess) {
-      setSaveNotification('Property Saved! (Local backup only)');
+      setSaveNotification(isUpdating ? 'Deal Updated! (Local backup only)' : 'Property Saved! (Local backup only)');
     } else {
       setSaveNotification('Failed to save deal');
     }
@@ -451,8 +478,13 @@ const App: React.FC = () => {
       return;
     }
     // Merge with DEFAULT_INPUTS to ensure all fields are present (especially new fields added after deal was saved)
-    setInputs({ ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' });
+    const loadedInputs = { ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' };
+    setInputs(loadedInputs);
     setLenders(deal.lenders || []);
+    setCurrentDealId(deal.id); // Track which deal is currently loaded
+    // Set the original baseline lender name and inputs from the loaded deal
+    setOriginalBaselineLenderName(deal.data.lenderName || null);
+    setOriginalBaselineInputs({ ...loadedInputs }); // Store loaded inputs as baseline
     setIsDealModalOpen(false);
   };
 
@@ -505,11 +537,24 @@ const App: React.FC = () => {
     if (window.confirm('Start a new deal? Unsaved changes will be lost.')) {
       setInputs(DEFAULT_INPUTS);
       setLenders([]);
+      setCurrentDealId(null); // Clear current deal ID when starting new deal
     }
   };
 
   // --- LENDER HANDLERS ---
   const handleApplyLender = (lender: LenderOption) => {
+    // Store baseline inputs before switching if this is the first time switching away from baseline
+    const isCurrentlyBaseline = !comparisonData.some(c => inputs.lenderName === c.lender.lenderName);
+    if (isCurrentlyBaseline && !originalBaselineInputs) {
+      // We're currently on baseline, about to switch to a comparison lender
+      // Store the current inputs as baseline
+      setOriginalBaselineInputs({ ...inputs });
+      if (!originalBaselineLenderName) {
+        setOriginalBaselineLenderName(inputs.lenderName);
+      }
+      console.log('✅ Stored baseline inputs before switching:', inputs.lenderName);
+    }
+    
     setInputs((prev) => ({
       ...prev,
       lenderName: lender.lenderName,
@@ -521,6 +566,68 @@ const App: React.FC = () => {
       wireFee: lender.wireFee,
       otherLenderFees: lender.otherFees,
     }));
+  };
+
+  const handleRestoreBaseline = () => {
+    // Strategy 1: Restore from stored baseline inputs (most reliable - works even if no baseline lender exists)
+    if (originalBaselineInputs) {
+      console.log('✅ Restoring baseline from stored inputs:', originalBaselineInputs.lenderName);
+      setInputs({ ...originalBaselineInputs });
+      return;
+    }
+    
+    // Strategy 2: Find and apply baseline lender (fallback if inputs not stored)
+    const currentLenderName = inputs.lenderName;
+    console.log('Restoring baseline. Current:', currentLenderName, 'Original baseline:', originalBaselineLenderName);
+    console.log('Available lenders:', lenders.map(l => ({ name: l.lenderName, id: l.id, notes: l.notes })));
+    
+    let baselineLender: LenderOption | undefined;
+    
+    // Try to find by stored original baseline lender name
+    if (originalBaselineLenderName) {
+      baselineLender = lenders.find(l => l.lenderName === originalBaselineLenderName && l.lenderName !== currentLenderName);
+      console.log('Strategy 2a - Found by original name:', baselineLender?.lenderName);
+    }
+    
+    // Look for a lender with "Captured from deal baseline" in notes
+    if (!baselineLender) {
+      baselineLender = lenders.find(l => {
+        if (l.lenderName === currentLenderName) return false;
+        return l.notes?.includes('Captured from deal baseline') || 
+               l.notes?.includes('baseline') ||
+               l.notes?.includes('Baseline');
+      });
+      console.log('Strategy 2b - Found by notes:', baselineLender?.lenderName);
+    }
+    
+    // Look for a lender with "Baseline" in the name
+    if (!baselineLender) {
+      baselineLender = lenders.find(l => {
+        if (l.lenderName === currentLenderName) return false;
+        return l.lenderName.includes('Baseline') || 
+               l.lenderName.includes('BASELINE') || 
+               l.lenderName.includes('baseline');
+      });
+      console.log('Strategy 2c - Found by name:', baselineLender?.lenderName);
+    }
+    
+    // Find any lender that's not the current active one
+    if (!baselineLender) {
+      baselineLender = lenders.find(l => l.lenderName !== currentLenderName);
+      console.log('Strategy 2d - Found any other:', baselineLender?.lenderName);
+    }
+    
+    if (baselineLender) {
+      console.log('✅ Applying baseline lender:', baselineLender.lenderName);
+      handleApplyLender(baselineLender);
+    } else {
+      console.error('❌ Could not find baseline lender to restore. Current:', currentLenderName, 'Available:', lenders.map(l => l.lenderName));
+      // Last resort: restore to default inputs
+      console.log('⚠️ Restoring to default inputs as fallback');
+      setInputs({ ...DEFAULT_INPUTS });
+      setOriginalBaselineInputs({ ...DEFAULT_INPUTS });
+      setOriginalBaselineLenderName(DEFAULT_INPUTS.lenderName || null);
+    }
   };
 
   const handleAddLender = () => {
@@ -544,9 +651,10 @@ const App: React.FC = () => {
   };
 
   const handleCaptureBaseline = () => {
+    const baselineName = inputs.lenderName || 'Baseline Snapshot';
     const newLender: LenderOption = {
       id: Date.now().toString(),
-      lenderName: inputs.lenderName || 'Baseline Snapshot',
+      lenderName: baselineName,
       loanType: 'HARD_MONEY',
       interestRate: inputs.interestRate,
       originationPoints: inputs.originationPoints,
@@ -560,6 +668,13 @@ const App: React.FC = () => {
       notes: 'Captured from deal baseline',
     };
     setLenders([...lenders, newLender]);
+    // Store the original baseline lender name and inputs
+    if (!originalBaselineLenderName) {
+      setOriginalBaselineLenderName(baselineName);
+    }
+    // Always store current inputs as baseline when capturing
+    setOriginalBaselineInputs({ ...inputs });
+    console.log('✅ Captured baseline:', baselineName, 'Stored inputs for restoration');
   };
 
   const handleEditLender = (lender: LenderOption) => {
@@ -679,8 +794,10 @@ const App: React.FC = () => {
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}
             bestMonthlyPayment={bestMonthlyPayment}
+            originalBaselineLenderName={originalBaselineLenderName}
             onAddLender={handleAddLender}
             onApplyLender={handleApplyLender}
+            onRestoreBaseline={handleRestoreBaseline}
             onEditLender={handleEditLender}
             onDuplicateLender={handleDuplicateLender}
             onDeleteLender={handleDeleteLender}

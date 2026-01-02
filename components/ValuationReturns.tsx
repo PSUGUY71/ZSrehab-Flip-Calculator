@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
+import { HelpTooltip } from './HelpTooltip';
 
 interface ValuationReturnsProps {
   results: CalculatedResults;
@@ -17,12 +18,14 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ results }) =
           <div className="text-sm font-bold text-gray-900 mt-1">
             {formatCurrency(results.purchasePricePerSqFt)}
           </div>
+          <div className="text-[9px] text-gray-400 mt-0.5">Purchase Price ÷ SqFt</div>
         </div>
         <div className="bg-blue-50 rounded p-2 text-center border border-blue-100">
           <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wide">Sell / SqFt</div>
           <div className="text-sm font-bold text-blue-700 mt-1">
             {formatCurrency(results.arvPerSqFt)}
           </div>
+          <div className="text-[9px] text-blue-400 mt-0.5">ARV ÷ SqFt</div>
         </div>
       </div>
 
@@ -32,6 +35,7 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ results }) =
           <div className="text-[10px] text-green-600 font-bold uppercase tracking-wide">Cash ROI</div>
           <div className="text-sm font-bold text-green-700 mt-1">{formatPercent(results.roi)}</div>
           <div className="text-[9px] text-green-500 mt-0.5">Cash on Cash</div>
+          <div className="text-[9px] text-green-400 mt-0.5">(Net Profit ÷ Cash) × 100</div>
         </div>
 
         {/* Project ROI (Total Cost) */}
@@ -39,6 +43,7 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ results }) =
           <div className="text-[10px] text-purple-600 font-bold uppercase tracking-wide">Proj. ROI</div>
           <div className="text-sm font-bold text-purple-700 mt-1">{formatPercent(results.projectRoi)}</div>
           <div className="text-[9px] text-purple-500 mt-0.5">Return on Cost</div>
+          <div className="text-[9px] text-purple-400 mt-0.5">(Net Profit ÷ Total Cost) × 100</div>
         </div>
 
         {/* Net Margin (Sales Price) */}
@@ -46,6 +51,7 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ results }) =
           <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wide">Margin</div>
           <div className="text-sm font-bold text-indigo-700 mt-1">{formatPercent(results.netMargin)}</div>
           <div className="text-[9px] text-indigo-500 mt-0.5">Return on Sales</div>
+          <div className="text-[9px] text-indigo-400 mt-0.5">(Net Profit ÷ ARV) × 100</div>
         </div>
       </div>
     </div>

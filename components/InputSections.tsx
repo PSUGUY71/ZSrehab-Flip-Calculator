@@ -704,40 +704,164 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               prefix="$"
               helpText="Hideout community transfer fee"
             />
-            <InputGroup 
-              label="Dues (Ann.)" 
-              id="ha" 
-              value={inputs.hideoutAnnualFee} 
-              onChange={(v) => onInputChange('hideoutAnnualFee', v)} 
-              prefix="$"
-              helpText="Dues annual amount (prorated Jan-Dec)"
-            />
+            <div>
+              <div className="mb-1">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-600">Dues</label>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                      onMouseEnter={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.remove('hidden');
+                      }}
+                      onMouseLeave={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.add('hidden');
+                      }}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                      Dues annual amount (prorated Jan-Dec)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 font-normal mt-0.5">
+                  (calculated January through December)
+                </div>
+              </div>
+              <InputGroup 
+                label="" 
+                id="ha" 
+                value={inputs.hideoutAnnualFee} 
+                onChange={(v) => onInputChange('hideoutAnnualFee', v)} 
+                prefix="$"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-6">
-            <InputGroup 
-              label="City/Town Taxes (Ann.)" 
-              id="ra" 
-              value={inputs.roamingwoodAnnual} 
-              onChange={(v) => onInputChange('roamingwoodAnnual', v)} 
-              prefix="$"
-              helpText="City/town taxes annual amount (prorated Jan-Dec)"
-            />
-            <InputGroup 
-              label="School Tax (Ann.)" 
-              id="sa" 
-              value={inputs.schoolTaxAnnual} 
-              onChange={(v) => onInputChange('schoolTaxAnnual', v)}
-              prefix="$"
-              helpText="School tax annual amount (prorated Jul-Jun)"
-            />
-            <InputGroup
-              label="Sewer & Water (Ann.)"
-              id="sewerWaterAnnual"
-              value={inputs.sewerWaterAnnual} 
-              onChange={(v) => onInputChange('sewerWaterAnnual', v)}
-              prefix="$"
-              helpText="Sewer and water annual amount (prorated quarterly)"
-            />
+            <div>
+              <div className="mb-1">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-600">City/Town Taxes</label>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                      onMouseEnter={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.remove('hidden');
+                      }}
+                      onMouseLeave={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.add('hidden');
+                      }}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                      City/town taxes annual amount (prorated Jan-Dec)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 font-normal mt-0.5">
+                  (calculated January through December)
+                </div>
+              </div>
+              <InputGroup 
+                label="" 
+                id="ra" 
+                value={inputs.roamingwoodAnnual} 
+                onChange={(v) => onInputChange('roamingwoodAnnual', v)} 
+                prefix="$"
+              />
+            </div>
+            <div>
+              <div className="mb-1">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-600">School Tax</label>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                      onMouseEnter={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.remove('hidden');
+                      }}
+                      onMouseLeave={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.add('hidden');
+                      }}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                      School tax annual amount (prorated Jul-Jun)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 font-normal mt-0.5">
+                  (calculated July through June)
+                </div>
+              </div>
+              <InputGroup 
+                label="" 
+                id="sa" 
+                value={inputs.schoolTaxAnnual} 
+                onChange={(v) => onInputChange('schoolTaxAnnual', v)}
+                prefix="$"
+              />
+            </div>
+            <div>
+              <div className="mb-1">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-semibold text-gray-600">Sewer & Water</label>
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                      onMouseEnter={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.remove('hidden');
+                      }}
+                      onMouseLeave={(e) => {
+                        const tooltip = e.currentTarget.nextElementSibling;
+                        if (tooltip) tooltip.classList.add('hidden');
+                      }}
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                      Sewer and water annual amount (prorated quarterly)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 font-normal mt-0.5">
+                  (calculated quarterly)
+                </div>
+              </div>
+              <InputGroup 
+                label=""
+                id="sewerWaterAnnual"
+                value={inputs.sewerWaterAnnual} 
+                onChange={(v) => onInputChange('sewerWaterAnnual', v)}
+                prefix="$"
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -804,20 +928,50 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 {inputs.holdingPeriodMonths} Month{inputs.holdingPeriodMonths !== 1 ? 's' : ''} Total
               </span>
             </h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex flex-col">
-                  <span className="text-gray-700 font-medium">Loan Interest</span>
-                  <span className="text-[10px] text-gray-500">Monthly payment</span>
+            <div className="space-y-3">
+              {/* Monthly Interest Breakdown */}
+              <div>
+                <div className="text-xs font-semibold text-gray-700 mb-2">Loan Interest (Progressive Draws):</div>
+                <div className="bg-white rounded border border-blue-100 p-2 space-y-1 max-h-48 overflow-y-auto">
+                  {results.monthlyInterestPayments && results.monthlyInterestPayments.length > 0 ? (
+                    results.monthlyInterestPayments.map((interest, index) => {
+                      const month = index + 1;
+                      let drawDescription = '';
+                      if (month === 1) {
+                        drawDescription = 'Purchase price only';
+                      } else if (month === 2) {
+                        drawDescription = 'Purchase + 25% rehab';
+                      } else if (month === 3) {
+                        drawDescription = 'Purchase + 50% rehab';
+                      } else if (month === 4) {
+                        drawDescription = 'Purchase + 75% rehab';
+                      } else {
+                        drawDescription = 'Purchase + 100% rehab (full)';
+                      }
+                      return (
+                        <div key={month} className="flex justify-between items-center text-xs">
+                          <div className="flex flex-col">
+                            <span className="text-gray-700">Month {month}</span>
+                            <span className="text-[10px] text-gray-500">{drawDescription}</span>
+                          </div>
+                          <span className="font-semibold text-gray-900">{formatCurrency(interest)}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-xs text-gray-500">No interest payments</div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold text-gray-900">{formatCurrency(results.monthlyInterestPayment)}</div>
-                  <div className="text-[10px] text-gray-600">
-                    {formatCurrency(results.monthlyInterestPayment * inputs.holdingPeriodMonths)} total
-                  </div>
+                <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-blue-200">
+                  <span className="text-gray-700 font-medium">Total Interest</span>
+                  <span className="font-bold text-gray-900">
+                    {formatCurrency(results.monthlyInterestPayments?.reduce((sum, val) => sum + val, 0) || 0)}
+                  </span>
                 </div>
               </div>
-              <div className="flex justify-between items-center text-sm">
+              
+              {/* Utilities */}
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200">
                 <div className="flex flex-col">
                   <span className="text-gray-700 font-medium">Utilities (Electric)</span>
                   <span className="text-[10px] text-gray-500">Monthly cost</span>
@@ -829,12 +983,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   </div>
                 </div>
               </div>
+              
+              {/* Grand Total */}
               <div className="border-t border-blue-300 pt-2 mt-2 flex justify-between items-center">
-                <span className="font-bold text-blue-900 uppercase text-sm">Total Monthly</span>
+                <span className="font-bold text-blue-900 uppercase text-sm">Grand Total</span>
                 <div className="text-right">
-                  <div className="font-bold text-blue-700 text-lg">{formatCurrency(results.monthlyHoldingCost)}</div>
+                  <div className="font-bold text-blue-700 text-lg">{formatCurrency(results.totalHoldingCosts)}</div>
                   <div className="text-xs text-blue-600 font-semibold">
-                    {formatCurrency(results.totalHoldingCosts)} over {inputs.holdingPeriodMonths} month{inputs.holdingPeriodMonths !== 1 ? 's' : ''}
+                    Over {inputs.holdingPeriodMonths} month{inputs.holdingPeriodMonths !== 1 ? 's' : ''}
                   </div>
                 </div>
               </div>

@@ -26,6 +26,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onReportMode,
   onLogout,
 }) => {
+  // Debug: Log the count when component renders
+  React.useEffect(() => {
+    console.log('📊 AppHeader: savedDeals count =', savedDeals.length, 'deals:', savedDeals.map(d => ({ id: d.id, name: d.name })));
+  }, [savedDeals]);
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">

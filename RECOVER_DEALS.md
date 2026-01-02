@@ -46,3 +46,5 @@ dealKeys.forEach(key => {
 
 The issue was that when saving a deal, if another deal had the same address, it would overwrite the existing deal instead of creating a new one. This has been fixed - now every save creates a new deal, so you won't lose deals by accident.
 
+
+

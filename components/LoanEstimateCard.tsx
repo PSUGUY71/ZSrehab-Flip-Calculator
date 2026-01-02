@@ -23,8 +23,17 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         </div>
       </div>
       <div className="p-6">
-        <ResultRow label="Total Loan Amount" value={results.qualifiedLoanAmount} isTotal />
-        <ResultRow label="Max Allowable Offer" subtext="For 100% Loan" value={results.maxAllowableOffer} />
+        <ResultRow 
+          label="Total Loan Amount" 
+          value={results.qualifiedLoanAmount} 
+          isTotal 
+          subtext="min(Total Cost × Financing%, ARV × LTV%)"
+        />
+        <ResultRow 
+          label="Max Allowable Offer" 
+          subtext="(ARV × LTV%) - Rehab Budget" 
+          value={results.maxAllowableOffer} 
+        />
         
         {/* LTV/LTARV and LTC Separate Display */}
         <div className="space-y-2 my-2">
@@ -43,7 +52,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">% of ARV</span>
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-400">% of ARV</span>
+                <span className="text-[10px] text-gray-300">(Loan ÷ ARV) × 100</span>
+              </div>
               <span className={`text-sm font-bold ${results.ltv > 75 ? 'text-red-600' : 'text-gray-900'}`}>
                 {results.ltv.toFixed(2)}%
               </span>
@@ -64,7 +76,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">% of Cost</span>
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-400">% of Cost</span>
+                <span className="text-[10px] text-gray-300">(Loan ÷ Total Cost) × 100</span>
+              </div>
               <span className="text-sm font-bold text-gray-900">
                 {results.ltc.toFixed(2)}%
               </span>
@@ -91,10 +106,26 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
         <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-        <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
-        <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
-        <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
-        <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
+        <FeeBreakdownItem 
+          label="Dues (Pro)" 
+          value={results.hideoutProratedDues}
+          subtext="(calculated January through December)"
+        />
+        <FeeBreakdownItem 
+          label="City/Town Taxes (Pro)" 
+          value={results.roamingwoodProrated}
+          subtext="(calculated January through December)"
+        />
+        <FeeBreakdownItem 
+          label="School Tax (Pro)" 
+          value={results.schoolTaxProrated}
+          subtext="(calculated July through June)"
+        />
+        <FeeBreakdownItem 
+          label="Sewer & Water (Pro)" 
+          value={results.sewerWaterProrated}
+          subtext="(calculated quarterly)"
+        />
 
         <div className="my-4 bg-yellow-50 p-4 rounded border border-yellow-200">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Cash Required to Close</h3>
@@ -117,12 +148,32 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Recording" value={results.recordingCost} />
           <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
           <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-          <FeeBreakdownItem label="Dues (Pro)" value={results.hideoutProratedDues} />
-          <FeeBreakdownItem label="City/Town Taxes (Pro)" value={results.roamingwoodProrated} />
-          <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
-          <FeeBreakdownItem label="Sewer & Water (Pro)" value={results.sewerWaterProrated} />
+          <FeeBreakdownItem 
+            label="Dues (Pro)" 
+            value={results.hideoutProratedDues}
+            subtext="(calculated January through December)"
+          />
+          <FeeBreakdownItem 
+            label="City/Town Taxes (Pro)" 
+            value={results.roamingwoodProrated}
+            subtext="(calculated January through December)"
+          />
+          <FeeBreakdownItem 
+            label="School Tax (Pro)" 
+            value={results.schoolTaxProrated}
+            subtext="(calculated July through June)"
+          />
+          <FeeBreakdownItem 
+            label="Sewer & Water (Pro)" 
+            value={results.sewerWaterProrated}
+            subtext="(calculated quarterly)"
+          />
           
-          <ResultRow label="Gap / Down Payment" value={results.gapAmount} />
+          <ResultRow 
+            label="Gap / Down Payment" 
+            subtext="Purchase Price - (Purchase Price × Financing%)"
+            value={results.gapAmount} 
+          />
           
           <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
           <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />

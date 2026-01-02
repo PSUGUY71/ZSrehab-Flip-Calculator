@@ -1,6 +1,7 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
+import { HelpTooltip } from './HelpTooltip';
 
 interface ClosingProfitCardProps {
   inputs: LoanInputs;
@@ -10,7 +11,10 @@ interface ClosingProfitCardProps {
 export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, results }) => (
   <div className="bg-teal-50 border border-teal-500 rounded p-4 shadow-sm break-inside-avoid print-color-adjust-exact print:p-2">
     <div className="flex justify-between items-center border-b border-teal-200 pb-2 mb-2 print:pb-1 print:mb-1">
-      <div className="text-teal-900 font-bold uppercase text-xs">Net Profit (Projected)</div>
+      <div className="flex flex-col">
+        <div className="text-teal-900 font-bold uppercase text-xs">Net Profit (Projected)</div>
+        <div className="text-[9px] text-teal-600 mt-0.5">ARV - Loan - Costs - Exit - Holding</div>
+      </div>
       <div className="flex items-center gap-2">
         <span className="text-xs bg-teal-200 text-teal-800 px-2 py-0.5 rounded-full shadow-sm border border-teal-300">
           {formatPercent(results.roi)} ROI
@@ -79,8 +83,11 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
       </div>
     </div>
 
-    <div className="mt-3 pt-2 border-t border-teal-200 text-[10px] text-teal-600 flex justify-between print:mt-1 print:pt-1">
-      <span>Closing Table Check (Before Holding):</span>
+    <div className="mt-3 pt-2 border-t border-teal-200 text-[10px] text-teal-600 flex justify-between items-center print:mt-1 print:pt-1">
+      <div className="flex flex-col">
+        <span>Closing Table Check (Before Holding):</span>
+        <span className="text-[9px] text-teal-500">Net Profit + Holding Costs</span>
+      </div>
       <span className="font-bold">{formatCurrency(results.closingTableProfit)}</span>
     </div>
   </div>

@@ -28,8 +28,10 @@ interface ResultsColumnProps {
   comparisonData: ComparisonDataItem[];
   bestLenderFees: number | null;
   bestMonthlyPayment: number | null;
+  originalBaselineLenderName?: string | null;
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
+  onRestoreBaseline?: () => void;
   onEditLender: (lender: LenderOption) => void;
   onDuplicateLender: (lender: LenderOption) => void;
   onDeleteLender: (id: string) => void;
@@ -42,8 +44,10 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   comparisonData,
   bestLenderFees,
   bestMonthlyPayment,
+  originalBaselineLenderName,
   onAddLender,
   onApplyLender,
+  onRestoreBaseline,
   onEditLender,
   onDuplicateLender,
   onDeleteLender,
@@ -80,8 +84,10 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
             comparisonData={comparisonData}
             bestLenderFees={bestLenderFees}
             bestMonthlyPayment={bestMonthlyPayment}
+            originalBaselineLenderName={originalBaselineLenderName}
             onAddLender={onAddLender}
             onApplyLender={onApplyLender}
+            onRestoreBaseline={onRestoreBaseline}
             onEditLender={onEditLender}
             onDuplicateLender={onDuplicateLender}
             onDeleteLender={onDeleteLender}
