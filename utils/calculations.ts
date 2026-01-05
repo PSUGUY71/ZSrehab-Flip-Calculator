@@ -4,6 +4,7 @@ import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
     purchasePrice,
+    asIsValue,
     rehabBudget,
     arv,
     financingPercentage,
@@ -28,6 +29,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     numberOfEndorsements,
     legalSettlementFees,
     recordingFees,
+    inspectionCost,
+    appraisalCost,
+    insuranceCost,
     walkerDocPrep,
     walkerOvernight,
     walkerWire,
@@ -42,6 +46,16 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     exitStrategy,
     holdingPeriodMonths,
     monthlyElectric,
+    monthlyInternet,
+    monthlyPropane,
+    includeMonthlyInsurance,
+    monthlyInsurance,
+    includeMonthlyTaxes,
+    monthlyTaxes,
+    includeYearlyWater,
+    yearlyWater,
+    includeYearlyDues,
+    yearlyDues,
     sellingCommissionRate,
     sellingTransferTaxRate,
     refinanceLTV,
@@ -92,14 +106,28 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
-  const ltv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
-  // LTC = Loan Amount / Total Project Cost
+  // LTV = Loan-to-Value = Loan Amount / Purchase Price (or As-Is Value if available)
+  // Use asIsValue if provided, otherwise use purchasePrice
+  const propertyValue = asIsValue > 0 ? asIsValue : purchasePrice;
+  const ltv = propertyValue > 0 ? (qualifiedLoanAmount / propertyValue) * 100 : 0;
+  
+  // LTC = Loan-to-Cost = Loan Amount / Total Project Cost
   // Total Project Cost = Purchase Price + Rehab Budget
-  // qualifiedLoanAmount = min(totalProjectCost, maxLoanBasedOnARV)
-  // If totalProjectCost <= maxLoanBasedOnARV: qualifiedLoanAmount = totalProjectCost, so LTC = 100%
-  // If maxLoanBasedOnARV < totalProjectCost: qualifiedLoanAmount = maxLoanBasedOnARV, so LTC < 100%
-  const ltc = totalProjectCost > 0 ? (qualifiedLoanAmount / totalProjectCost) * 100 : 0;
-  const ltarv = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0; // Loan-to-After-Repair-Value (same as LTV for clarity)
+  // Calculate actual LTC based on financing percentage (uncapped)
+  const actualLTC = totalProjectCost > 0 ? (loanAmountByFinancing / totalProjectCost) * 100 : 0;
+  // Capped LTC based on qualified loan amount (for reference)
+  const cappedLTC = totalProjectCost > 0 ? (qualifiedLoanAmount / totalProjectCost) * 100 : 0;
+  // Use actual LTC (uncapped) as the main LTC value
+  const ltc = actualLTC;
+  
+  // LTARV = Loan-to-After-Repair-Value = Loan Amount / ARV
+  // This shows the actual percentage based on financing percentage, not capped at 75%
+  // Calculate actual LTARV based on financing percentage loan amount (not the capped qualified amount)
+  const actualLoanAmountForLTARV = loanAmountByFinancing; // Use financing-based loan, not capped
+  const ltarv = arv > 0 ? (actualLoanAmountForLTARV / arv) * 100 : 0;
+  
+  // Also calculate the capped LTARV for reference (what the actual qualified loan gives)
+  const cappedLTARV = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
 
   const purchasePricePerSqFt = sqFt > 0 ? purchasePrice / sqFt : 0;
   const arvPerSqFt = sqFt > 0 ? arv / sqFt : 0;
@@ -224,6 +252,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   
   const totalWalkerFees = (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
 
+  // Inspection and Appraisal are prepaid before closing, not included in closing costs
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
@@ -232,11 +261,15 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     (legalSettlementFees || 0) + 
     totalWalkerFees +
     (recordingFees || 0) + 
+    (insuranceCost || 0) + // Insurance is due at closing
     (hideoutTransferFee || 0) + 
     (hideoutProratedDues || 0) +
     (roamingwoodProrated || 0) +
     (schoolTaxProrated || 0) +
     (sewerWaterProrated || 0);
+  
+  // Prepaid costs (paid before closing)
+  const prepaidCosts = (inspectionCost || 0) + (appraisalCost || 0) + (earnestMoneyDeposit || 0);
 
   // 7. Credits
   const sellerConcessionAmount = purchasePrice * (sellerConcessionRate / 100);
@@ -250,28 +283,72 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const totalCashToClose = totalClosingCosts + gapAmount - sellerConcessionAmount - earnestMoneyDeposit - buyerAgentCommissionCredit;
 
   // 9. Interest Calculations
+  // Use qualifiedLoanAmount (the actual loan amount that will be funded) for payment calculations
   const annualInterest = qualifiedLoanAmount * (interestRate / 100);
-  const monthlyPayment = annualInterest / 12;
+  
+  // Monthly Payment Calculation (Amortized - 30-year term)
+  // Formula: Payment = L × r ÷ (1 − (1 + r)^−n)
+  // Where: 
+  //   L = qualifiedLoanAmount (actual funded loan amount, capped at 75% of ARV if needed)
+  //   r = annual interest rate ÷ 12 ÷ 100 (monthly rate as decimal)
+  //   n = 360 (30 years × 12 months)
+  let monthlyPayment = 0;
+  if (interestRate > 0 && qualifiedLoanAmount > 0) {
+    const L = qualifiedLoanAmount; // Actual loan amount that will be funded
+    const r = interestRate / 12 / 100; // Monthly rate as decimal (e.g., 6.375 ÷ 12 ÷ 100 = 0.0053125)
+    const n = 360; // 30-year loan term (30 × 12 = 360 months)
+    
+    // Payment = L × r ÷ (1 − (1 + r)^−n)
+    const denominator = 1 - Math.pow(1 + r, -n);
+    if (denominator > 0) {
+      monthlyPayment = L * (r / denominator);
+    } else {
+      // Fallback to interest-only if denominator is invalid
+      monthlyPayment = annualInterest / 12;
+    }
+  } else {
+    // Fallback to interest-only if zero interest or zero loan
+    monthlyPayment = annualInterest / 12;
+  }
+  
   const perDiemInterest = annualInterest / 360;
 
   // 10. Profitability Analysis
-  const totalMonthlyUtilities = monthlyElectric;
+  // Calculate total monthly utilities and optional costs
+  const totalMonthlyUtilities = monthlyElectric + 
+    monthlyInternet + 
+    monthlyPropane + 
+    (includeMonthlyInsurance ? monthlyInsurance : 0) + 
+    (includeMonthlyTaxes ? monthlyTaxes : 0);
+  
+  // Calculate yearly costs (one-time costs added to grand total)
+  const yearlyWaterCost = includeYearlyWater ? yearlyWater : 0;
+  const yearlyDuesCost = includeYearlyDues ? yearlyDues : 0;
   
   // Calculate monthly interest based on progressive draws
-  // Month 1: Purchase price only
-  // Month 2: Purchase price + 25% of rehab
-  // Month 3: Purchase price + 50% of rehab
-  // Month 4: Purchase price + 75% of rehab
-  // Month 5+: Purchase price + 100% of rehab (full loan amount)
+  // Month 1: Purchase price only (based on financing percentage)
+  // Month 2: Purchase price + 25% of rehab (both based on financing percentage)
+  // Month 3: Purchase price + 50% of rehab (both based on financing percentage)
+  // Month 4: Purchase price + 75% of rehab (both based on financing percentage)
+  // Month 5+: Purchase price + 100% of rehab (full loan amount based on financing percentage)
   const calculateMonthlyInterest = (month: number): number => {
-    let drawnAmount = purchasePrice; // Month 1 starts with purchase price
+    // Calculate the loan amount for purchase price based on financing percentage
+    const purchaseLoanAmount = purchasePrice * (financingPercent / 100);
+    
+    // Month 1: Only purchase price loan amount
+    let drawnAmount = purchaseLoanAmount;
     
     if (month >= 2) {
-      const rehabDrawPercent = Math.min((month - 1) * 0.25, 1.0); // 25%, 50%, 75%, then 100%
-      drawnAmount = purchasePrice + (rehabBudget * rehabDrawPercent);
+      // Calculate rehab draw percentage (25%, 50%, 75%, then 100%)
+      const rehabDrawPercent = Math.min((month - 1) * 0.25, 1.0);
+      // Rehab loan amount based on financing percentage
+      const rehabLoanAmount = rehabBudget * (financingPercent / 100);
+      // Total drawn amount = purchase loan + (rehab loan × draw percentage)
+      drawnAmount = purchaseLoanAmount + (rehabLoanAmount * rehabDrawPercent);
     }
     
-    // Cap at qualified loan amount
+    // Cap at the actual loan amount that will be funded (qualifiedLoanAmount)
+    // This ensures we don't calculate interest on more than the actual loan
     drawnAmount = Math.min(drawnAmount, qualifiedLoanAmount);
     
     // Calculate monthly interest: (drawn amount × annual interest rate) / 12
@@ -295,7 +372,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   
   const monthlyUtilitiesCost = totalMonthlyUtilities;
   const monthlyHoldingCost = monthlyInterestPayment + totalMonthlyUtilities;
-  const totalHoldingCosts = totalInterestCosts + (totalMonthlyUtilities * holdingPeriodMonths);
+  // Total holding costs = interest + monthly utilities × months + yearly costs (one-time)
+  const totalHoldingCosts = totalInterestCosts + (totalMonthlyUtilities * holdingPeriodMonths) + yearlyWaterCost + yearlyDuesCost;
 
   let totalExitCosts = 0;
   let refinanceLoanAmount = 0;
@@ -532,8 +610,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   return {
     maxLTVPercent: MAX_LTV_PERCENT * 100,
     maxLoanAmountDollars: maxLoanBasedOnARV,
-    requestedLoanAmount: totalProjectCost,
-    qualifiedLoanAmount,
+    requestedLoanAmount: loanAmountByFinancing, // Loan amount based on financing percentage
+    qualifiedLoanAmount, // Actual loan amount (capped at 75% of ARV if needed)
     initialFundedAmount,
     holdbackAmount,
     maxAllowableOffer,
@@ -542,7 +620,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     workBackwardMaxOffer,
     ltv,
     ltc,
+    cappedLTC,
     ltarv,
+    cappedLTARV,
     
     // Metrics
     purchasePricePerSqFt,
@@ -564,6 +644,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     endorsementCost,
     legalSettlementCost: legalSettlementFees,
     recordingCost: recordingFees,
+    inspectionCost: inspectionCost || 0,
+    appraisalCost: appraisalCost || 0,
+    insuranceCost: insuranceCost || 0,
     
     // Walker
     totalWalkerFees,
@@ -587,6 +670,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalClosingCosts,
     totalCashToClose,
     gapAmount,
+    prepaidCosts,
+    totalPaidOut: prepaidCosts + totalCashToClose,
     requiredLiquidity,
     isEligible,
     eligibilityReasons,
@@ -597,6 +682,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     monthlyInterestPayment,
     monthlyUtilitiesCost,
     monthlyInterestPayments,
+    yearlyWaterCost,
+    yearlyDuesCost,
     totalExitCosts,
     netProfit,
     closingTableProfit,

@@ -102,6 +102,11 @@ export interface LoanInputs {
   legalSettlementFees: number; // General Legal
   recordingFees: number; // Line 1201
   
+  // Additional Costs
+  inspectionCost: number; // Property inspection cost
+  appraisalCost: number; // Property appraisal cost
+  insuranceCost: number; // Insurance cost
+  
   // specific fees
   walkerDocPrep: number;
   walkerOvernight: number;
@@ -119,6 +124,16 @@ export interface LoanInputs {
   exitStrategy: 'SELL' | 'REFI';
   holdingPeriodMonths: number;
   monthlyElectric: number;
+  monthlyInternet: number;
+  monthlyPropane: number;
+  includeMonthlyInsurance: boolean;
+  monthlyInsurance: number;
+  includeMonthlyTaxes: boolean;
+  monthlyTaxes: number;
+  includeYearlyWater: boolean;
+  yearlyWater: number;
+  includeYearlyDues: boolean;
+  yearlyDues: number;
   
   // Selling Scenario
   sellingCommissionRate: number;
@@ -180,8 +195,10 @@ export interface CalculatedResults {
 
   // Ratios
   ltv: number;
-  ltc: number;
-  ltarv: number;
+  ltc: number; // Actual LTC based on financing percentage (not capped)
+  cappedLTC?: number; // LTC based on qualified loan amount (capped)
+  ltarv: number; // Actual LTARV based on financing percentage (not capped)
+  cappedLTARV?: number; // LTARV based on qualified loan amount (capped at 75% of ARV)
   
   // Metrics
   purchasePricePerSqFt: number;
@@ -203,6 +220,9 @@ export interface CalculatedResults {
   endorsementCost: number; // Endorsement fees ($100 per endorsement)
   legalSettlementCost: number;
   recordingCost: number;
+  inspectionCost: number;
+  appraisalCost: number;
+  insuranceCost: number;
   
   // Walker Specifics
   totalWalkerFees: number;
@@ -228,6 +248,8 @@ export interface CalculatedResults {
   totalClosingCosts: number;
   totalCashToClose: number;
   gapAmount: number;
+  prepaidCosts: number; // Inspection + Appraisal + Earnest Money (paid before closing)
+  totalPaidOut: number; // Prepaid costs + Cash to Close
   
   // Proof of Funds Requirements
   requiredLiquidity: number;
@@ -241,6 +263,8 @@ export interface CalculatedResults {
   monthlyHoldingCost: number; // Monthly total (interest + utilities) - average
   monthlyInterestPayment: number; // Monthly loan interest payment - average
   monthlyUtilitiesCost: number; // Monthly utilities cost
+  yearlyWaterCost: number; // Yearly water cost (if included)
+  yearlyDuesCost: number; // Yearly dues cost (if included)
   monthlyInterestPayments: number[]; // Array of monthly interest payments (progressive draws)
   totalExitCosts: number;
   netProfit: number;
@@ -323,6 +347,11 @@ export const DEFAULT_INPUTS: LoanInputs = {
   walkerWire: 0,
   
   recordingFees: 0,
+  
+  // Additional Costs
+  inspectionCost: 0,
+  appraisalCost: 0,
+  insuranceCost: 0,
 
   hideoutTransferFee: 0,
   hideoutAnnualFee: 0,
@@ -334,6 +363,16 @@ export const DEFAULT_INPUTS: LoanInputs = {
   exitStrategy: 'SELL',
   holdingPeriodMonths: 6,
   monthlyElectric: 0,
+  monthlyInternet: 0,
+  monthlyPropane: 0,
+  includeMonthlyInsurance: false,
+  monthlyInsurance: 0,
+  includeMonthlyTaxes: false,
+  monthlyTaxes: 0,
+  includeYearlyWater: false,
+  yearlyWater: 0,
+  includeYearlyDues: false,
+  yearlyDues: 0,
   sellingCommissionRate: 0,
   sellingTransferTaxRate: 0,
 

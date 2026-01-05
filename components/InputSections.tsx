@@ -516,38 +516,47 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <span>Less: Rehab Budget</span>
                   <span>-{formatCurrency(inputs.rehabBudget)}</span>
                 </div>
-                {exceedsMax && (
-                  <div className="bg-red-100 border border-red-300 rounded p-2 space-y-2">
-                    <div className="text-xs text-red-700 font-semibold text-center">
-                      ⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer
-                    </div>
-                    <div className="text-[10px] text-red-600 font-medium mt-2">Required ARV to make this deal work (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
-                    <div className="grid grid-cols-2 gap-1.5 mt-1">
-                      {ltvOptions.map((option) => {
-                        const requiredARV = calculateRequiredARV(option.value);
-                        const currentARV = inputs.arv || 0;
-                        const difference = requiredARV - currentARV; // How much higher ARV needs to be
-                        return (
-                          <div key={option.value} className="bg-white border border-red-200 rounded p-1.5">
-                            <div className="text-[9px] text-red-600 font-semibold">{option.label} ARV:</div>
-                            <div className="text-[10px] text-red-700 font-bold">{formatCurrency(requiredARV)}</div>
-                            {currentARV > 0 && difference !== 0 && (
-                              <div className={`text-[9px] font-semibold ${difference > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                {difference > 0 ? `+${formatCurrency(difference)} higher` : `${formatCurrency(difference)} lower`}
-                              </div>
-                            )}
-                            {currentARV > 0 && difference === 0 && (
-                              <div className="text-[9px] text-green-600 font-semibold">✓ Current ARV works</div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="text-[9px] text-red-600 mt-1.5 text-center border-t border-red-200 pt-1.5">
-                      Current Est. ARV: {formatCurrency(inputs.arv || 0)}
-                    </div>
+                
+                {/* Always show current ARV and required ARV for each percentage */}
+                <div className={`${exceedsMax ? 'bg-red-100 border border-red-300' : 'bg-blue-50 border border-blue-200'} rounded p-2 space-y-2 mt-2`}>
+                  <div className={`text-xs font-semibold text-center ${exceedsMax ? 'text-red-700' : 'text-blue-700'}`}>
+                    {exceedsMax ? (
+                      <>⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer</>
+                    ) : (
+                      <>Current Purchase Price: {formatCurrency(inputs.purchasePrice)}</>
+                    )}
                   </div>
-                )}
+                  <div className="text-[10px] font-medium text-center border-b pb-1.5 mb-1.5">
+                    <span className="font-bold">Current Est. ARV: {formatCurrency(inputs.arv || 0)}</span>
+                  </div>
+                  <div className="text-[10px] font-medium mt-2">Required ARV for each percentage (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
+                  <div className="grid grid-cols-2 gap-1.5 mt-1">
+                    {ltvOptions.map((option) => {
+                      const requiredARV = calculateRequiredARV(option.value);
+                      const currentARV = inputs.arv || 0;
+                      const difference = requiredARV - currentARV; // How much higher ARV needs to be
+                      const isSelected = maxOfferLTVPercent === option.value;
+                      return (
+                        <div key={option.value} className={`bg-white border rounded p-1.5 ${isSelected ? 'border-blue-400 ring-1 ring-blue-300' : exceedsMax ? 'border-red-200' : 'border-gray-200'}`}>
+                          <div className={`text-[9px] font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}>
+                            {option.label} ARV: {isSelected && '(Selected)'}
+                          </div>
+                          <div className={`text-[10px] font-bold ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+                            {formatCurrency(requiredARV)}
+                          </div>
+                          {currentARV > 0 && difference !== 0 && (
+                            <div className={`text-[9px] font-semibold ${difference > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                              {difference > 0 ? `+${formatCurrency(difference)} higher` : `${formatCurrency(Math.abs(difference))} lower`}
+                            </div>
+                          )}
+                          {currentARV > 0 && difference === 0 && (
+                            <div className="text-[9px] text-green-600 font-semibold">✓ Current ARV works</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             );
           })()}
@@ -659,6 +668,34 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               onChange={(v) => onInputChange('recordingFees', v)} 
               prefix="$"
               helpText="Government recording fees"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <InputGroup 
+              label="Inspection Cost" 
+              id="inspectionCost" 
+              value={inputs.inspectionCost} 
+              onChange={(v) => onInputChange('inspectionCost', v)} 
+              prefix="$"
+              helpText="Property inspection cost"
+            />
+            <InputGroup 
+              label="Appraisal Cost" 
+              id="appraisalCost" 
+              value={inputs.appraisalCost} 
+              onChange={(v) => onInputChange('appraisalCost', v)} 
+              prefix="$"
+              helpText="Property appraisal cost"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <InputGroup 
+              label="Insurance Cost" 
+              id="insuranceCost" 
+              value={inputs.insuranceCost} 
+              onChange={(v) => onInputChange('insuranceCost', v)} 
+              prefix="$"
+              helpText="Insurance cost"
             />
             <InputGroup 
               label="Transfer Tax Rate" 
@@ -888,6 +925,125 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               prefix="$"
               helpText="Monthly electric utility cost during holding period"
             />
+            <InputGroup 
+              label="Mo. Internet" 
+              id="internet" 
+              value={inputs.monthlyInternet || 0} 
+              onChange={(v) => onInputChange('monthlyInternet', v)} 
+              prefix="$"
+              helpText="Monthly internet cost during holding period"
+            />
+            <InputGroup 
+              label="Mo. Propane" 
+              id="propane" 
+              value={inputs.monthlyPropane || 0} 
+              onChange={(v) => onInputChange('monthlyPropane', v)} 
+              prefix="$"
+              helpText="Monthly propane cost during holding period"
+            />
+          </div>
+          
+          {/* Optional Monthly Costs */}
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeMonthlyInsurance"
+                checked={inputs.includeMonthlyInsurance}
+                onChange={(e) => onInputChange('includeMonthlyInsurance', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="includeMonthlyInsurance" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                Add Monthly Insurance
+              </label>
+            </div>
+            {inputs.includeMonthlyInsurance && (
+              <div className="ml-6">
+                <InputGroup 
+                  label="Monthly Insurance" 
+                  id="monthlyInsurance" 
+                  value={inputs.monthlyInsurance} 
+                  onChange={(v) => onInputChange('monthlyInsurance', v)} 
+                  prefix="$"
+                  helpText="Monthly insurance cost during holding period"
+                />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeMonthlyTaxes"
+                checked={inputs.includeMonthlyTaxes}
+                onChange={(e) => onInputChange('includeMonthlyTaxes', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="includeMonthlyTaxes" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                Add Monthly Taxes
+              </label>
+            </div>
+            {inputs.includeMonthlyTaxes && (
+              <div className="ml-6">
+                <InputGroup 
+                  label="Monthly Taxes" 
+                  id="monthlyTaxes" 
+                  value={inputs.monthlyTaxes} 
+                  onChange={(v) => onInputChange('monthlyTaxes', v)} 
+                  prefix="$"
+                  helpText="Monthly property tax cost during holding period"
+                />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeYearlyWater"
+                checked={inputs.includeYearlyWater || false}
+                onChange={(e) => onInputChange('includeYearlyWater', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="includeYearlyWater" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                Add Yearly Water
+              </label>
+            </div>
+            {inputs.includeYearlyWater && (
+              <div className="ml-6">
+                <InputGroup 
+                  label="Yearly Water" 
+                  id="yearlyWater" 
+                  value={inputs.yearlyWater || 0} 
+                  onChange={(v) => onInputChange('yearlyWater', v)} 
+                  prefix="$"
+                  helpText="Yearly water cost (one-time, added to grand total)"
+                />
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeYearlyDues"
+                checked={inputs.includeYearlyDues || false}
+                onChange={(e) => onInputChange('includeYearlyDues', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="includeYearlyDues" className="text-sm font-semibold text-gray-700 cursor-pointer">
+                Add Yearly Dues
+              </label>
+            </div>
+            {inputs.includeYearlyDues && (
+              <div className="ml-6">
+                <InputGroup 
+                  label="Yearly Dues" 
+                  id="yearlyDues" 
+                  value={inputs.yearlyDues || 0} 
+                  onChange={(v) => onInputChange('yearlyDues', v)} 
+                  prefix="$"
+                  helpText="Yearly dues cost (one-time, added to grand total)"
+                />
+              </div>
+            )}
           </div>
           <div className="mt-4 grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded border border-yellow-100">
             <InputGroup 
@@ -930,63 +1086,203 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </h3>
             <div className="space-y-3">
               {/* Monthly Interest Breakdown */}
-              <div>
-                <div className="text-xs font-semibold text-gray-700 mb-2">Loan Interest (Progressive Draws):</div>
-                <div className="bg-white rounded border border-blue-100 p-2 space-y-1 max-h-48 overflow-y-auto">
-                  {results.monthlyInterestPayments && results.monthlyInterestPayments.length > 0 ? (
-                    results.monthlyInterestPayments.map((interest, index) => {
-                      const month = index + 1;
-                      let drawDescription = '';
-                      if (month === 1) {
-                        drawDescription = 'Purchase price only';
-                      } else if (month === 2) {
-                        drawDescription = 'Purchase + 25% rehab';
-                      } else if (month === 3) {
-                        drawDescription = 'Purchase + 50% rehab';
-                      } else if (month === 4) {
-                        drawDescription = 'Purchase + 75% rehab';
-                      } else {
-                        drawDescription = 'Purchase + 100% rehab (full)';
-                      }
-                      return (
-                        <div key={month} className="flex justify-between items-center text-xs">
-                          <div className="flex flex-col">
-                            <span className="text-gray-700">Month {month}</span>
-                            <span className="text-[10px] text-gray-500">{drawDescription}</span>
+              {inputs.rehabBudget > 0 ? (
+                <div>
+                  <div className="text-xs font-semibold text-gray-700 mb-2">Loan Interest (Progressive Draws):</div>
+                  <div className="bg-white rounded border border-blue-100 p-2 space-y-1 max-h-48 overflow-y-auto">
+                    {results.monthlyInterestPayments && results.monthlyInterestPayments.length > 0 ? (
+                      results.monthlyInterestPayments.map((interest, index) => {
+                        const month = index + 1;
+                        let drawDescription = '';
+                        if (month === 1) {
+                          drawDescription = 'Purchase price only';
+                        } else if (month === 2) {
+                          drawDescription = 'Purchase + 25% rehab';
+                        } else if (month === 3) {
+                          drawDescription = 'Purchase + 50% rehab';
+                        } else if (month === 4) {
+                          drawDescription = 'Purchase + 75% rehab';
+                        } else {
+                          drawDescription = 'Purchase + 100% rehab (full)';
+                        }
+                        return (
+                          <div key={month} className="flex justify-between items-center text-xs">
+                            <div className="flex flex-col">
+                              <span className="text-gray-700">Month {month}</span>
+                              <span className="text-[10px] text-gray-500">{drawDescription}</span>
+                            </div>
+                            <span className="font-semibold text-gray-900">{formatCurrency(interest)}</span>
                           </div>
-                          <span className="font-semibold text-gray-900">{formatCurrency(interest)}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-xs text-gray-500">No interest payments</div>
-                  )}
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-gray-500">No interest payments</div>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-blue-200">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Monthly Mortgage Payment</span>
+                      <span className="text-[10px] text-gray-500">Principal + Interest</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-blue-200">
-                  <span className="text-gray-700 font-medium">Total Interest</span>
-                  <span className="font-bold text-gray-900">
-                    {formatCurrency(results.monthlyInterestPayments?.reduce((sum, val) => sum + val, 0) || 0)}
-                  </span>
+              ) : (
+                <div>
+                  <div className="text-xs font-semibold text-gray-700 mb-2">Monthly Mortgage Payment:</div>
+                  <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Monthly Payment</span>
+                      <span className="text-[10px] text-gray-500">Principal + Interest</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
               
-              {/* Utilities */}
-              <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200">
-                <div className="flex flex-col">
-                  <span className="text-gray-700 font-medium">Utilities (Electric)</span>
-                  <span className="text-[10px] text-gray-500">Monthly cost</span>
+              {/* Utilities and Optional Costs */}
+              <div className="space-y-2 pt-2 border-t border-blue-200">
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-gray-700 font-medium">Utilities (Electric)</span>
+                    <span className="text-[10px] text-gray-500">Monthly cost</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyElectric)}</div>
+                    <div className="text-[10px] text-gray-600">
+                      {formatCurrency(inputs.monthlyElectric * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold text-gray-900">{formatCurrency(results.monthlyUtilitiesCost)}</div>
-                  <div className="text-[10px] text-gray-600">
-                    {formatCurrency(results.monthlyUtilitiesCost * inputs.holdingPeriodMonths)} total
+                
+                {(inputs.monthlyInternet || 0) > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Internet</span>
+                      <span className="text-[10px] text-gray-500">Monthly cost</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyInternet || 0)}</div>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency((inputs.monthlyInternet || 0) * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {(inputs.monthlyPropane || 0) > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Propane</span>
+                      <span className="text-[10px] text-gray-500">Monthly cost</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyPropane || 0)}</div>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency((inputs.monthlyPropane || 0) * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {inputs.includeMonthlyInsurance && (
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Insurance</span>
+                      <span className="text-[10px] text-gray-500">Monthly cost</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency(inputs.monthlyInsurance * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {inputs.includeMonthlyTaxes && (
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex flex-col">
+                      <span className="text-gray-700 font-medium">Taxes</span>
+                      <span className="text-[10px] text-gray-500">Monthly cost</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyTaxes)}</div>
+                      <div className="text-[10px] text-gray-600">
+                        {formatCurrency(inputs.monthlyTaxes * inputs.holdingPeriodMonths)} total
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-100">
+                  <div className="flex flex-col">
+                    <span className="text-gray-700 font-medium">Total Monthly Utilities & Costs</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold text-gray-900">{formatCurrency(results.monthlyUtilitiesCost)}</div>
+                    <div className="text-[10px] text-gray-600">
+                      {formatCurrency(results.monthlyUtilitiesCost * inputs.holdingPeriodMonths)} total
+                    </div>
                   </div>
                 </div>
               </div>
               
+              {/* Monthly Total Cost */}
+              <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200">
+                <div className="flex flex-col">
+                  <span className="text-gray-700 font-semibold">Total Monthly Cost</span>
+                  <span className="text-[10px] text-gray-500">Payment + Electric (Insurance & Taxes in Payment)</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-blue-600 text-base">
+                    {formatCurrency(
+                      results.monthlyPayment + 
+                      (inputs.includeMonthlyInsurance ? (inputs.monthlyInsurance || 0) : 0) + 
+                      (inputs.includeMonthlyTaxes ? (inputs.monthlyTaxes || 0) : 0) +
+                      (inputs.monthlyElectric || 0)
+                    )}
+                  </div>
+                  <div className="text-[10px] text-gray-600">
+                    per month
+                  </div>
+                </div>
+              </div>
+              
+              {/* Yearly Costs (if included) */}
+              {(results.yearlyWaterCost > 0 || results.yearlyDuesCost > 0) && (
+                <div className="space-y-2 pt-2 border-t border-blue-200">
+                  {results.yearlyWaterCost > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-700 font-medium">Yearly Water</span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(results.yearlyWaterCost)}</span>
+                    </div>
+                  )}
+                  {results.yearlyDuesCost > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-700 font-medium">Yearly Dues</span>
+                      <span className="font-semibold text-gray-900">{formatCurrency(results.yearlyDuesCost)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Grand Total */}
               <div className="border-t border-blue-300 pt-2 mt-2 flex justify-between items-center">
-                <span className="font-bold text-blue-900 uppercase text-sm">Grand Total</span>
+                <div className="flex flex-col">
+                  <span className="font-bold text-blue-900 uppercase text-sm">Grand Total (Annual)</span>
+                  <span className="text-[10px] text-gray-500">Includes one-time fees (water & dues)</span>
+                </div>
                 <div className="text-right">
                   <div className="font-bold text-blue-700 text-lg">{formatCurrency(results.totalHoldingCosts)}</div>
                   <div className="text-xs text-blue-600 font-semibold">

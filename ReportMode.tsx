@@ -244,6 +244,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
               <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
               <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+              <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
               <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
               <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
               <FeeBreakdownItem 
@@ -273,14 +274,39 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 subtext="Purchase Price - (Purchase Price × Financing%)"
               />
               <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
-              <ResultRow label="Earnest Deposit" value={inputs.earnestMoneyDeposit * -1} />
               {results.buyerAgentCommissionCredit > 0 && (
                 <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
               )}
               <div className="flex justify-between border-t border-gray-300 pt-1 mt-1 font-bold text-sm print:text-xs">
-                <span>{results.totalCashToClose >= 0 ? 'Cash to Close' : 'Cash Back'}</span>
+                <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
                 <span>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
               </div>
+              
+              {/* Prepaid Costs Section */}
+              <div className="mt-3 pt-3 border-t border-gray-300">
+                <div className="text-xs font-semibold text-gray-600 uppercase mb-2 print:text-[9px]">Prepaid Before Closing</div>
+                <FeeBreakdownItem label="Inspection" value={results.inspectionCost} />
+                <FeeBreakdownItem label="Appraisal" value={results.appraisalCost} />
+                <FeeBreakdownItem label="Earnest Money Deposit" value={inputs.earnestMoneyDeposit} />
+                <div className="flex justify-between font-bold text-sm pt-2 mt-2 border-t border-gray-200 text-gray-800 print:text-[10px]">
+                  <span>Total Prepaid</span>
+                  <span>{formatCurrency(results.prepaidCosts)}</span>
+                </div>
+              </div>
+              
+              {/* Total Paid Out */}
+              <div className="mt-3 pt-3 border-t-2 border-gray-400">
+                <div className="flex justify-between font-bold text-base pt-2 text-gray-900 print:text-sm">
+                  <span>Total Paid Out</span>
+                  <span className="text-blue-600">
+                    {formatCurrency(results.totalPaidOut)}
+                  </span>
+                </div>
+                <div className="text-[10px] text-gray-500 mt-1 print:text-[8px]">
+                  (Prepaid + Due at Closing)
+                </div>
+              </div>
+              
               <div className="flex justify-between text-[10px] text-gray-500 mt-1">
                 <span>Req. Liquidity:</span>
                 <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
@@ -298,63 +324,164 @@ export const ReportMode: React.FC<ReportModeProps> = ({
           </div>
           <div className="p-3 space-y-3 text-xs print:text-[10px] print:p-1 print:space-y-1">
             {/* Monthly Interest Breakdown */}
-            <div>
-              <div className="text-[10px] font-semibold text-gray-700 mb-2 print:text-[9px] print:mb-1">Loan Interest (Progressive Draws):</div>
-              <div className="bg-white rounded border border-gray-200 p-2 space-y-1 max-h-48 overflow-y-auto print:p-1 print:max-h-none">
-                {results.monthlyInterestPayments && results.monthlyInterestPayments.length > 0 ? (
-                  results.monthlyInterestPayments.map((interest, index) => {
-                    const month = index + 1;
-                    let drawDescription = '';
-                    if (month === 1) {
-                      drawDescription = 'Purchase price only';
-                    } else if (month === 2) {
-                      drawDescription = 'Purchase + 25% rehab';
-                    } else if (month === 3) {
-                      drawDescription = 'Purchase + 50% rehab';
-                    } else if (month === 4) {
-                      drawDescription = 'Purchase + 75% rehab';
-                    } else {
-                      drawDescription = 'Purchase + 100% rehab (full)';
-                    }
-                    return (
-                      <div key={month} className="flex justify-between items-center text-[10px] print:text-[9px]">
-                        <div className="flex flex-col">
-                          <span className="text-gray-700 font-medium">Month {month}</span>
-                          <span className="text-[9px] text-gray-500 print:text-[8px]">{drawDescription}</span>
+            {inputs.rehabBudget > 0 ? (
+              <div>
+                <div className="text-[10px] font-semibold text-gray-700 mb-2 print:text-[9px] print:mb-1">Loan Interest (Progressive Draws):</div>
+                <div className="bg-white rounded border border-gray-200 p-2 space-y-1 max-h-48 overflow-y-auto print:p-1 print:max-h-none">
+                  {results.monthlyInterestPayments && results.monthlyInterestPayments.length > 0 ? (
+                    results.monthlyInterestPayments.map((interest, index) => {
+                      const month = index + 1;
+                      let drawDescription = '';
+                      if (month === 1) {
+                        drawDescription = 'Purchase price only';
+                      } else if (month === 2) {
+                        drawDescription = 'Purchase + 25% rehab';
+                      } else if (month === 3) {
+                        drawDescription = 'Purchase + 50% rehab';
+                      } else if (month === 4) {
+                        drawDescription = 'Purchase + 75% rehab';
+                      } else {
+                        drawDescription = 'Purchase + 100% rehab (full)';
+                      }
+                      return (
+                        <div key={month} className="flex justify-between items-center text-[10px] print:text-[9px]">
+                          <div className="flex flex-col">
+                            <span className="text-gray-700 font-medium">Month {month}</span>
+                            <span className="text-[9px] text-gray-500 print:text-[8px]">{drawDescription}</span>
+                          </div>
+                          <span className="font-semibold text-gray-900">{formatCurrency(interest)}</span>
                         </div>
-                        <span className="font-semibold text-gray-900">{formatCurrency(interest)}</span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-[10px] text-gray-500 print:text-[9px]">No interest payments</div>
-                )}
+                      );
+                    })
+                  ) : (
+                    <div className="text-[10px] text-gray-500 print:text-[9px]">No interest payments</div>
+                  )}
+                </div>
+                <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-gray-200 print:text-[10px] print:mt-1 print:pt-1">
+                  <div className="flex flex-col">
+                    <span className="text-gray-700 font-semibold">Monthly Mortgage Payment</span>
+                    <span className="text-[9px] text-gray-500 print:text-[8px]">Principal + Interest</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex justify-between items-center text-xs mt-2 pt-2 border-t border-gray-200 print:text-[10px] print:mt-1 print:pt-1">
-                <span className="text-gray-700 font-semibold">Total Interest</span>
-                <span className="font-bold text-gray-900">
-                  {formatCurrency(results.monthlyInterestPayments?.reduce((sum, val) => sum + val, 0) || 0)}
-                </span>
+            ) : (
+              <div>
+                <div className="text-[10px] font-semibold text-gray-700 mb-2 print:text-[9px] print:mb-1">Monthly Mortgage Payment:</div>
+                <div className="flex justify-between items-center text-xs pt-2 border-t border-gray-200 print:text-[10px] print:pt-1">
+                  <div className="flex flex-col">
+                    <span className="text-gray-700 font-semibold">Monthly Payment</span>
+                    <span className="text-[9px] text-gray-500 print:text-[8px]">Principal + Interest</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Utilities */}
-            <div className="flex justify-between items-center pt-2 border-t border-gray-200 print:pt-1">
-              <div>
-                <div className="font-semibold text-gray-700">Utilities (Electric)</div>
-                <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+            <div className="space-y-2 pt-2 border-t border-gray-200 print:pt-1">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-semibold text-gray-700">Utilities (Electric)</div>
+                  <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyElectric)}</div>
+                  <div className="text-[9px] text-gray-600 print:text-[8px]">
+                    {formatCurrency(inputs.monthlyElectric * inputs.holdingPeriodMonths)} total
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-gray-900">{formatCurrency(results.monthlyUtilitiesCost)}</div>
-                <div className="text-[9px] text-gray-600 print:text-[8px]">
-                  {formatCurrency(results.monthlyUtilitiesCost * inputs.holdingPeriodMonths)} total
+              
+              {(inputs.monthlyInternet || 0) > 0 && (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-gray-700">Internet</div>
+                    <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyInternet || 0)}</div>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency((inputs.monthlyInternet || 0) * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {(inputs.monthlyPropane || 0) > 0 && (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-gray-700">Propane</div>
+                    <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyPropane || 0)}</div>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency((inputs.monthlyPropane || 0) * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {inputs.includeMonthlyInsurance && (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-gray-700">Insurance</div>
+                    <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency(inputs.monthlyInsurance * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {inputs.includeMonthlyTaxes && (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold text-gray-700">Taxes</div>
+                    <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyTaxes)}</div>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      {formatCurrency(inputs.monthlyTaxes * inputs.holdingPeriodMonths)} total
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200 print:pt-1">
+                <div>
+                  <div className="font-semibold text-gray-700">Total Monthly Utilities & Costs</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-gray-900">{formatCurrency(results.monthlyUtilitiesCost)}</div>
+                  <div className="text-[9px] text-gray-600 print:text-[8px]">
+                    {formatCurrency(results.monthlyUtilitiesCost * inputs.holdingPeriodMonths)} total
+                  </div>
                 </div>
               </div>
             </div>
             
             {/* Grand Total */}
             <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between items-center">
-              <span className="font-bold text-blue-900 uppercase">Grand Total</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-blue-900 uppercase">Grand Total (Annual)</span>
+                <span className="text-[9px] text-gray-500 print:text-[8px]">Includes one-time fees (water & dues)</span>
+              </div>
               <div className="text-right">
                 <div className="font-bold text-blue-700 text-sm print:text-xs">{formatCurrency(results.totalHoldingCosts)}</div>
                 <div className="text-[9px] text-blue-600 font-semibold print:text-[8px]">

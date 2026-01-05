@@ -543,6 +543,7 @@ const App: React.FC = () => {
       console.log('⚠️ Prevented loading deal during login clear');
       return;
     }
+    
     // Merge with DEFAULT_INPUTS to ensure all fields are present (especially new fields added after deal was saved)
     const loadedInputs = { ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' };
     setInputs(loadedInputs);
@@ -552,6 +553,51 @@ const App: React.FC = () => {
     setOriginalBaselineLenderName(deal.data.lenderName || null);
     setOriginalBaselineInputs({ ...loadedInputs }); // Store loaded inputs as baseline
     setIsDealModalOpen(false);
+  };
+
+  const handleCloneDeal = async (deal: SavedDeal) => {
+    if (!currentUser) return;
+    
+    // Create a cloned deal with a new name and ID
+    const clonedDeal: SavedDeal = {
+      id: isSupabaseConfigured && supabase && currentUser.id !== 'local' 
+        ? crypto.randomUUID() // Use UUID for Supabase
+        : Date.now(), // Use timestamp for localStorage
+      name: `${deal.name} (Copy)`,
+      date: new Date().toLocaleDateString(),
+      data: { ...deal.data }, // Deep copy of the deal data
+      lenders: deal.lenders ? deal.lenders.map(l => ({ ...l })) : [], // Deep copy lenders array
+    };
+    
+    try {
+      if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+        await saveDeal(clonedDeal, currentUser.id);
+        // Reload deals from Supabase
+        const deals = await getDeals();
+        setSavedDeals(deals);
+      } else {
+        // Save to localStorage
+        const updatedDeals = [clonedDeal, ...savedDeals];
+        localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updatedDeals));
+        setSavedDeals(updatedDeals);
+      }
+      
+      setSaveNotification("Deal Cloned!");
+      setTimeout(() => setSaveNotification(null), 2000);
+      
+      // Optionally load the cloned deal into the current inputs
+      const loadedInputs = { ...DEFAULT_INPUTS, ...clonedDeal.data, exitStrategy: 'SELL' };
+      setInputs(loadedInputs);
+      setLenders(clonedDeal.lenders || []);
+      setCurrentDealId(clonedDeal.id);
+      setOriginalBaselineLenderName(clonedDeal.data.lenderName || null);
+      setOriginalBaselineInputs({ ...loadedInputs });
+      setIsDealModalOpen(false);
+    } catch (error) {
+      console.error('Failed to clone deal:', error);
+      setSaveNotification("Failed to clone deal");
+      setTimeout(() => setSaveNotification(null), 2000);
+    }
   };
 
   const handleDeleteDeal = async (id: number | string, e: React.MouseEvent) => {
@@ -907,6 +953,7 @@ const App: React.FC = () => {
           savedDeals={savedDeals}
           onLoadDeal={handleLoadDeal}
           onDeleteDeal={handleDeleteDeal}
+          onCloneDeal={handleCloneDeal}
           onClose={() => setIsDealModalOpen(false)}
         />
       )}
