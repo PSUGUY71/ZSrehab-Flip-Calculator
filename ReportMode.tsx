@@ -69,9 +69,9 @@ export const ReportMode: React.FC<ReportModeProps> = ({
       </div>
 
       {/* The Physical Sheet */}
-      <div className="sheet shadow-2xl print:shadow-none print:pb-12">
+      <div className="sheet shadow-2xl print:shadow-none print:pb-0" style={{ pageBreakBefore: 'auto' }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b-2 border-blue-900 pb-4 mb-6 print:pb-1 print:mb-1">
+        <div className="flex items-center justify-between border-b-2 border-blue-900 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ pageBreakAfter: 'avoid' }}>
           <div className="flex items-center gap-4">
             <div className="bg-blue-900 text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg">ZS</div>
             <div>
@@ -91,7 +91,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
         </div>
 
         {/* 1. Top Summary Grid */}
-        <div className="grid grid-cols-3 gap-6 mb-8 break-inside-avoid print:gap-2 print:mb-1">
+        <div className="grid grid-cols-3 gap-6 mb-4 print:gap-2 print:mb-0 print:mt-0">
           <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 print-color-adjust-exact break-inside-avoid shadow-sm print:p-1">
             <h3 className="font-bold text-gray-900 text-sm uppercase border-b border-gray-300 pb-2 mb-3 print:mb-1 print:pb-1 print:text-[10px]">Deal Structure</h3>
             <div className="space-y-2 text-sm print:space-y-1 print:text-[10px]">
@@ -149,24 +149,11 @@ export const ReportMode: React.FC<ReportModeProps> = ({
           </div>
         </div>
 
-        {/* Notes if any */}
-        {inputs.notes && (
-          <div className="mb-6 bg-yellow-50 p-3 border border-yellow-200 rounded print-color-adjust-exact text-xs break-inside-avoid print:mb-1 print:p-1">
-            <span className="font-bold text-gray-900 uppercase mr-2">Notes:</span>
-            {inputs.notes}
-          </div>
-        )}
-
-        {/* Eligibility Alert */}
-        <div className="mb-6 break-inside-avoid print:mb-1">
-          <EligibilityAlert results={results} />
-        </div>
-
-        {/* 70% Rule Analysis */}
-        <div className="mb-6 border border-gray-300 rounded break-inside-avoid print:mb-1 print-color-adjust-exact">
-          <div className="bg-gray-800 px-4 py-2 text-white font-bold text-xs uppercase print-color-adjust-exact print:py-1 print:text-[10px] flex justify-between items-center">
+        {/* 70% Rule Analysis - compact version for first page */}
+        <div className="mb-2 border border-gray-300 rounded print-color-adjust-exact print:mb-0.5 print:mt-0.5">
+          <div className="bg-gray-800 px-3 py-1.5 text-white font-bold text-xs uppercase print-color-adjust-exact print:py-0.5 print:text-[9px] flex justify-between items-center">
             <span>70% Rule Analysis</span>
-            <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase print:text-[9px] ${
+            <div className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase print:text-[8px] ${
               results.passes70Rule 
                 ? 'bg-green-500 text-white' 
                 : 'bg-red-500 text-white'
@@ -174,49 +161,52 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               {results.passes70Rule ? '✓ Pass' : '✗ Fail'}
             </div>
           </div>
-          <div className="p-3 space-y-2 text-xs print:text-[10px] print:p-1 print:space-y-1">
+          <div className="p-2 space-y-1 text-xs print:text-[9px] print:p-1 print:space-y-0.5">
             <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-700">70% Rule Max Purchase Price</span>
-              <span className={`text-base font-bold print:text-sm ${results.passes70Rule ? 'text-green-600' : 'text-red-600'}`}>
+              <span className="font-semibold text-gray-700 text-[10px] print:text-[9px]">70% Rule Max:</span>
+              <span className={`text-sm font-bold print:text-xs ${results.passes70Rule ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(results.maxPurchasePrice70Rule)}
               </span>
             </div>
-            <div className="flex justify-between items-center text-[10px] text-gray-600 print:text-[9px]">
-              <span>Your Purchase Price</span>
+            <div className="flex justify-between items-center text-[9px] text-gray-600 print:text-[8px]">
+              <span>Your Price:</span>
               <span className="font-medium">{formatCurrency(inputs.purchasePrice)}</span>
             </div>
             {!results.passes70Rule && (
-              <div className="bg-red-50 border border-red-200 rounded p-2 print:p-1">
-                <div className="text-[10px] text-red-700 font-semibold print:text-[9px]">
-                  ⚠️ You are {formatCurrency(Math.abs(inputs.purchasePrice - results.maxPurchasePrice70Rule))} over the 70% Rule
-                </div>
-                <div className="text-[9px] text-red-600 mt-1 print:text-[8px]">
-                  This may impact profitability. Review your numbers carefully.
-                </div>
+              <div className="text-[9px] text-red-700 font-semibold print:text-[8px]">
+                ⚠️ {formatCurrency(Math.abs(inputs.purchasePrice - results.maxPurchasePrice70Rule))} over limit
               </div>
             )}
             {results.passes70Rule && (
-              <div className="bg-green-50 border border-green-200 rounded p-2 print:p-1">
-                <div className="text-[10px] text-green-700 font-semibold print:text-[9px]">
-                  ✓ Purchase price is within the 70% Rule guideline
-                </div>
+              <div className="text-[9px] text-green-700 font-semibold print:text-[8px]">
+                ✓ Within guideline
               </div>
             )}
-            <div className="text-[9px] text-gray-500 pt-2 border-t border-gray-200 print:text-[8px] print:pt-1">
-              Formula: (ARV × 70%) - Rehab Budget
-            </div>
           </div>
         </div>
 
-        {/* 2. Loan Estimate */}
-        <div className="border border-gray-300 break-inside-avoid">
-          <div className="bg-gray-800 text-white font-bold p-1 text-center text-xs uppercase print-color-adjust-exact">Loan Estimate</div>
-          <div className="p-2 space-y-3 text-xs print:space-y-1 print:p-1">
-            <div>
-              <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Funds</h4>
-              <ResultRow label="Total Loan" value={results.qualifiedLoanAmount} />
-              <ResultRow label="Initial Funding" value={results.initialFundedAmount} />
-              <ResultRow label="Rehab Holdback" value={results.holdbackAmount} />
+        {/* Eligibility Alert - compact */}
+        <div className="mb-2 print:mb-0.5 print:mt-0.5">
+          <EligibilityAlert results={results} />
+        </div>
+
+        {/* Notes if any - compact */}
+        {inputs.notes && (
+          <div className="mb-2 bg-yellow-50 p-2 border border-yellow-200 rounded print-color-adjust-exact text-xs print:mb-0.5 print:p-1 print:mt-0.5">
+            <span className="font-bold text-gray-900 uppercase mr-2 text-[10px] print:text-[9px]">Notes:</span>
+            <span className="text-[10px] print:text-[9px]">{inputs.notes}</span>
+          </div>
+        )}
+
+        {/* 2. Loan Estimate - allow it to start on first page */}
+        <div className="border border-gray-300 print:mt-0.5">
+            <div className="bg-gray-800 text-white font-bold p-1 text-center text-xs uppercase print-color-adjust-exact">Loan Estimate</div>
+            <div className="p-2 space-y-3 text-xs print:space-y-1 print:p-1">
+              <div>
+                <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Funds</h4>
+                <ResultRow label="Total Loan" value={results.qualifiedLoanAmount} />
+                <ResultRow label="Initial Funding" value={results.initialFundedAmount} />
+                <ResultRow label="Rehab Holdback" value={results.holdbackAmount} />
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <div className="flex justify-between">
                   <span>LTV / LTARV</span>
@@ -227,26 +217,26 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <span className="font-bold">{results.ltc.toFixed(2)}%</span>
                 </div>
               </div>
-            </div>
-            <div>
-              <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
-              <ResultRow label="Lender Fees" value={results.totalLenderFees} />
-              <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
-              <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
-              <FeeBreakdownItem label="Processing" value={results.processingFee} />
-              <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
-              <FeeBreakdownItem label="Wire" value={results.wireFee} />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
+                <ResultRow label="Lender Fees" value={results.totalLenderFees} />
+                <FeeBreakdownItem label={`Points (${inputs.originationPoints}%)`} value={results.pointsCost} />
+                <FeeBreakdownItem label="Underwriting" value={results.underwritingFee} />
+                <FeeBreakdownItem label="Processing" value={results.processingFee} />
+                <FeeBreakdownItem label="Doc Prep" value={results.docPrepFee} />
+                <FeeBreakdownItem label="Wire" value={results.wireFee} />
 
-              <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
-              <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
-              <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
+                <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
+                <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
+                <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
               <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
               <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
-              <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
-              <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+                <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
+                <FeeBreakdownItem label="Recording" value={results.recordingCost} />
               <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
-              <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-              <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+                <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
+                <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
               <FeeBreakdownItem 
                 label="Dues (Pro)" 
                 value={results.hideoutProratedDues}
@@ -273,13 +263,13 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 value={results.gapAmount}
                 subtext="Purchase Price - (Purchase Price × Financing%)"
               />
-              <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
-              {results.buyerAgentCommissionCredit > 0 && (
-                <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
-              )}
-              <div className="flex justify-between border-t border-gray-300 pt-1 mt-1 font-bold text-sm print:text-xs">
+                <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
+                {results.buyerAgentCommissionCredit > 0 && (
+                  <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
+                )}
+                <div className="flex justify-between border-t border-gray-300 pt-1 mt-1 font-bold text-sm print:text-xs">
                 <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
-                <span>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
+                  <span>{formatCurrency(Math.abs(results.totalCashToClose))}</span>
               </div>
               
               {/* Prepaid Costs Section */}
@@ -307,15 +297,15 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 </div>
               </div>
               
-              <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                <span>Req. Liquidity:</span>
-                <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
-                  {formatCurrency(results.requiredLiquidity)}
-                </span>
+                <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                  <span>Req. Liquidity:</span>
+                  <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
+                    {formatCurrency(results.requiredLiquidity)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
         {/* Monthly Holding Cost Summary */}
         <div className="mt-6 border border-gray-300 rounded break-inside-avoid print:mt-1">
@@ -464,7 +454,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               )}
               
               <div className="flex justify-between items-center pt-2 border-t border-gray-200 print:pt-1">
-                <div>
+          <div>
                   <div className="font-semibold text-gray-700">Total Monthly Utilities & Costs</div>
                 </div>
                 <div className="text-right">
@@ -716,7 +706,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                               <span className={isBestDown ? 'text-green-700 font-bold' : ''}>
                                 {formatCurrency(c.results.gapAmount)}
                               </span>
-                            </div>
+            </div>
                           </td>
                         );
                       })}
@@ -733,7 +723,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                           <span className={results.totalCashToClose === bestCashToClose ? 'text-green-700 font-bold' : ''}>
                             {formatCurrency(results.totalCashToClose)}
                           </span>
-                        </div>
+            </div>
                       </td>
                       {comparisonData.map((c) => {
                         const isBestCash = c.results.totalCashToClose === bestCashToClose;
@@ -748,14 +738,14 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                               <span className={isBestCash ? 'text-green-700 font-bold' : ''}>
                                 {formatCurrency(c.results.totalCashToClose)}
                               </span>
-                            </div>
+            </div>
                           </td>
                         );
                       })}
                     </tr>
                   </tbody>
                 </table>
-              </div>
+            </div>
             </div>
           </div>
         )}

@@ -39,6 +39,11 @@
             margin: 0.25in;
             size: auto;
         }
+        
+        /* Prevent page break on first page */
+        .sheet > *:first-child {
+            page-break-before: auto !important;
+        }
 
         body {
             background: white !important;
@@ -60,6 +65,31 @@
             padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
+            page-break-before: auto !important;
+        }
+        
+        /* Prevent unwanted page breaks on first page */
+        .sheet > *:first-child {
+            page-break-before: auto !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Reduce spacing for first page sections to fill page better */
+        .sheet > *:nth-child(2),
+        .sheet > *:nth-child(3),
+        .sheet > *:nth-child(4),
+        .sheet > *:nth-child(5),
+        .sheet > *:nth-child(6) {
+            margin-top: 0.125rem !important;
+            margin-bottom: 0.125rem !important;
+        }
+        
+        /* Remove break-inside-avoid from smaller sections on first page */
+        .sheet > *:nth-child(3),
+        .sheet > *:nth-child(4),
+        .sheet > *:nth-child(5) {
+            break-inside: auto !important;
+            page-break-inside: auto !important;
         }
         
         /* Force Background Colors */
