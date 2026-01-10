@@ -217,6 +217,23 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <span className="font-bold">{results.ltc.toFixed(2)}%</span>
                 </div>
               </div>
+              
+              {/* Monthly Payment Section */}
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div className="text-[10px] font-semibold text-gray-600 uppercase mb-1 print:text-[9px]">Monthly Payment</div>
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-semibold text-gray-700 print:text-[9px]">Principal + Interest</span>
+                    <span className="text-[9px] text-gray-500 print:text-[8px]">30-year amortized</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-bold text-gray-900 text-sm print:text-xs">{formatCurrency(results.monthlyPayment)}</span>
+                    <div className="text-[9px] text-gray-600 print:text-[8px]">
+                      per month
+                    </div>
+                  </div>
+                </div>
+              </div>
               </div>
               <div>
                 <h4 className="font-bold text-gray-500 uppercase mb-1 text-[10px] print:mb-0">Costs</h4>
@@ -261,8 +278,15 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               <ResultRow 
                 label="Gap / Down Payment" 
                 value={results.gapAmount}
-                subtext="Purchase Price - (Purchase Price × Financing%)"
+                subtext="Purchase Price - (Purchase Price × Financing%) - Seller Buy Back"
               />
+              {inputs.sellerBuyBackAmount > 0 && (
+                <ResultRow 
+                  label="Seller Buy Back" 
+                  value={inputs.sellerBuyBackAmount * -1}
+                  subtext="Seller financing amount (reduces down payment)"
+                />
+              )}
                 <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
                 {results.buyerAgentCommissionCredit > 0 && (
                   <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} />
@@ -454,7 +478,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               )}
               
               <div className="flex justify-between items-center pt-2 border-t border-gray-200 print:pt-1">
-          <div>
+                <div>
                   <div className="font-semibold text-gray-700">Total Monthly Utilities & Costs</div>
                 </div>
                 <div className="text-right">
@@ -464,6 +488,38 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   </div>
                 </div>
               </div>
+              
+              {/* Total Monthly Payment */}
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200 print:pt-1">
+                <div>
+                  <div className="font-semibold text-gray-700">Total Monthly Payment</div>
+                  <div className="text-[9px] text-gray-500 print:text-[8px]">Payment + Utilities</div>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment + results.monthlyUtilitiesCost)}</div>
+                  <div className="text-[9px] text-gray-600 print:text-[8px]">
+                    {formatCurrency((results.monthlyPayment + results.monthlyUtilitiesCost) * inputs.holdingPeriodMonths)} total
+                  </div>
+                </div>
+              </div>
+              
+              {/* Yearly Costs (if included) */}
+              {(results.yearlyWaterCost > 0 || results.yearlyDuesCost > 0) && (
+                <div className="space-y-2 pt-2 border-t border-gray-200 print:pt-1">
+                  {results.yearlyWaterCost > 0 && (
+                    <div className="flex justify-between items-center text-xs print:text-[10px]">
+                      <span className="text-gray-700 font-semibold">Yearly Water</span>
+                      <span className="font-bold text-gray-900">{formatCurrency(results.yearlyWaterCost)}</span>
+                    </div>
+                  )}
+                  {results.yearlyDuesCost > 0 && (
+                    <div className="flex justify-between items-center text-xs print:text-[10px]">
+                      <span className="text-gray-700 font-semibold">Yearly Dues</span>
+                      <span className="font-bold text-gray-900">{formatCurrency(results.yearlyDuesCost)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             
             {/* Grand Total */}

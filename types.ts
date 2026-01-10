@@ -101,6 +101,7 @@ export interface LoanInputs {
   
   legalSettlementFees: number; // General Legal
   recordingFees: number; // Line 1201
+  titleCompanyCharges: number; // Title company charges (for non-Hideout versions)
   
   // Additional Costs
   inspectionCost: number; // Property inspection cost
@@ -136,8 +137,14 @@ export interface LoanInputs {
   yearlyDues: number;
   
   // Selling Scenario
-  sellingCommissionRate: number;
+  sellingCommissionRate: number; // Legacy field - total commission (will be calculated from seller + buyer if not used)
   sellingTransferTaxRate: number;
+  weAreTheRealEstateAgent: boolean; // If true, add commission back to profit
+  sellingCommissionBrokerRate: number; // Percentage of selling commission that goes to broker (e.g., 35%)
+  // Separate seller and buyer agent commissions (when selling)
+  sellingSellerAgentCommissionRate: number; // Seller's agent commission rate when selling
+  sellingBuyerAgentCommissionRate: number; // Buyer's agent commission rate when selling
+  sellingSellerAgentBrokerRate: number; // Percentage of seller agent commission that goes to broker
 
   // Refinance Scenario (from PDF)
   refinanceLTV: number; // Default 80%
@@ -154,6 +161,9 @@ export interface LoanInputs {
   sellerAgentCommissionRate: number;
   sellerTransferTaxRate: number;
   sellerMiscFees: number;
+  
+  // Seller Financing
+  sellerBuyBackAmount: number; // Seller holds note/finances part of purchase, reduces down payment
 }
 
 export interface SavedDeal {
@@ -375,6 +385,11 @@ export const DEFAULT_INPUTS: LoanInputs = {
   yearlyDues: 0,
   sellingCommissionRate: 0,
   sellingTransferTaxRate: 0,
+  weAreTheRealEstateAgent: false,
+  sellingCommissionBrokerRate: 0,
+  sellingSellerAgentCommissionRate: 0,
+  sellingBuyerAgentCommissionRate: 0,
+  sellingSellerAgentBrokerRate: 0,
 
   refinanceLTV: 80.0,
   refinancePoints: 2.0,
@@ -387,5 +402,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   sellerLineOfCreditBalance: 0,
   sellerAgentCommissionRate: 0,
   sellerTransferTaxRate: 0,
-  sellerMiscFees: 0
+  sellerMiscFees: 0,
+  
+  sellerBuyBackAmount: 0,
 };

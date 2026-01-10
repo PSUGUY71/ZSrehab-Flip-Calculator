@@ -921,6 +921,7 @@ const App: React.FC = () => {
             onRehabLineItemAdd={handleRehabLineItemAdd}
             onRehabLineItemUpdate={handleRehabLineItemUpdate}
             onRehabLineItemDelete={handleRehabLineItemDelete}
+            appVersion={appVersion}
           />
 
           {/* Right Column - Results */}

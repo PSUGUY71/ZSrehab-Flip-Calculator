@@ -213,9 +213,18 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           
           <ResultRow 
             label="Gap / Down Payment" 
-            subtext="Purchase Price - (Purchase Price × Financing%)"
+            subtext="Purchase Price - (Purchase Price × Financing%) - Seller Buy Back"
             value={results.gapAmount} 
           />
+          
+          {inputs.sellerBuyBackAmount > 0 && (
+            <ResultRow 
+              label="Seller Buy Back" 
+              subtext="Seller financing amount (reduces down payment)"
+              value={inputs.sellerBuyBackAmount * -1} 
+              highlight
+            />
+          )}
           
           <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
           {results.buyerAgentCommissionCredit > 0 && (

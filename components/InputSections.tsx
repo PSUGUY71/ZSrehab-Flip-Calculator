@@ -16,6 +16,7 @@ interface InputSectionsProps {
   onRehabLineItemAdd: () => void;
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
   onRehabLineItemDelete: (id: string) => void;
+  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
 }
 
 export const InputSections: React.FC<InputSectionsProps> = ({
@@ -29,6 +30,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemAdd,
   onRehabLineItemUpdate,
   onRehabLineItemDelete,
+  appVersion = 'HIDEOUT',
 }) => {
   const ltvOptions = [
     { label: '60%', value: 0.60 },
@@ -131,7 +133,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 <option value="Slab">Slab</option>
                 <option value="Other">Other</option>
               </select>
-            </div>
+          </div>
           </div>
         </div>
       </section>
@@ -189,7 +191,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 />
               </div>
             )}
-          </div>
+        </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
               <InputGroup 
@@ -290,6 +292,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 step={0.5}
                 helpText="Percentage of purchase price seller contributes to closing costs"
               />
+              <InputGroup 
+                label="Seller Buy Back Amount" 
+                id="sellerBuyBack" 
+                value={inputs.sellerBuyBackAmount || 0} 
+                onChange={(v) => onInputChange('sellerBuyBackAmount', v)} 
+                prefix="$"
+                helpText="Amount seller finances/holds note. Reduces down payment needed."
+              />
             </div>
             <div className="bg-yellow-50 p-3 rounded border border-yellow-100">
               <InputGroup 
@@ -313,7 +323,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 />
               </div>
               <p className="text-[10px] text-yellow-700 mt-1">If you are a realtor, this commission is credited towards your closing costs.</p>
-            </div>
+          </div>
           </div>
         </div>
       </section>
@@ -634,7 +644,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               onChange={(v) => onInputChange('titleInsuranceRate', v)} 
               suffix="%" 
               step={0.01}
-              helpText="Note: Title insurance is now calculated using PA Title Insurance Rate Table based on total loan amount (purchase + rehab). This field is kept for reference only."
+              helpText="Leave blank (0) to use PA Title Insurance Rate Table chart automatically. Enter a percentage to manually override the chart calculation."
             />
             <InputGroup
               label="CPL Fee" 
@@ -706,81 +716,104 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Transfer tax rate as a percentage of purchase price"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <InputGroup 
-              label="Walker Doc" 
-              id="wd" 
-              value={inputs.walkerDocPrep} 
-              onChange={(v) => onInputChange('walkerDocPrep', v)} 
-              prefix="$"
-              helpText="Walker & Walker document preparation fee"
-            />
-            <InputGroup 
-              label="Walker Overnight" 
-              id="wo" 
-              value={inputs.walkerOvernight} 
-              onChange={(v) => onInputChange('walkerOvernight', v)} 
-              prefix="$"
-              helpText="Walker & Walker overnight delivery fee"
-            />
-            <InputGroup 
-              label="Walker Wire" 
-              id="ww" 
-              value={inputs.walkerWire} 
-              onChange={(v) => onInputChange('walkerWire', v)} 
-              prefix="$"
-              helpText="Walker & Walker wire transfer fee"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <InputGroup 
-              label="Hideout Transfer" 
-              id="ht" 
-              value={inputs.hideoutTransferFee} 
-              onChange={(v) => onInputChange('hideoutTransferFee', v)} 
-              prefix="$"
-              helpText="Hideout community transfer fee"
-            />
-            <div>
-              <div className="mb-1">
-                <div className="flex items-center gap-1.5">
-                  <label className="text-xs font-semibold text-gray-600">Dues</label>
-                  <div className="relative group">
-                    <button
-                      type="button"
-                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
-                      onMouseEnter={(e) => {
-                        const tooltip = e.currentTarget.nextElementSibling;
-                        if (tooltip) tooltip.classList.remove('hidden');
-                      }}
-                      onMouseLeave={(e) => {
-                        const tooltip = e.currentTarget.nextElementSibling;
-                        if (tooltip) tooltip.classList.add('hidden');
-                      }}
-                    >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
-                      Dues annual amount (prorated Jan-Dec)
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 font-normal mt-0.5">
-                  (calculated January through December)
-                </div>
-              </div>
+          
+          {/* Walker Charges - Only show in HIDEOUT version */}
+          {appVersion === 'HIDEOUT' && (
+            <div className="grid grid-cols-3 gap-4">
               <InputGroup 
-                label="" 
-                id="ha" 
-                value={inputs.hideoutAnnualFee} 
-                onChange={(v) => onInputChange('hideoutAnnualFee', v)} 
+                label="Walker Doc" 
+                id="wd" 
+                value={inputs.walkerDocPrep} 
+                onChange={(v) => onInputChange('walkerDocPrep', v)} 
                 prefix="$"
+                helpText="Walker & Walker document preparation fee"
+              />
+              <InputGroup 
+                label="Walker Overnight" 
+                id="wo" 
+                value={inputs.walkerOvernight} 
+                onChange={(v) => onInputChange('walkerOvernight', v)} 
+                prefix="$"
+                helpText="Walker & Walker overnight delivery fee"
+              />
+              <InputGroup 
+                label="Walker Wire" 
+                id="ww" 
+                value={inputs.walkerWire} 
+                onChange={(v) => onInputChange('walkerWire', v)} 
+                prefix="$"
+                helpText="Walker & Walker wire transfer fee"
               />
             </div>
-          </div>
+          )}
+          
+          {/* Title Company Charges - Only show in non-HIDEOUT versions */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup 
+                label="Title Company Charges" 
+                id="titleCompany" 
+                value={inputs.titleCompanyCharges || 0} 
+                onChange={(v) => onInputChange('titleCompanyCharges', v)} 
+                prefix="$"
+                helpText="Title company charges and fees"
+              />
+            </div>
+          )}
+          
+          {/* Hideout Transfer and Dues - Only show in HIDEOUT version */}
+          {appVersion === 'HIDEOUT' && (
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup 
+                label="Hideout Transfer" 
+                id="ht" 
+                value={inputs.hideoutTransferFee} 
+                onChange={(v) => onInputChange('hideoutTransferFee', v)} 
+                prefix="$"
+                helpText="Leave blank (0) to use PA Title Insurance Rate Table chart automatically based on purchase price. Enter a dollar amount to manually override."
+              />
+              <div>
+                <div className="mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs font-semibold text-gray-600">Dues</label>
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                        onMouseEnter={(e) => {
+                          const tooltip = e.currentTarget.nextElementSibling;
+                          if (tooltip) tooltip.classList.remove('hidden');
+                        }}
+                        onMouseLeave={(e) => {
+                          const tooltip = e.currentTarget.nextElementSibling;
+                          if (tooltip) tooltip.classList.add('hidden');
+                        }}
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                        Dues annual amount (prorated Jan-Dec)
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-500 font-normal mt-0.5">
+                    (calculated January through December)
+                  </div>
+                </div>
+                <InputGroup 
+                  label="" 
+                  id="ha" 
+                  value={inputs.hideoutAnnualFee} 
+                  onChange={(v) => onInputChange('hideoutAnnualFee', v)} 
+                  prefix="$"
+                />
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 gap-6">
             <div>
               <div className="mb-1">
@@ -860,45 +893,48 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 prefix="$"
               />
             </div>
-            <div>
-              <div className="mb-1">
-                <div className="flex items-center gap-1.5">
-                  <label className="text-xs font-semibold text-gray-600">Sewer & Water</label>
-                  <div className="relative group">
-                    <button
-                      type="button"
-                      className="text-gray-400 hover:text-blue-600 focus:outline-none"
-                      onMouseEnter={(e) => {
-                        const tooltip = e.currentTarget.nextElementSibling;
-                        if (tooltip) tooltip.classList.remove('hidden');
-                      }}
-                      onMouseLeave={(e) => {
-                        const tooltip = e.currentTarget.nextElementSibling;
-                        if (tooltip) tooltip.classList.add('hidden');
-                      }}
-                    >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
-                      Sewer and water annual amount (prorated quarterly)
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+            {/* Sewer & Water - Only show in HIDEOUT version */}
+            {appVersion === 'HIDEOUT' && (
+              <div>
+                <div className="mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs font-semibold text-gray-600">Sewer & Water</label>
+                    <div className="relative group">
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-blue-600 focus:outline-none"
+                        onMouseEnter={(e) => {
+                          const tooltip = e.currentTarget.nextElementSibling;
+                          if (tooltip) tooltip.classList.remove('hidden');
+                        }}
+                        onMouseLeave={(e) => {
+                          const tooltip = e.currentTarget.nextElementSibling;
+                          if (tooltip) tooltip.classList.add('hidden');
+                        }}
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      <div className="hidden absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+                        Sewer and water annual amount (prorated quarterly)
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-xs text-gray-500 font-normal mt-0.5">
+                    (calculated quarterly)
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 font-normal mt-0.5">
-                  (calculated quarterly)
-                </div>
+                <InputGroup 
+                  label=""
+                  id="sewerWaterAnnual"
+                  value={inputs.sewerWaterAnnual} 
+                  onChange={(v) => onInputChange('sewerWaterAnnual', v)}
+                  prefix="$"
+                />
               </div>
-              <InputGroup 
-                label=""
-                id="sewerWaterAnnual"
-                value={inputs.sewerWaterAnnual} 
-                onChange={(v) => onInputChange('sewerWaterAnnual', v)}
-                prefix="$"
-              />
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -1045,23 +1081,62 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </div>
             )}
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-4 bg-yellow-50 p-4 rounded border border-yellow-100">
-            <InputGroup 
-              label="Commission %" 
-              id="comm" 
-              value={inputs.sellingCommissionRate} 
-              onChange={(v) => onInputChange('sellingCommissionRate', v)} 
-              suffix="%"
-              helpText="Real estate commission rate when selling"
-            />
-            <InputGroup 
-              label="Transfer Tax %" 
-              id="stt" 
-              value={inputs.sellingTransferTaxRate} 
-              onChange={(v) => onInputChange('sellingTransferTaxRate', v)} 
-              suffix="%"
-              helpText="Transfer tax rate when selling the property"
-            />
+          <div className="mt-4 bg-yellow-50 p-4 rounded border border-yellow-100">
+            <div className="mb-3">
+              <h3 className="text-xs font-bold text-gray-700 uppercase mb-2">Commission Breakdown</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <InputGroup 
+                label="Seller Agent Commission %" 
+                id="sellerAgentComm" 
+                value={inputs.sellingSellerAgentCommissionRate || 0} 
+                onChange={(v) => onInputChange('sellingSellerAgentCommissionRate', v)} 
+                suffix="%"
+                helpText="Commission rate for seller's agent"
+              />
+              <InputGroup 
+                label="Buyer Agent Commission %" 
+                id="buyerAgentComm" 
+                value={inputs.sellingBuyerAgentCommissionRate || 0} 
+                onChange={(v) => onInputChange('sellingBuyerAgentCommissionRate', v)} 
+                suffix="%"
+                helpText="Commission rate for buyer's agent"
+              />
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="weAreAgent"
+                checked={inputs.weAreTheRealEstateAgent || false}
+                onChange={(e) => onInputChange('weAreTheRealEstateAgent', e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="weAreAgent" className="text-xs font-medium text-gray-700">
+                We are the seller's agent (add commission back to profit)
+              </label>
+            </div>
+            {inputs.weAreTheRealEstateAgent && (
+              <div className="mt-2">
+                <InputGroup 
+                  label="Seller Agent Broker Split %" 
+                  id="sellerAgentBrokerSplit" 
+                  value={inputs.sellingSellerAgentBrokerRate || 0} 
+                  onChange={(v) => onInputChange('sellingSellerAgentBrokerRate', v)} 
+                  suffix="%"
+                  helpText="Percentage of seller agent commission that goes to broker (e.g., 35%)"
+                />
+              </div>
+            )}
+            <div className="mt-4 pt-3 border-t border-yellow-200">
+              <InputGroup 
+                label="Transfer Tax %" 
+                id="stt" 
+                value={inputs.sellingTransferTaxRate} 
+                onChange={(v) => onInputChange('sellingTransferTaxRate', v)} 
+                suffix="%"
+                helpText="Transfer tax rate when selling the property"
+              />
+            </div>
           </div>
           
           {/* Monthly Holding Cost Summary */}

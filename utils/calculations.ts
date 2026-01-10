@@ -11,8 +11,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     useCustomFinancing,
     customFinancingPercentage,
     sellerConcessionRate,
+    sellerBuyBackAmount,
     earnestMoneyDeposit,
     buyerAgentCommissionRate,
+    buyerAgentCommissionBrokerRate,
     interestRate,
     originationPoints,
     liquidity,
@@ -37,6 +39,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     walkerWire,
     hideoutTransferFee,
     hideoutAnnualFee,
+    titleCompanyCharges,
     roamingwoodAnnual,
     schoolTaxAnnual,
     sewerWaterAnnual,
@@ -58,6 +61,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     yearlyDues,
     sellingCommissionRate,
     sellingTransferTaxRate,
+    weAreTheRealEstateAgent,
+    sellingCommissionBrokerRate,
+    sellingSellerAgentCommissionRate,
+    sellingBuyerAgentCommissionRate,
+    sellingSellerAgentBrokerRate,
     refinanceLTV,
     refinancePoints,
     refinanceFixedFees,
@@ -96,11 +104,12 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const passes70Rule = purchasePrice <= maxPurchasePrice70Rule;
   
   // Gap / Down Payment
-  // Gap = Purchase Price - (Purchase Price × Financing %)
+  // Gap = Purchase Price - (Purchase Price × Financing %) - Seller Buy Back Amount
   // This represents the cash down payment needed for the purchase price only
-  // Example: Purchase $100k at 80% financing = $20k gap
+  // Seller Buy Back Amount reduces the down payment (seller holds note/finances part)
+  // Example: Purchase $100k at 80% financing with $5k seller buy back = $15k gap
   const loanForPurchasePrice = purchasePrice * (financingPercent / 100);
-  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice);
+  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice - (sellerBuyBackAmount || 0));
   
   const holdbackAmount = rehabBudget;
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
@@ -241,8 +250,27 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   
   // Title Insurance: Use PA Title Insurance Rate Table based on total loan amount (purchase + rehab)
   // Source: https://www.alphaadv.net/patitle/parate25.html
+  // If titleInsuranceRate is provided (non-zero), use manual calculation instead of chart
   const totalLoanAmount = purchasePrice + rehabBudget;
-  const titleInsuranceCost = calculatePATitleInsurance(totalLoanAmount);
+  let titleInsuranceCost = 0;
+  if (titleInsuranceRate && titleInsuranceRate > 0) {
+    // Manual override: use percentage rate
+    titleInsuranceCost = totalLoanAmount * (titleInsuranceRate / 100);
+  } else {
+    // Default: use PA Title Insurance Rate Table chart
+    titleInsuranceCost = calculatePATitleInsurance(totalLoanAmount);
+  }
+  
+  // Hideout Transfer Fee: Use PA Title Insurance Rate Table chart based on purchase price
+  // This uses the same chart as title insurance
+  let calculatedHideoutTransferFee = 0;
+  if (hideoutTransferFee && hideoutTransferFee > 0) {
+    // Manual override: use provided value
+    calculatedHideoutTransferFee = hideoutTransferFee;
+  } else {
+    // Default: use PA Title Insurance Rate Table chart based on purchase price
+    calculatedHideoutTransferFee = calculatePATitleInsurance(purchasePrice);
+  }
   
   // CPL fee is always $125 payable to Penn Attorneys (default if not specified)
   const cplFeeCost = cplFee || 125;
@@ -251,35 +279,46 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const endorsementCost = (numberOfEndorsements || 0) * 100;
   
   const totalWalkerFees = (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
+  
+  // Title company charges (for non-HIDEOUT versions)
+  const titleCompanyChargesAmount = titleCompanyCharges || 0;
 
   // Inspection and Appraisal are prepaid before closing, not included in closing costs
+  // Note: Walker fees, Hideout Transfer, Dues, and Sewer & Water are only used in HIDEOUT version
+  // They will be 0 for other versions, so including them here is safe
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
     (cplFeeCost || 0) +
     (endorsementCost || 0) +
     (legalSettlementFees || 0) + 
-    totalWalkerFees +
+    totalWalkerFees + // Only non-zero in HIDEOUT version
+    titleCompanyChargesAmount + // Only non-zero in non-HIDEOUT versions
     (recordingFees || 0) + 
     (insuranceCost || 0) + // Insurance is due at closing
-    (hideoutTransferFee || 0) + 
-    (hideoutProratedDues || 0) +
+    (calculatedHideoutTransferFee || 0) + // Only non-zero in HIDEOUT version
+    (hideoutProratedDues || 0) + // Only non-zero in HIDEOUT version
     (roamingwoodProrated || 0) +
     (schoolTaxProrated || 0) +
-    (sewerWaterProrated || 0);
+    (sewerWaterProrated || 0); // Only non-zero in HIDEOUT version
   
   // Prepaid costs (paid before closing)
   const prepaidCosts = (inspectionCost || 0) + (appraisalCost || 0) + (earnestMoneyDeposit || 0);
 
   // 7. Credits
   const sellerConcessionAmount = purchasePrice * (sellerConcessionRate / 100);
-  const buyerAgentCommissionCredit = purchasePrice * (buyerAgentCommissionRate / 100);
+  // Buyer Agent Commission Credit: If you're the agent, you get commission minus broker split
+  // Example: $7k commission, 35% to broker = $4,550 net credit to you
+  const totalBuyerAgentCommission = purchasePrice * (buyerAgentCommissionRate / 100);
+  const buyerAgentBrokerPortion = totalBuyerAgentCommission * ((buyerAgentCommissionBrokerRate || 0) / 100);
+  const buyerAgentCommissionCredit = totalBuyerAgentCommission - buyerAgentBrokerPortion;
 
   // 8. Total Costs
   const totalClosingCosts = totalLenderFees + totalThirdPartyFees;
   
   // Cash to close = Closing Costs + Gap - Seller Concessions - Earnest Money - Commission Credit
   // We do NOT clamp at 0 anymore, allowing negative values (Cash to Borrower)
+  // Note: Seller Buy Back Amount is already subtracted from gapAmount above
   const totalCashToClose = totalClosingCosts + gapAmount - sellerConcessionAmount - earnestMoneyDeposit - buyerAgentCommissionCredit;
 
   // 9. Interest Calculations
@@ -379,9 +418,40 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   let refinanceLoanAmount = 0;
 
   if (exitStrategy === 'SELL') {
-    const sellingCommission = arv * (sellingCommissionRate / 100);
     const sellingTransferTax = arv * (sellingTransferTaxRate / 100);
-    totalExitCosts = sellingCommission + sellingTransferTax;
+    
+    // Calculate commissions: Use separate seller/buyer rates if provided, otherwise use legacy total rate
+    let sellerAgentCommission = 0;
+    let buyerAgentCommission = 0;
+    let totalSellingCommission = 0;
+    
+    if (sellingSellerAgentCommissionRate > 0 || sellingBuyerAgentCommissionRate > 0) {
+      // Use separate seller and buyer agent commission rates
+      sellerAgentCommission = arv * (sellingSellerAgentCommissionRate / 100);
+      buyerAgentCommission = arv * (sellingBuyerAgentCommissionRate / 100);
+      totalSellingCommission = sellerAgentCommission + buyerAgentCommission;
+    } else {
+      // Legacy: Use single sellingCommissionRate (backward compatibility)
+      totalSellingCommission = arv * (sellingCommissionRate / 100);
+      // Assume 50/50 split if using legacy rate (or adjust as needed)
+      sellerAgentCommission = totalSellingCommission / 2;
+      buyerAgentCommission = totalSellingCommission / 2;
+    }
+    
+    // If we are the real estate agent, calculate net commission after broker split
+    // Broker split applies to seller agent commission
+    if (weAreTheRealEstateAgent) {
+      // Calculate broker portion of seller agent commission
+      const sellerAgentBrokerPortion = sellerAgentCommission * ((sellingSellerAgentBrokerRate || 0) / 100);
+      const sellerAgentNetCommission = sellerAgentCommission - sellerAgentBrokerPortion;
+      
+      // Total commission cost = Buyer agent commission + Seller agent broker portion (we pay broker)
+      // We receive seller agent net commission, so it's not subtracted
+      totalExitCosts = buyerAgentCommission + sellerAgentBrokerPortion + sellingTransferTax;
+    } else {
+      // Not the agent: pay full commissions
+      totalExitCosts = totalSellingCommission + sellingTransferTax;
+    }
   } else {
     // REFINANCE STRATEGY
     // Loan Amount = 80% of ARV (Refi LTV)
@@ -437,7 +507,24 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const baselineARV = arv;
   let baselineExitCosts = 0;
   if (exitStrategy === 'SELL') {
-      baselineExitCosts = (baselineARV * (sellingCommissionRate / 100)) + (baselineARV * (sellingTransferTaxRate / 100));
+      const baselineTransferTax = baselineARV * (sellingTransferTaxRate / 100);
+      // Use same commission calculation logic as main calculation
+      let baselineSellerComm = 0;
+      let baselineBuyerComm = 0;
+      if (sellingSellerAgentCommissionRate > 0 || sellingBuyerAgentCommissionRate > 0) {
+          baselineSellerComm = baselineARV * (sellingSellerAgentCommissionRate / 100);
+          baselineBuyerComm = baselineARV * (sellingBuyerAgentCommissionRate / 100);
+      } else {
+          const totalComm = baselineARV * (sellingCommissionRate / 100);
+          baselineSellerComm = totalComm / 2;
+          baselineBuyerComm = totalComm / 2;
+      }
+      if (weAreTheRealEstateAgent) {
+          const brokerPortion = baselineSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
+          baselineExitCosts = baselineBuyerComm + brokerPortion + baselineTransferTax;
+      } else {
+          baselineExitCosts = baselineSellerComm + baselineBuyerComm + baselineTransferTax;
+      }
   } else {
       const baselineRefiLoan = baselineARV * (refinanceLTV / 100);
       baselineExitCosts = (baselineRefiLoan * (refinancePoints / 100)) + refinanceFixedFees;
@@ -450,7 +537,23 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const minus10kARV = baselineARV - 10000;
   let minus10kExitCosts = 0;
   if (exitStrategy === 'SELL') {
-      minus10kExitCosts = (minus10kARV * (sellingCommissionRate / 100)) + (minus10kARV * (sellingTransferTaxRate / 100));
+      const minus10kTransferTax = minus10kARV * (sellingTransferTaxRate / 100);
+      let minus10kSellerComm = 0;
+      let minus10kBuyerComm = 0;
+      if (sellingSellerAgentCommissionRate > 0 || sellingBuyerAgentCommissionRate > 0) {
+          minus10kSellerComm = minus10kARV * (sellingSellerAgentCommissionRate / 100);
+          minus10kBuyerComm = minus10kARV * (sellingBuyerAgentCommissionRate / 100);
+      } else {
+          const totalComm = minus10kARV * (sellingCommissionRate / 100);
+          minus10kSellerComm = totalComm / 2;
+          minus10kBuyerComm = totalComm / 2;
+      }
+      if (weAreTheRealEstateAgent) {
+          const brokerPortion = minus10kSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
+          minus10kExitCosts = minus10kBuyerComm + brokerPortion + minus10kTransferTax;
+      } else {
+          minus10kExitCosts = minus10kSellerComm + minus10kBuyerComm + minus10kTransferTax;
+      }
   } else {
       const minus10kRefiLoan = minus10kARV * (refinanceLTV / 100);
       minus10kExitCosts = (minus10kRefiLoan * (refinancePoints / 100)) + refinanceFixedFees;
@@ -482,7 +585,23 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       let simExitCosts = 0;
       
       if (exitStrategy === 'SELL') {
-          simExitCosts = (simARV * (sellingCommissionRate / 100)) + (simARV * (sellingTransferTaxRate / 100));
+          const simTransferTax = simARV * (sellingTransferTaxRate / 100);
+          let simSellerComm = 0;
+          let simBuyerComm = 0;
+          if (sellingSellerAgentCommissionRate > 0 || sellingBuyerAgentCommissionRate > 0) {
+              simSellerComm = simARV * (sellingSellerAgentCommissionRate / 100);
+              simBuyerComm = simARV * (sellingBuyerAgentCommissionRate / 100);
+          } else {
+              const totalComm = simARV * (sellingCommissionRate / 100);
+              simSellerComm = totalComm / 2;
+              simBuyerComm = totalComm / 2;
+          }
+          if (weAreTheRealEstateAgent) {
+              const brokerPortion = simSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
+              simExitCosts = simBuyerComm + brokerPortion + simTransferTax;
+          } else {
+              simExitCosts = simSellerComm + simBuyerComm + simTransferTax;
+          }
       } else {
           // Refi Costs change because loan amount (80% LTV) changes with ARV
           const simRefiLoan = simARV * (refinanceLTV / 100);
@@ -651,7 +770,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // Walker
     totalWalkerFees,
 
-    hideoutTransferCost: hideoutTransferFee,
+    hideoutTransferCost: calculatedHideoutTransferFee,
     hideoutProratedDues,
     
     roamingwoodProrated,

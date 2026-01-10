@@ -45,10 +45,48 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
       </div>
 
       {/* Exit Costs Breakdown - Always Sell */}
-      <div className="flex justify-between">
-        <span className="opacity-70">Commission</span>
-        <span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingCommissionRate / 100))}</span>
-      </div>
+      {(() => {
+        // Calculate commissions using new separate rates or legacy rate
+        let sellerComm = 0;
+        let buyerComm = 0;
+        if (inputs.sellingSellerAgentCommissionRate > 0 || inputs.sellingBuyerAgentCommissionRate > 0) {
+          sellerComm = inputs.arv * ((inputs.sellingSellerAgentCommissionRate || 0) / 100);
+          buyerComm = inputs.arv * ((inputs.sellingBuyerAgentCommissionRate || 0) / 100);
+        } else {
+          // Legacy: use total commission rate
+          const totalComm = inputs.arv * ((inputs.sellingCommissionRate || 0) / 100);
+          sellerComm = totalComm / 2;
+          buyerComm = totalComm / 2;
+        }
+        
+        return (
+          <>
+            <div className="flex justify-between">
+              <span className="opacity-70">Buyer Agent Commission</span>
+              <span className="font-bold text-red-600">-{formatCurrency(buyerComm)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-70">Seller Agent Commission</span>
+              {inputs.weAreTheRealEstateAgent ? (
+                (() => {
+                  const brokerPortion = sellerComm * ((inputs.sellingSellerAgentBrokerRate || 0) / 100);
+                  const netCommission = sellerComm - brokerPortion;
+                  return (
+                    <span className="font-bold text-green-600">
+                      +{formatCurrency(netCommission)} (Credit)
+                      {brokerPortion > 0 && (
+                        <span className="text-[9px] text-gray-500 block">Net after {inputs.sellingSellerAgentBrokerRate}% broker split</span>
+                      )}
+                    </span>
+                  );
+                })()
+              ) : (
+                <span className="font-bold text-red-600">-{formatCurrency(sellerComm)}</span>
+              )}
+            </div>
+          </>
+        );
+      })()}
       <div className="flex justify-between">
         <span className="opacity-70">Transfer Tax</span>
         <span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate / 100))}</span>
