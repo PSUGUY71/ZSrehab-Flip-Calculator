@@ -179,28 +179,68 @@ const App: React.FC = () => {
 
   // Auto-apply suggested lender fees when purchase price or rehab budget changes and all fees are zero
   useEffect(() => {
+    // Check if all lender fees are zero
     const allFeesZero = inputs.underwritingFee === 0 && inputs.processingFee === 0 && 
                         inputs.docPrepFee === 0 && inputs.wireFee === 0 && (inputs.otherLenderFees || 0) === 0;
     
-    if (allFeesZero && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0)) {
+    // Only auto-apply if all fees are zero AND we have meaningful deal data
+    const totalProjectCost = inputs.purchasePrice + inputs.rehabBudget;
+    const hasDealData = totalProjectCost > 0 && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0);
+    
+    if (allFeesZero && hasDealData) {
       const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
+      
       if (financingPercent > 0) {
-        const totalProjectCost = inputs.purchasePrice + inputs.rehabBudget;
         const loanAmount = totalProjectCost * (financingPercent / 100);
         const pointsTotal = loanAmount * 0.03; // 3% default
         
-        // Auto-apply suggested fees
-        setInputs((prev) => ({
-          ...prev,
-          underwritingFee: Math.round(pointsTotal * 0.20),
-          processingFee: Math.round(pointsTotal * 0.25),
-          docPrepFee: Math.round(pointsTotal * 0.15),
-          wireFee: Math.round(pointsTotal * 0.10),
-          otherLenderFees: Math.round(pointsTotal * 0.30),
-        }));
+        // Only apply if points total is meaningful (> $50 to catch small deals too)
+        if (pointsTotal > 50) {
+          const calculatedFees = {
+            underwritingFee: Math.round(pointsTotal * 0.20),
+            processingFee: Math.round(pointsTotal * 0.25),
+            docPrepFee: Math.round(pointsTotal * 0.15),
+            wireFee: Math.round(pointsTotal * 0.10),
+            otherLenderFees: Math.round(pointsTotal * 0.30),
+          };
+          
+          // Debug logging
+          console.log('🔧 Auto-applying lender fees:', {
+            loanAmount: loanAmount.toFixed(2),
+            pointsTotal: pointsTotal.toFixed(2),
+            calculatedFees,
+            allFeesZero,
+            purchasePrice: inputs.purchasePrice,
+            rehabBudget: inputs.rehabBudget,
+            totalProjectCost,
+            financingPercent
+          });
+          
+          // Auto-apply suggested fees with a small delay to avoid race conditions
+          const timeoutId = setTimeout(() => {
+            setInputs((prev) => {
+              // Double-check fees are still zero before applying (prevent race conditions)
+              const stillAllZero = prev.underwritingFee === 0 && prev.processingFee === 0 && 
+                                  prev.docPrepFee === 0 && prev.wireFee === 0 && (prev.otherLenderFees || 0) === 0;
+              
+              if (stillAllZero) {
+                console.log('✅ Applying lender fees:', calculatedFees);
+                return {
+                  ...prev,
+                  ...calculatedFees,
+                };
+              } else {
+                console.log('⚠️ Skipping fee application - fees already set');
+              }
+              return prev;
+            });
+          }, 100); // Small delay to let other effects settle
+          
+          return () => clearTimeout(timeoutId);
+        }
       }
     }
-  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage]);
+  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage, inputs.underwritingFee, inputs.processingFee, inputs.docPrepFee, inputs.wireFee, inputs.otherLenderFees]);
 
   // Auto-check and populate insurance/taxes when holding period > 3 months
   useEffect(() => {
