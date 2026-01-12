@@ -334,7 +334,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   ficoScore: 720,
   experienceLevel: 0,
   liquidity: 100000, // Default liquidity to avoid eligibility errors on blank form
-  interestRate: 0,
+  interestRate: 12, // Default to 12% (typical hard money rate)
   originationPoints: 0,
   loanTermMonths: 12,
   
@@ -387,8 +387,8 @@ export const DEFAULT_INPUTS: LoanInputs = {
   sellingTransferTaxRate: 0,
   weAreTheRealEstateAgent: false,
   sellingCommissionBrokerRate: 0,
-  sellingSellerAgentCommissionRate: 0,
-  sellingBuyerAgentCommissionRate: 0,
+  sellingSellerAgentCommissionRate: 3, // Default to 3% (typical commission rate)
+  sellingBuyerAgentCommissionRate: 3, // Default to 3% (typical commission rate)
   sellingSellerAgentBrokerRate: 0,
 
   refinanceLTV: 80.0,

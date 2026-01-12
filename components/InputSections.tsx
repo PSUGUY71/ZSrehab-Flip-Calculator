@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
 import { formatCurrency } from '../utils/calculations';
@@ -38,6 +38,43 @@ export const InputSections: React.FC<InputSectionsProps> = ({
     { label: '70%', value: 0.70 },
     { label: '75%', value: 0.75 },
   ];
+
+  // Calculate suggested lender fees (3% of loan amount for hard money)
+  const suggestedLenderFees = useMemo(() => {
+    const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
+    if (financingPercent > 0 && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0)) {
+      const totalProjectCost = inputs.purchasePrice + inputs.rehabBudget;
+      const loanAmount = totalProjectCost * (financingPercent / 100);
+      const pointsTotal = loanAmount * 0.03; // 3% default
+      
+      return {
+        loanAmount,
+        pointsTotal,
+        underwriting: pointsTotal * 0.20,  // 20%
+        processing: pointsTotal * 0.25,     // 25%
+        docPrep: pointsTotal * 0.15,        // 15%
+        wireFee: pointsTotal * 0.10,        // 10%
+        other: pointsTotal * 0.30,          // 30%
+      };
+    }
+    return null;
+  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage]);
+
+  // Check if all lender fees are zero
+  const allFeesZero = inputs.underwritingFee === 0 && inputs.processingFee === 0 && 
+                      inputs.docPrepFee === 0 && inputs.wireFee === 0 && (inputs.otherLenderFees || 0) === 0;
+
+  // Handler to apply suggested fees
+  const handleApplySuggestedFees = () => {
+    if (suggestedLenderFees) {
+      onInputChange('underwritingFee', Math.round(suggestedLenderFees.underwriting));
+      onInputChange('processingFee', Math.round(suggestedLenderFees.processing));
+      onInputChange('docPrepFee', Math.round(suggestedLenderFees.docPrep));
+      onInputChange('wireFee', Math.round(suggestedLenderFees.wireFee));
+      onInputChange('otherLenderFees', Math.round(suggestedLenderFees.other));
+    }
+  };
+
   return (
     <div className="w-full lg:w-1/2 space-y-6">
       {/* Property Info */}
@@ -65,9 +102,23 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 value={inputs.state} 
                 onChange={(e) => onInputChange('state', e.target.value)}
               >
+                <option value="">Select State</option>
                 <option value="PA">PA</option>
                 <option value="NJ">NJ</option>
                 <option value="NY">NY</option>
+                <option value="CA">CA</option>
+                <option value="TX">TX</option>
+                <option value="FL">FL</option>
+                <option value="IL">IL</option>
+                <option value="MD">MD</option>
+                <option value="VA">VA</option>
+                <option value="NC">NC</option>
+                <option value="SC">SC</option>
+                <option value="GA">GA</option>
+                <option value="OH">OH</option>
+                <option value="MI">MI</option>
+                <option value="AZ">AZ</option>
+                <option value="NV">NV</option>
               </select>
             </div>
             <InputGroup 
@@ -634,6 +685,11 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Detailed HUD Charges</h2>
+          {inputs.state && (
+            <div className="text-[10px] text-gray-600 mt-1">
+              Closing costs updated for {inputs.state}. Adjust if property is in a different county with higher costs.
+            </div>
+          )}
         </div>
         <div className="p-6 grid gap-6">
           <div className="grid grid-cols-2 gap-6">
@@ -713,7 +769,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.transferTaxRate} 
               onChange={(v) => onInputChange('transferTaxRate', v)} 
               suffix="%"
-              helpText="Transfer tax rate as a percentage of purchase price"
+              helpText="Transfer tax rate as a percentage of purchase price - auto-populated based on state. Adjust if your county has different rates."
             />
           </div>
           
@@ -979,8 +1035,34 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             />
           </div>
           
+          {/* Holding Costs Warning */}
+          {inputs.holdingPeriodMonths > 3 && !inputs.includeMonthlyInsurance && !inputs.includeMonthlyTaxes && (
+            <div className="mt-4 p-3 bg-red-100 border-2 border-red-300 rounded-lg">
+              <div className="flex items-start gap-2">
+                <span className="text-red-700 text-lg font-bold">🔴</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-red-900 mb-1">HOLDING COSTS WARNING</div>
+                  <div className="text-xs text-red-800 mb-2">
+                    You're planning a {inputs.holdingPeriodMonths}-month hold but have no insurance or property taxes included.
+                  </div>
+                  <div className="text-xs text-red-700 mb-2">
+                    For vacant/rehab properties:
+                    <ul className="list-disc list-inside ml-2 mt-1">
+                      <li>Insurance: $75-$200/month typical</li>
+                      <li>Property Tax: Varies by state</li>
+                    </ul>
+                  </div>
+                  <div className="text-xs font-semibold text-red-900">
+                    👉 Check the boxes below or add estimated monthly costs:
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Optional Monthly Costs */}
           <div className="mt-4 space-y-3">
+            <h3 className="text-xs font-bold text-gray-600 uppercase mb-2">Holding Cost Options</h3>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1087,20 +1169,20 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <InputGroup 
-                label="Seller Agent Commission %" 
+                label="SELLER AGENT COMMISSION %" 
                 id="sellerAgentComm" 
-                value={inputs.sellingSellerAgentCommissionRate || 0} 
+                value={inputs.sellingSellerAgentCommissionRate || 3} 
                 onChange={(v) => onInputChange('sellingSellerAgentCommissionRate', v)} 
                 suffix="%"
-                helpText="Commission rate for seller's agent"
+                helpText="Seller agent commission: typically 2.5-3% of ARV. This commission is paid from sale proceeds and reduces your profit. If you are the seller's agent, you can add it back to profit."
               />
               <InputGroup 
-                label="Buyer Agent Commission %" 
+                label="BUYER AGENT COMMISSION %" 
                 id="buyerAgentComm" 
-                value={inputs.sellingBuyerAgentCommissionRate || 0} 
+                value={inputs.sellingBuyerAgentCommissionRate || 3} 
                 onChange={(v) => onInputChange('sellingBuyerAgentCommissionRate', v)} 
                 suffix="%"
-                helpText="Commission rate for buyer's agent"
+                helpText="Buyer agent commission: typically 2.5-3% of ARV. This commission is paid from sale proceeds and reduces your profit."
               />
             </div>
             <div className="mt-2 flex items-center gap-2">
@@ -1412,15 +1494,25 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             />
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <InputGroup 
-              label="Rate" 
-              id="rate" 
-              value={inputs.interestRate} 
-              onChange={(v) => onInputChange('interestRate', v)} 
-              suffix="%" 
-              step={0.125}
-              helpText="Annual interest rate on the loan"
-            />
+            <div className="col-span-1">
+              <InputGroup 
+                label="Rate" 
+                id="rate" 
+                value={inputs.interestRate} 
+                onChange={(v) => onInputChange('interestRate', v)} 
+                suffix="%" 
+                step={0.125}
+                helpText="Annual interest rate on the loan"
+              />
+              <div 
+                className={`mt-2 p-2 rounded text-xs ${inputs.interestRate === 0 ? 'bg-red-100 border border-red-300 text-red-800' : ''}`}
+                style={inputs.interestRate === 0 ? {} : { backgroundColor: '#FFF3CD', color: '#721C24', border: '1px solid #FFC107' }}
+              >
+                ⚠️ <strong>IMPORTANT:</strong> {inputs.interestRate === 0 
+                  ? 'Interest rate is 0% (unrealistic). Typical hard money is 12%. Monthly payment and holding costs will be $0.'
+                  : 'Interest rate defaults to 12% (typical hard money). If using conventional/portfolio financing, update this rate. Monthly payment and holding costs will recalculate automatically.'}
+              </div>
+            </div>
             <InputGroup 
               label="Points" 
               id="pts" 
@@ -1442,6 +1534,34 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           {/* Lender Fees */}
           <div className="pt-4 border-t border-gray-100">
             <h3 className="text-xs font-bold text-gray-400 uppercase mb-3">Lender Upfront Fees</h3>
+            
+            {/* Suggested Fees Box */}
+            {suggestedLenderFees && allFeesZero && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="text-xs font-semibold text-blue-900 mb-2">
+                  Suggested Lender Fees (based on 3% origination for hard money):
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-700 mb-2">
+                  <div>Underwriting: {formatCurrency(suggestedLenderFees.underwriting)}</div>
+                  <div>Processing: {formatCurrency(suggestedLenderFees.processing)}</div>
+                  <div>Doc Prep: {formatCurrency(suggestedLenderFees.docPrep)}</div>
+                  <div>Wire Fee: {formatCurrency(suggestedLenderFees.wireFee)}</div>
+                  <div>Other Lender Fees: {formatCurrency(suggestedLenderFees.other)}</div>
+                  <div className="font-bold">TOTAL: {formatCurrency(suggestedLenderFees.pointsTotal)}</div>
+                </div>
+                <div className="text-[10px] text-blue-700 mb-2">
+                  💡 Tip: For conventional financing, reduce to 0.5-1.5%. For portfolio lenders, set to 0%. You can adjust any line item above.
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplySuggestedFees}
+                  className="w-full bg-blue-600 text-white text-xs font-semibold py-2 px-4 rounded hover:bg-blue-700 transition"
+                >
+                  Apply Suggested Fees
+                </button>
+              </div>
+            )}
+            
             <div className="grid grid-cols-2 gap-4">
               <InputGroup 
                 label="Underwriting" 

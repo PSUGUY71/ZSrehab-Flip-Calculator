@@ -104,12 +104,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const passes70Rule = purchasePrice <= maxPurchasePrice70Rule;
   
   // Gap / Down Payment
-  // Gap = Purchase Price - (Purchase Price × Financing %) - Seller Buy Back Amount
+  // Gap = Purchase Price - (Purchase Price × Financing %) - EMD - Seller Buy Back Amount
   // This represents the cash down payment needed for the purchase price only
+  // EMD (Earnest Money Deposit) reduces the down payment (already paid at offer stage)
   // Seller Buy Back Amount reduces the down payment (seller holds note/finances part)
-  // Example: Purchase $100k at 80% financing with $5k seller buy back = $15k gap
+  // Example: Purchase $100k at 80% financing with $5k EMD and $5k seller buy back = $10k gap
   const loanForPurchasePrice = purchasePrice * (financingPercent / 100);
-  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice - (sellerBuyBackAmount || 0));
+  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice - (earnestMoneyDeposit || 0) - (sellerBuyBackAmount || 0));
   
   const holdbackAmount = rehabBudget;
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;

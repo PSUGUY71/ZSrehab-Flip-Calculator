@@ -5,6 +5,7 @@ import { calculateLoanForLender } from './utils/lenderComparison';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
+import { getStateClosingCosts } from './utils/stateClosingCosts';
 
 import {
   AuthScreen,
@@ -405,7 +406,28 @@ const App: React.FC = () => {
 
   // --- INPUT HANDLERS ---
   const handleInputChange = (field: keyof LoanInputs, value: string | number) => {
-    setInputs((prev) => ({ ...prev, [field]: value }));
+    setInputs((prev) => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-populate closing costs when state changes
+      if (field === 'state' && typeof value === 'string') {
+        const stateCosts = getStateClosingCosts(value);
+        if (stateCosts) {
+          // Auto-populate CPL fee and transfer tax rate when state changes
+          // Only if they're at defaults to avoid overwriting user edits
+          updated.cplFee = stateCosts.cplFee;
+          updated.transferTaxRate = stateCosts.transferTaxRate;
+          
+          // For title insurance rate: 
+          // - PA: leave at 0 to use PA Title Insurance Rate Table chart
+          // - Other states: leave at 0 (users can set manually if needed)
+          // The lookup table has dollar estimates, but titleInsuranceRate is a percentage
+          // So we'll leave it and let users override if needed
+        }
+      }
+      
+      return updated;
+    });
   };
 
   // --- REHAB LINE ITEM HANDLERS ---

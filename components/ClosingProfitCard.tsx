@@ -24,27 +24,11 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
     </div>
     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4 text-xs text-teal-800 print:gap-y-1">
       <div className="flex justify-between">
-        <span className="opacity-70">Revenue</span>
+        <span className="opacity-70">Revenue (Sale)</span>
         <span className="font-bold">{formatCurrency(inputs.arv)}</span>
       </div>
-      <div className="flex justify-between">
-        <span className="opacity-70">Ln. Payoff</span>
-        <span className="font-bold text-red-600">-{formatCurrency(results.qualifiedLoanAmount)}</span>
-      </div>
-
-      {/* Walker Fees */}
-      <div className="flex justify-between">
-        <span className="opacity-70">Walker Fees</span>
-        <span className="font-bold text-red-600">-{formatCurrency(results.totalWalkerFees)}</span>
-      </div>
-
-      {/* Other Buying Costs */}
-      <div className="flex justify-between">
-        <span className="opacity-70">Other Cash Inv.</span>
-        <span className="font-bold text-red-600">-{formatCurrency(results.totalBuyingCosts - results.totalWalkerFees)}</span>
-      </div>
-
-      {/* Exit Costs Breakdown - Always Sell */}
+      
+      {/* Exit Costs Breakdown - Commissions shown prominently */}
       {(() => {
         // Calculate commissions using new separate rates or legacy rate
         let sellerComm = 0;
@@ -61,12 +45,12 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         
         return (
           <>
-            <div className="flex justify-between">
-              <span className="opacity-70">Buyer Agent Commission</span>
+            <div className="flex justify-between border-t border-teal-300 pt-1 mt-1">
+              <span className="opacity-70 font-semibold">Buyer's Agent Commission ({inputs.sellingBuyerAgentCommissionRate || 0}%)</span>
               <span className="font-bold text-red-600">-{formatCurrency(buyerComm)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-70">Seller Agent Commission</span>
+              <span className="opacity-70 font-semibold">Seller's Agent Commission ({inputs.sellingSellerAgentCommissionRate || 0}%)</span>
               {inputs.weAreTheRealEstateAgent ? (
                 (() => {
                   const brokerPortion = sellerComm * ((inputs.sellingSellerAgentBrokerRate || 0) / 100);
@@ -87,6 +71,23 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
           </>
         );
       })()}
+      
+      <div className="flex justify-between">
+        <span className="opacity-70">Ln. Payoff</span>
+        <span className="font-bold text-red-600">-{formatCurrency(results.qualifiedLoanAmount)}</span>
+      </div>
+
+      {/* Walker Fees */}
+      <div className="flex justify-between">
+        <span className="opacity-70">Walker Fees</span>
+        <span className="font-bold text-red-600">-{formatCurrency(results.totalWalkerFees)}</span>
+      </div>
+
+      {/* Other Buying Costs */}
+      <div className="flex justify-between">
+        <span className="opacity-70">Other Cash Inv.</span>
+        <span className="font-bold text-red-600">-{formatCurrency(results.totalBuyingCosts - results.totalWalkerFees)}</span>
+      </div>
       <div className="flex justify-between">
         <span className="opacity-70">Transfer Tax</span>
         <span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate / 100))}</span>

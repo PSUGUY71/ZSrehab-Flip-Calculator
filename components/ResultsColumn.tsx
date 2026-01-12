@@ -8,6 +8,8 @@ import { LenderComparison } from './LenderComparison';
 import { ClosingProfitCard } from './ClosingProfitCard';
 import { SensitivityAnalysis } from './SensitivityAnalysis';
 import { SellerNetAnalysis } from './SellerNetAnalysis';
+import { CashRequiredSummary } from './CashRequiredSummary';
+import { RealismCheckPanel } from './RealismCheckPanel';
 
 interface LenderComparisonResult {
   lenderUpfrontFeesAdjusted: number;
@@ -64,10 +66,16 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   return (
     <div className="w-full lg:w-1/2 space-y-6">
       <div className="sticky top-24 space-y-6">
+        {/* Cash Required Summary */}
+        <CashRequiredSummary inputs={inputs} results={results} />
+
         {/* Eligibility Alert */}
         <div className="bg-gray-50 rounded-xl p-2">
           <EligibilityAlert results={results} />
         </div>
+
+        {/* Realism Check Panel */}
+        <RealismCheckPanel inputs={inputs} results={results} />
 
         {/* Valuation & Returns Section */}
         <div className="bg-blue-50 rounded-xl p-2">

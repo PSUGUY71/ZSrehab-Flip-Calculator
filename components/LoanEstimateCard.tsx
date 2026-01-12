@@ -34,11 +34,50 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             Qualified Loan (capped): {formatCurrency(results.qualifiedLoanAmount)}
           </div>
         )}
-        <ResultRow 
-          label="Max Allowable Offer" 
-          subtext="(ARV × LTV%) - Rehab Budget" 
-          value={results.maxAllowableOffer} 
-        />
+        {/* Max Allowable Offer with Detailed Breakdown */}
+        <div className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-bold text-gray-900">Max Allowable Offer Calculation:</span>
+            <HelpTooltip
+              title="Max Allowable Offer"
+              description="Lenders typically allow loans up to 75% of the after-repair value. If your ARV is $250k, the max loan is $187.5k. Subtract your rehab budget ($40k) to get max purchase price ($147.5k). This may limit your financing options if exceeded."
+              formula="1. Maximum Loan Allowed: ARV × 75% 2. Less: Rehab Budget 3. Result: Max Purchase Price"
+            />
+          </div>
+          <div className="space-y-1.5 text-xs text-gray-700">
+            <div className="flex justify-between">
+              <span>1. Maximum Loan Allowed:</span>
+              <span className="font-medium">ARV × 75% = {formatCurrency(inputs.arv)} × 0.75 = {formatCurrency(inputs.arv * 0.75)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>2. Less: Rehab Budget</span>
+              <span className="font-medium text-red-600">-{formatCurrency(inputs.rehabBudget)}</span>
+            </div>
+            <div className="flex justify-between pt-1 border-t border-blue-200 font-bold text-sm">
+              <span>3. Result:</span>
+              <span className="text-blue-700">{formatCurrency(results.maxAllowableOffer)} (maximum you can offer)</span>
+            </div>
+            <div className="pt-2 mt-2 border-t border-blue-200">
+              <div className="flex justify-between items-center">
+                <span>Your Current Purchase:</span>
+                <span className="font-semibold">{formatCurrency(inputs.purchasePrice)}</span>
+              </div>
+              {inputs.purchasePrice > results.maxAllowableOffer && results.maxAllowableOffer > 0 ? (
+                <div className="mt-1 text-red-700 font-semibold text-xs">
+                  Status: ⚠️ OVER by {formatCurrency(inputs.purchasePrice - results.maxAllowableOffer)}
+                </div>
+              ) : (
+                <div className="mt-1 text-green-700 font-semibold text-xs">
+                  Status: ✓ Within limit
+                </div>
+              )}
+            </div>
+            <div className="text-[10px] text-gray-600 mt-2 pt-2 border-t border-blue-200">
+              <strong>Note:</strong> Your LTV ({results.ltarv.toFixed(2)}%) is {results.ltarv <= 75 ? 'LOWER' : 'HIGHER'} than the 75% lender limit. 
+              {results.ltarv > 75 && ' This may limit your financing options.'}
+            </div>
+          </div>
+        </div>
         
         {/* Monthly Payment */}
         <div className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -213,9 +252,23 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           
           <ResultRow 
             label="Gap / Down Payment" 
-            subtext="Purchase Price - (Purchase Price × Financing%) - Seller Buy Back"
+            subtext={inputs.earnestMoneyDeposit > 0 || inputs.sellerBuyBackAmount > 0 
+              ? `Purchase Price - Financed Amount - EMD Applied${inputs.sellerBuyBackAmount > 0 ? ' - Seller Buy Back' : ''}`
+              : "Purchase Price - (Purchase Price × Financing%)"}
             value={results.gapAmount} 
           />
+          
+          {inputs.earnestMoneyDeposit > 0 && (
+            <div className="pl-3 py-1 text-[11px] text-green-700">
+              <div className="flex justify-between">
+                <span>Earnest Money Deposit (Applied):</span>
+                <span className="font-medium">-{formatCurrency(inputs.earnestMoneyDeposit)}</span>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">
+                EMD paid at offer stage reduces your down payment
+              </div>
+            </div>
+          )}
           
           {inputs.sellerBuyBackAmount > 0 && (
             <ResultRow 
@@ -231,7 +284,14 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} highlight />
           )}
           <div className="flex justify-between font-bold text-lg pt-2 mt-2 border-t border-yellow-300 text-gray-900">
-            <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
+            <div className="flex flex-col">
+              <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
+              {inputs.earnestMoneyDeposit > 0 && (
+                <span className="text-[10px] text-gray-500 font-normal mt-0.5">
+                  (Already paid EMD: {formatCurrency(inputs.earnestMoneyDeposit)})
+                </span>
+              )}
+            </div>
             <span className={results.totalCashToClose < 0 ? 'text-green-600' : ''}>
               {formatCurrency(Math.abs(results.totalCashToClose))}
             </span>
@@ -262,15 +322,37 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             </div>
           </div>
           
-          <div className="mt-2 text-xs text-gray-500 flex justify-between">
-            <span>Required Liquidity Evidence:</span>
-            <span
-              className={`font-bold ${
-                inputs.liquidity >= results.requiredLiquidity ? 'text-green-600' : 'text-red-600'
-              }`}
-            >
-              {formatCurrency(results.requiredLiquidity)}
-            </span>
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-gray-700">Required Liquidity Evidence (Lender Requirement)</span>
+                <HelpTooltip
+                  title="Required Liquidity Evidence"
+                  description="Most lenders require proof that you have cash reserves equal to your Total Paid Out at closing multiplied by 1.25. This verifies you're not borrowing the down payment from a credit card. Have this amount verified in bank statements when you apply for the loan."
+                  formula={`Calculation: Total Paid Out (${formatCurrency(results.totalPaidOut)}) × 1.25 = ${formatCurrency(results.requiredLiquidity)}`}
+                />
+              </div>
+              <span
+                className={`text-sm font-bold ${
+                  inputs.liquidity >= results.requiredLiquidity ? 'text-green-600' : 'text-red-600'
+                }`}
+              >
+                {formatCurrency(results.requiredLiquidity)}
+              </span>
+            </div>
+            {inputs.liquidity > 0 && (
+              <div className={`text-[10px] p-2 rounded ${
+                inputs.liquidity >= results.requiredLiquidity 
+                  ? 'bg-green-50 text-green-800 border border-green-200' 
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {inputs.liquidity >= results.requiredLiquidity ? (
+                  <span>✓ Your liquid savings ({formatCurrency(inputs.liquidity)}) meet the requirement.</span>
+                ) : (
+                  <span>⚠️ Your liquid savings ({formatCurrency(inputs.liquidity)}) are below required ({formatCurrency(results.requiredLiquidity)}). Lenders may not approve.</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
