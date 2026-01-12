@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
 import { getStateClosingCosts } from './utils/stateClosingCosts';
+import { estimateMonthlyInsurance, estimateMonthlyTax } from './utils/stateHoldingCosts';
 
 import {
   AuthScreen,
@@ -175,6 +176,57 @@ const App: React.FC = () => {
       isMounted = false; // Cleanup: prevent state updates after unmount
     };
   }, [currentUser?.id, currentUser?.email]); // Only depend on user ID and email, not the whole object
+
+  // Auto-apply suggested lender fees when purchase price or rehab budget changes and all fees are zero
+  useEffect(() => {
+    const allFeesZero = inputs.underwritingFee === 0 && inputs.processingFee === 0 && 
+                        inputs.docPrepFee === 0 && inputs.wireFee === 0 && (inputs.otherLenderFees || 0) === 0;
+    
+    if (allFeesZero && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0)) {
+      const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
+      if (financingPercent > 0) {
+        const totalProjectCost = inputs.purchasePrice + inputs.rehabBudget;
+        const loanAmount = totalProjectCost * (financingPercent / 100);
+        const pointsTotal = loanAmount * 0.03; // 3% default
+        
+        // Auto-apply suggested fees
+        setInputs((prev) => ({
+          ...prev,
+          underwritingFee: Math.round(pointsTotal * 0.20),
+          processingFee: Math.round(pointsTotal * 0.25),
+          docPrepFee: Math.round(pointsTotal * 0.15),
+          wireFee: Math.round(pointsTotal * 0.10),
+          otherLenderFees: Math.round(pointsTotal * 0.30),
+        }));
+      }
+    }
+  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage]);
+
+  // Auto-check and populate insurance/taxes when holding period > 3 months
+  useEffect(() => {
+    if (inputs.holdingPeriodMonths > 3 && inputs.state) {
+      setInputs((prev) => {
+        const updated = { ...prev };
+        let changed = false;
+        
+        // Auto-check insurance if unchecked and no value set
+        if (!prev.includeMonthlyInsurance && prev.monthlyInsurance === 0) {
+          updated.includeMonthlyInsurance = true;
+          updated.monthlyInsurance = estimateMonthlyInsurance(prev.purchasePrice, prev.state);
+          changed = true;
+        }
+        
+        // Auto-check taxes if unchecked and no value set
+        if (!prev.includeMonthlyTaxes && prev.monthlyTaxes === 0) {
+          updated.includeMonthlyTaxes = true;
+          updated.monthlyTaxes = estimateMonthlyTax(prev.purchasePrice, prev.state);
+          changed = true;
+        }
+        
+        return changed ? updated : prev;
+      });
+    }
+  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice]);
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);

@@ -79,7 +79,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
 
         {/* Valuation & Returns Section */}
         <div className="bg-blue-50 rounded-xl p-2">
-          <ValuationReturns results={results} />
+          <ValuationReturns inputs={inputs} results={results} />
         </div>
 
         {/* Loan Estimate Card */}

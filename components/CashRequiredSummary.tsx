@@ -17,8 +17,15 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
   // Calculate due at closing (cash to close)
   const dueAtClosing = results.totalCashToClose || 0;
 
-  // Calculate total liquidity needed (due at closing + holding costs)
-  const totalLiquidityNeeded = dueAtClosing + holdingCosts;
+  // FIX: Use the same requiredLiquidity calculation as the report
+  // This matches the lender requirement formula: Max(ClosingCosts + Gap + PerDiem + 25% Rehab, ClosingCosts + Gap + PerDiem + $15k)
+  // The requiredLiquidity is already calculated in utils/calculations.ts and includes:
+  // - Total closing costs (lender + third party)
+  // - Gap amount (down payment)
+  // - Per diem interest (prepaids)
+  // - Minus commission credit (reduces cash needed)
+  // - Plus buffer: Max(25% of rehab, $15,000)
+  const totalLiquidityNeeded = results.requiredLiquidity || 0;
 
   // Determine color coding
   const isUnrealistic = inputs.interestRate === 0 || (holdingCosts === 0 && (inputs.holdingPeriodMonths || 0) > 3);
@@ -74,7 +81,12 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           </div>
           <div className="border-t-2 border-gray-300 pt-2 mt-2">
             <div className="flex justify-between items-center">
-              <span className="text-base font-bold text-gray-900">TOTAL LIQUIDITY NEEDED:</span>
+              <div className="flex flex-col">
+                <span className="text-base font-bold text-gray-900">TOTAL LIQUIDITY NEEDED:</span>
+                <span className="text-[10px] text-gray-500 mt-0.5">
+                  (Lender requirement: Max(Closing + Gap + 25% Rehab, Closing + Gap + $15k))
+                </span>
+              </div>
               <span className="text-xl font-bold text-gray-900">{formatCurrency(totalLiquidityNeeded)}</span>
             </div>
           </div>

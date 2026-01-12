@@ -129,5 +129,26 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
       </div>
       <span className="font-bold">{formatCurrency(results.closingTableProfit)}</span>
     </div>
+
+    {/* After-Tax Profit Section */}
+    {inputs.showAfterTaxProfit && results.estimatedCapitalGainsTax > 0 && (
+      <div className="mt-3 pt-2 border-t-2 border-teal-300 bg-teal-100/40 rounded p-2 print:mt-1 print:pt-1">
+        <div className="text-xs font-bold text-teal-900 uppercase mb-2">NET PROFIT AFTER TAXES</div>
+        <div className="space-y-1 text-xs text-teal-800">
+          <div className="flex justify-between">
+            <span className="opacity-70">Net Profit (Before Tax):</span>
+            <span className="font-bold">{formatCurrency(results.netProfit)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="opacity-70">Est. Capital Gains Tax ({inputs.capitalGainsTaxRate || 20}%):</span>
+            <span className="font-bold text-red-600">-{formatCurrency(results.estimatedCapitalGainsTax)}</span>
+          </div>
+          <div className="border-t border-teal-300 pt-1 mt-1 flex justify-between font-bold text-teal-900">
+            <span>Net After Taxes:</span>
+            <span>{formatCurrency(results.netProfitAfterTax)}</span>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
 );

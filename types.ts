@@ -164,6 +164,10 @@ export interface LoanInputs {
   
   // Seller Financing
   sellerBuyBackAmount: number; // Seller holds note/finances part of purchase, reduces down payment
+  
+  // Tax Settings
+  capitalGainsTaxRate: number; // Capital gains tax rate (default 20% for self-employed)
+  showAfterTaxProfit: boolean; // Toggle to show/hide after-tax profit calculation
 }
 
 export interface SavedDeal {
@@ -279,6 +283,10 @@ export interface CalculatedResults {
   totalExitCosts: number;
   netProfit: number;
   closingTableProfit: number;
+  
+  // Tax Calculations
+  estimatedCapitalGainsTax: number; // Estimated tax on profit
+  netProfitAfterTax: number; // Net profit after capital gains tax
   
   roi: number;
   projectRoi: number;
@@ -405,4 +413,8 @@ export const DEFAULT_INPUTS: LoanInputs = {
   sellerMiscFees: 0,
   
   sellerBuyBackAmount: 0,
+  
+  // Tax Settings
+  capitalGainsTaxRate: 20, // Default 20% for self-employed
+  showAfterTaxProfit: false, // Default to false (show toggle)
 };

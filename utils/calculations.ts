@@ -74,7 +74,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     sellerLineOfCreditBalance,
     sellerAgentCommissionRate,
     sellerTransferTaxRate,
-    sellerMiscFees
+    sellerMiscFees,
+    capitalGainsTaxRate,
+    showAfterTaxProfit
   } = inputs;
 
   // 1. Constants from PDF/RFG Rules
@@ -478,6 +480,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Net Equity (Refi) = ARV - Total Cost Basis (This represents equity retained after paying everything)
   const netProfit = arv - totalProjectCostBasis;
   
+  // Capital Gains Tax Calculation
+  // Capital gains tax is applied to the net profit (gain on sale)
+  // Default rate is 20% for self-employed (long-term capital gains)
+  const taxRate = inputs.capitalGainsTaxRate || 20;
+  const estimatedCapitalGainsTax = netProfit > 0 ? (netProfit * (taxRate / 100)) : 0;
+  const netProfitAfterTax = netProfit - estimatedCapitalGainsTax;
+  
   // Closing Table Profit = Net Profit + Holding Costs (Adding it back because we assume we don't count it for this metric)
   // Essentially: ARV - Payoff - BuyingCosts - SellingCosts
   const closingTableProfit = netProfit + totalHoldingCosts;
@@ -623,13 +632,20 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   });
 
   // 12. Proof of Funds / Liquidity Logic
-  // Based on the specific formula provided by user:
-  // Option A: Closing Cost + 25% of Rehab
-  // Option B: Closing Cost + $15,000
-  // Result: Greater of A or B
-  
-  // FIX: Include all closing costs (Lender + Third Party) + Gap + Per Diem Interest (Prepaids)
-  // Also subtracting commission credit as it reduces cash needed.
+  // REQUIRED LIQUIDITY FORMULA (Lender Requirement):
+  // This is the amount of liquid cash the lender requires you to prove you have in bank statements.
+  // Formula: Max(Option A, Option B) where:
+  //   Option A = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + (25% of Rehab Budget)
+  //   Option B = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + $15,000
+  // 
+  // Components:
+  //   - Total Closing Costs: Lender fees + Third party fees
+  //   - Gap: Down payment amount (Purchase Price - Financed Amount - EMD - Seller Buy Back)
+  //   - Per Diem Interest: Prepaid interest for days between closing and first payment
+  //   - Commission Credit: Reduces cash needed (if you're the agent)
+  //   - Buffer: Either 25% of rehab OR $15,000 (whichever is greater)
+  //
+  // This ensures lenders verify you have sufficient reserves and aren't borrowing the down payment.
   const liquidityClosingCosts = totalClosingCosts + gapAmount + perDiemInterest - buyerAgentCommissionCredit;
   
   const liquidityOptionA = liquidityClosingCosts + (rehabBudget * 0.25);
@@ -806,6 +822,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     yearlyDuesCost,
     totalExitCosts,
     netProfit,
+    estimatedCapitalGainsTax,
+    netProfitAfterTax,
     closingTableProfit,
     roi,
     projectRoi,

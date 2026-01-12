@@ -1221,6 +1221,34 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </div>
           </div>
           
+          {/* Capital Gains Tax Section */}
+          <div className="mt-4 bg-gray-50 p-4 rounded border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                type="checkbox"
+                id="showAfterTaxProfit"
+                checked={inputs.showAfterTaxProfit || false}
+                onChange={(e) => onInputChange('showAfterTaxProfit', e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="showAfterTaxProfit" className="text-xs font-bold text-gray-700 cursor-pointer">
+                Show after-tax profit?
+              </label>
+            </div>
+            {inputs.showAfterTaxProfit && (
+              <div className="mt-2">
+                <InputGroup 
+                  label="Capital Gains Tax Rate %" 
+                  id="capitalGainsTaxRate" 
+                  value={inputs.capitalGainsTaxRate || 20} 
+                  onChange={(v) => onInputChange('capitalGainsTaxRate', v)} 
+                  suffix="%"
+                  helpText="Capital gains tax rate on profit from sale. Default 20% for self-employed (long-term capital gains). Short-term (held < 1 year) is taxed as ordinary income."
+                />
+              </div>
+            )}
+          </div>
+          
           {/* Monthly Holding Cost Summary */}
           <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="text-xs font-bold text-blue-900 uppercase mb-3 flex justify-between items-center">

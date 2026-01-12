@@ -587,7 +587,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
 
         {/* Valuation & Returns */}
         <div className="mt-6 break-inside-avoid print:mt-1">
-          <ValuationReturns results={results} />
+          <ValuationReturns inputs={inputs} results={results} />
         </div>
 
         {/* Lender Comparison */}
