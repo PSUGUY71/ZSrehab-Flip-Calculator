@@ -91,3 +91,51 @@ export const estimateMonthlyTax = (purchasePrice: number, state: string): number
   return Math.round((purchasePrice * stateCosts.taxRatePercent / 100) / 12);
 };
 
+// Regional utilities estimates (monthly averages for vacant/rehab properties)
+// Northeast: Higher heating costs, South: Lower heating but higher cooling
+export const estimateMonthlyUtilities = (state: string): number => {
+  const northeastStates = ['PA', 'NJ', 'NY', 'CT', 'MA', 'RI', 'VT', 'NH', 'ME'];
+  const southStates = ['TX', 'FL', 'GA', 'NC', 'SC', 'AL', 'MS', 'LA', 'AR', 'TN', 'KY', 'VA', 'WV', 'MD', 'DE'];
+  
+  if (northeastStates.includes(state)) {
+    return 150; // Higher heating costs in winter
+  } else if (southStates.includes(state)) {
+    return 100; // Lower heating, but AC costs in summer
+  } else {
+    return 125; // Default for other regions (Midwest, West)
+  }
+};
+
+// Auto-estimate all holding costs when holding months >= 3
+export interface HoldingCostEstimates {
+  monthlyInsurance: number;
+  monthlyTaxes: number;
+  monthlyUtilities: number;
+  totalMonthlyEstimate: number;
+  isVeryConservative: boolean; // Flag if total monthly < $500
+}
+
+export const estimateHoldingCosts = (
+  purchasePrice: number,
+  state: string,
+  existingMonthlyElectric: number = 0
+): HoldingCostEstimates => {
+  const monthlyInsurance = estimateMonthlyInsurance(purchasePrice, state);
+  const monthlyTaxes = estimateMonthlyTax(purchasePrice, state);
+  // Use existing electric if provided, otherwise estimate based on region
+  const monthlyUtilities = existingMonthlyElectric > 0 
+    ? existingMonthlyElectric 
+    : estimateMonthlyUtilities(state);
+  
+  const totalMonthlyEstimate = monthlyInsurance + monthlyTaxes + monthlyUtilities;
+  const isVeryConservative = totalMonthlyEstimate < 500;
+  
+  return {
+    monthlyInsurance,
+    monthlyTaxes,
+    monthlyUtilities,
+    totalMonthlyEstimate,
+    isVeryConservative
+  };
+};
+

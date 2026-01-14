@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './types';
+import { getLoanTypeDefaults, calculatePMI } from './utils/loanTypeDefaults';
 import { calculateLoan, formatCurrency, formatPercent } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { InputGroup } from './components/InputGroup';
@@ -7,6 +8,9 @@ import { ResultRow } from './components/ResultRow';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { AuthScreen } from './components/AuthScreen';
+import { StateSelectionScreen } from './components/StateSelectionScreen';
+import { getStateDefaults, applyStateDefaults, getStateName, getAllStateCodes } from './utils/stateDefaults';
+import { analyzeRehabBudget } from './utils/rehabBudgetAnalysis';
 import {
   EligibilityAlert,
   MaxOfferCard,
@@ -35,6 +39,8 @@ const App: React.FC = () => {
   const [savedDeals, setSavedDeals] = useState<SavedDeal[]>([]);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [saveNotification, setSaveNotification] = useState<string | null>(null);
+  const [showStateSelection, setShowStateSelection] = useState(false);
+  const [stateChangeNotification, setStateChangeNotification] = useState<string | null>(null);
 
   // Lender Modal State
   const [isLenderModalOpen, setIsLenderModalOpen] = useState(false);
@@ -42,6 +48,15 @@ const App: React.FC = () => {
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
 
   // --- EFFECTS ---
+  useEffect(() => {
+    // Load saved state from localStorage on mount
+    const savedState = localStorage.getItem('zsrehab_selected_state');
+    if (savedState && !inputs.state) {
+      const defaults = applyStateDefaults(inputs, savedState, true);
+      setInputs(prev => ({ ...prev, state: savedState, ...defaults }));
+    }
+  }, []); // Only run on mount
+
   useEffect(() => {
     // Check for existing Supabase session
     if (isSupabaseConfigured && supabase) {
@@ -236,7 +251,39 @@ const App: React.FC = () => {
   };
 
   const handleInputChange = (field: keyof LoanInputs, value: string | number) => {
-    setInputs(prev => ({ ...prev, [field]: value }));
+    setInputs(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Auto-populate state defaults when state changes
+      if (field === 'state' && typeof value === 'string' && value) {
+        const defaults = applyStateDefaults(prev, value, false);
+        Object.entries(defaults).forEach(([key, val]) => {
+          (updated as any)[key] = val;
+        });
+        
+        // Save state to localStorage
+        localStorage.setItem('zsrehab_selected_state', value);
+        
+        // Show notification
+        const stateName = getStateName(value);
+        setStateChangeNotification(`Closing costs updated for ${stateName}. Verify with your lender.`);
+        setTimeout(() => setStateChangeNotification(null), 5000);
+      }
+      
+      return updated;
+    });
+  };
+
+  const handleStateSelect = (stateCode: string) => {
+    setShowStateSelection(false);
+    const defaults = applyStateDefaults(inputs, stateCode, true);
+    setInputs(prev => {
+      const updated = { ...prev, state: stateCode, ...defaults };
+      localStorage.setItem('zsrehab_selected_state', stateCode);
+      return updated;
+    });
+    setStateChangeNotification(`Closing costs set for ${getStateName(stateCode)}. Verify with your lender.`);
+    setTimeout(() => setStateChangeNotification(null), 5000);
   };
 
   const handleApplyLender = (lender: LenderOption) => {
@@ -255,6 +302,21 @@ const App: React.FC = () => {
 
   const handleSaveDeal = async () => {
     if (!currentUser) return;
+    
+    // Validation: Prevent saving with $0 holding costs when holding months >= 3
+    if (inputs.holdingPeriodMonths >= 3) {
+      const monthlyHoldingTotal = results.monthlyPayment + results.monthlyUtilitiesCost;
+      if (monthlyHoldingTotal < 500) {
+        const confirmSave = window.confirm(
+          `WARNING: Your holding costs are very low (${formatCurrency(monthlyHoldingTotal)}/month) for a ${inputs.holdingPeriodMonths}-month hold.\n\n` +
+          `This may underestimate your actual expenses. Typical holding costs are $500-$1,000+/month.\n\n` +
+          `Do you want to save anyway?`
+        );
+        if (!confirmSave) {
+          return;
+        }
+      }
+    }
     
     const existingDeal = savedDeals.find(d => d.name === (inputs.address || 'Untitled Property'));
     const newDeal: SavedDeal = {
@@ -325,8 +387,19 @@ const App: React.FC = () => {
 
   const handleNewDeal = () => {
       if (window.confirm("Start a new deal? Unsaved changes will be lost.")) {
-          setInputs(DEFAULT_INPUTS);
+          const savedState = localStorage.getItem('zsrehab_selected_state');
+          const newInputs = { ...DEFAULT_INPUTS };
+          if (savedState) {
+            newInputs.state = savedState;
+            // Apply state defaults to new deal
+            const defaults = applyStateDefaults(newInputs, savedState, true);
+            Object.assign(newInputs, defaults);
+          }
+          setInputs(newInputs);
           setLenders([]);
+          if (!savedState) {
+            setShowStateSelection(true);
+          }
       }
   };
 
@@ -427,6 +500,16 @@ const App: React.FC = () => {
     );
   }
 
+  // --- RENDER: STATE SELECTION ---
+  if (showStateSelection) {
+    return (
+      <StateSelectionScreen
+        onStateSelect={handleStateSelect}
+        currentState={inputs.state}
+      />
+    );
+  }
+
   // --- RENDER: REPORT MODE (Physical Sheet Metaphor) ---
   if (isReportMode) {
     return (
@@ -450,7 +533,7 @@ const App: React.FC = () => {
                     <div className="flex items-center gap-4">
                         <div className="bg-blue-900 text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg">ZS</div>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 leading-none print:text-xl">ZSrehab Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version</span></h1>
+                            <h1 className="text-3xl font-bold text-gray-900 leading-none print:text-xl">ZS Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version</span></h1>
                             <span className="text-sm text-gray-500 font-medium tracking-wide block mt-1 print:text-xs">INVESTMENT DEAL ANALYSIS • {new Date().toLocaleDateString()}</span>
                         </div>
                     </div>
@@ -640,13 +723,26 @@ const App: React.FC = () => {
           <div className="flex items-center gap-3">
              <div className="bg-blue-900 text-white p-2 rounded font-bold tracking-tighter text-xl">ZS</div>
              <div>
-               <h1 className="text-lg font-bold text-gray-900 leading-none">ZSrehab Flip Calculator</h1>
+               <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Flip Calculator</h1>
                <div className="flex items-center gap-2">
                    <span className="text-xs text-gray-500 font-medium tracking-wide">100% LOAN QUALIFIER</span>
                    <span className="text-xs text-blue-600 font-medium">User: {currentUser.email}</span>
+                   {inputs.state && (
+                     <span className="text-xs text-green-600 font-medium">
+                       • {getStateName(inputs.state)}
+                     </span>
+                   )}
                </div>
              </div>
           </div>
+          
+          {/* State Change Notification */}
+          {stateChangeNotification && (
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
+              <span>✓</span>
+              <span>{stateChangeNotification}</span>
+            </div>
+          )}
           
           {/* Centered Version Selector */}
           <div className="absolute left-1/2 transform -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2">
@@ -662,6 +758,13 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2">
+             <button 
+               onClick={() => setShowStateSelection(true)} 
+               className="text-gray-500 hover:text-blue-600 font-medium px-3 py-1 rounded text-sm transition"
+               title="Change State"
+             >
+               {inputs.state ? getStateName(inputs.state) : 'Select State'}
+             </button>
              <button onClick={handleNewDeal} className="text-gray-500 hover:text-blue-600 font-medium px-3 py-1 rounded text-sm transition">New</button>
              <button onClick={handleSaveDeal} className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2 relative">
                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-500"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
@@ -697,7 +800,28 @@ const App: React.FC = () => {
                     <div className="p-6 space-y-4">
                         <InputGroup label="Property Address" id="address" value={inputs.address} onChange={v => handleInputChange('address', v)} type="text" />
                         <div className="grid grid-cols-4 gap-4">
-                            <div className="col-span-1"><label className="text-xs font-semibold text-gray-500 uppercase">State</label><select className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" value={inputs.state} onChange={e => handleInputChange('state', e.target.value)}><option value="PA">PA</option><option value="NJ">NJ</option><option value="NY">NY</option></select></div>
+                            <div className="col-span-1">
+                              <label className="text-xs font-semibold text-gray-500 uppercase">State</label>
+                              <select 
+                                className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
+                                value={inputs.state} 
+                                onChange={e => handleInputChange('state', e.target.value)}
+                              >
+                                <option value="">Select State</option>
+                                {getAllStateCodes()
+                                  .sort((a, b) => getStateName(a).localeCompare(getStateName(b)))
+                                  .map((code) => (
+                                    <option key={code} value={code}>
+                                      {getStateName(code)} ({code})
+                                    </option>
+                                  ))}
+                              </select>
+                              {inputs.state && getStateDefaults(inputs.state) && (
+                                <div className="mt-1 text-[10px] text-blue-600 italic">
+                                  💡 Closing costs set for {getStateName(inputs.state)}. Verify with your lender.
+                                </div>
+                              )}
+                            </div>
                             <div className="col-span-1"><InputGroup label="Zip" id="zip" value={inputs.zipCode} onChange={v => handleInputChange('zipCode', v)} type="text" /></div>
                             <div className="col-span-1"><label className="text-xs font-semibold text-gray-500 uppercase">Type</label><select className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" value={inputs.propertyType} onChange={e => handleInputChange('propertyType', e.target.value)}><option value="SFR">SFR</option><option value="Multi-Family">Multi</option></select></div>
                             <div className="col-span-1"><InputGroup label="Units" id="units" value={inputs.units} onChange={v => handleInputChange('units', v)} /></div>
@@ -739,14 +863,108 @@ const App: React.FC = () => {
                                     </div>
                                 </div>
                              </div>
-                             <InputGroup label="Rehab Budget" id="rehab" value={inputs.rehabBudget} onChange={v => handleInputChange('rehabBudget', v)} prefix="$" />
+                             <div>
+                               <InputGroup label="Rehab Budget" id="rehab" value={inputs.rehabBudget} onChange={v => handleInputChange('rehabBudget', v)} prefix="$" />
+                               
+                               {/* Rehab Budget Analysis */}
+                               {(() => {
+                                 const analysis = analyzeRehabBudget(
+                                   inputs.rehabBudget,
+                                   inputs.purchasePrice,
+                                   inputs.sqFt
+                                 );
+                                 
+                                 if (!analysis) return null;
+                                 
+                                 return (
+                                   <div className="mt-3 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg space-y-3">
+                                     {/* Metrics Grid */}
+                                     <div className="grid grid-cols-2 gap-3">
+                                       <div className="bg-white rounded p-2 border border-blue-100">
+                                         <div className="text-[10px] text-gray-600 uppercase font-semibold">Cost per SqFt</div>
+                                         <div className="text-sm font-bold text-blue-900">
+                                           {formatCurrency(analysis.perSqft)}
+                                         </div>
+                                         <div className="text-[9px] text-gray-500 mt-0.5">
+                                           {analysis.perSqft >= 50 && analysis.perSqft <= 150 ? (
+                                             <span className="text-green-600">✓ Typical range</span>
+                                           ) : (
+                                             <span className="text-orange-600">Outside typical</span>
+                                           )}
+                                         </div>
+                                       </div>
+                                       
+                                       <div className="bg-white rounded p-2 border border-blue-100">
+                                         <div className="text-[10px] text-gray-600 uppercase font-semibold">% of Purchase</div>
+                                         <div className="text-sm font-bold text-blue-900">
+                                           {analysis.percentOfPurchase.toFixed(1)}%
+                                         </div>
+                                         <div className="text-[9px] text-gray-500 mt-0.5">
+                                           {analysis.percentOfPurchase >= 20 && analysis.percentOfPurchase <= 40 ? (
+                                             <span className="text-green-600">✓ Typical range</span>
+                                           ) : (
+                                             <span className="text-orange-600">Outside typical</span>
+                                           )}
+                                         </div>
+                                       </div>
+                                     </div>
+                                     
+                                     {/* Warnings */}
+                                     {analysis.warnings.length > 0 && (
+                                       <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 space-y-1">
+                                         <div className="text-xs font-bold text-yellow-900 uppercase mb-1">Warnings</div>
+                                         {analysis.warnings.map((warning, idx) => (
+                                           <div key={idx} className="text-xs text-yellow-800">
+                                             {warning}
+                                           </div>
+                                         ))}
+                                       </div>
+                                     )}
+                                     
+                                     {/* Contingency Recommendations */}
+                                     <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
+                                       <div className="text-xs font-bold text-blue-900 uppercase mb-2">Recommended Contingency</div>
+                                       <div className="grid grid-cols-2 gap-2">
+                                         <div>
+                                           <div className="text-[10px] text-gray-600">15% Contingency</div>
+                                           <div className="text-sm font-bold text-blue-700">
+                                             {formatCurrency(analysis.recommendedContingency15)}
+                                           </div>
+                                         </div>
+                                         <div>
+                                           <div className="text-[10px] text-gray-600">20% Contingency</div>
+                                           <div className="text-sm font-bold text-blue-700">
+                                             {formatCurrency(analysis.recommendedContingency20)}
+                                           </div>
+                                         </div>
+                                       </div>
+                                       <div className="text-[10px] text-gray-600 italic mt-1">
+                                         Add this buffer to your budget to account for unexpected costs
+                                       </div>
+                                     </div>
+                                     
+                                     {/* Profit Impact */}
+                                     <div className="bg-red-50 border-2 border-red-200 rounded p-3">
+                                       <div className="text-xs font-bold text-red-900 uppercase mb-1">
+                                         Profit Impact if 20% Over Budget
+                                       </div>
+                                       <div className="text-lg font-bold text-red-700">
+                                         -{formatCurrency(analysis.profitImpactOf20Over)}
+                                       </div>
+                                       <div className="text-[10px] text-red-600 mt-1">
+                                         Your profit would decrease by this amount if rehab costs exceed budget by 20%
+                                       </div>
+                                     </div>
+                                   </div>
+                                 );
+                               })()}
+                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                             <div>
                                 <InputGroup label="Est. ARV" id="arv" value={inputs.arv} onChange={v => handleInputChange('arv', v)} prefix="$" />
                                 <div className="text-[10px] text-gray-400 text-right mt-1 font-medium">{formatCurrency(results.arvPerSqFt)} / SqFt</div>
                             </div>
-                            <InputGroup label="As-Is Value" id="asis" value={inputs.asIsValue} onChange={v => handleInputChange('asIsValue', v)} prefix="$" />
                         </div>
                         <div className="border-t border-gray-100 pt-4">
                              <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Est. Closing Date</label>
@@ -851,11 +1069,220 @@ const App: React.FC = () => {
                             <InputGroup label="Liquidity" id="liq" value={inputs.liquidity} onChange={v => handleInputChange('liquidity', v)} prefix="$" />
                             <InputGroup label="Exp (Deals)" id="exp" value={inputs.experienceLevel} onChange={v => handleInputChange('experienceLevel', v)} />
                         </div>
+                        {/* Loan Type Selector */}
+                        <div className="mb-4">
+                            <label className="text-xs font-semibold text-gray-500 uppercase block mb-2">Loan Type</label>
+                            <select
+                                className="w-full rounded-md border-gray-300 py-2 text-sm border pl-3"
+                                value={inputs.loanType || 'HARD_MONEY'}
+                                onChange={(e) => {
+                                    const newLoanType = e.target.value as 'HARD_MONEY' | 'CONVENTIONAL' | 'PORTFOLIO' | 'OTHER';
+                                    const oldLoanType = inputs.loanType || 'HARD_MONEY';
+                                    
+                                    // Show warning if switching types
+                                    if (oldLoanType !== newLoanType && oldLoanType !== '') {
+                                        const confirmed = window.confirm(
+                                            '⚠️ WARNING: Changing loan type will recalculate your entire deal.\n\n' +
+                                            'This will update:\n' +
+                                            '• Interest rate and loan term\n' +
+                                            '• Monthly payment calculation\n' +
+                                            '• Holding costs\n' +
+                                            '• Down payment requirements (PMI if applicable)\n' +
+                                            '• All profit calculations\n\n' +
+                                            'Continue?'
+                                        );
+                                        if (!confirmed) {
+                                            return;
+                                        }
+                                    }
+                                    
+                                    handleInputChange('loanType', newLoanType);
+                                    
+                                    // Auto-update ALL defaults based on loan type
+                                    if (newLoanType !== 'OTHER') {
+                                        const defaults = getLoanTypeDefaults(newLoanType);
+                                        
+                                        handleInputChange('interestRate', defaults.rate * 100);
+                                        handleInputChange('loanTermMonths', defaults.term);
+                                        handleInputChange('interestOnly', defaults.interestOnly === true);
+                                        
+                                        if (defaults.includesTaxInsurance === true) {
+                                            handleInputChange('includePITI', true);
+                                        } else if (defaults.includesTaxInsurance === false) {
+                                            handleInputChange('includePITI', false);
+                                        }
+                                        
+                                        handleInputChange('prepaymentPenalty', defaults.prepaymentPenalty);
+                                        
+                                        if (typeof defaults.typicalPoints === 'number') {
+                                            handleInputChange('originationPoints', defaults.typicalPoints);
+                                        }
+                                        
+                                        // Calculate typical lender fees
+                                        if (inputs.purchasePrice > 0 || inputs.rehabBudget > 0) {
+                                            const totalProjectCost = (inputs.purchasePrice || 0) + (inputs.rehabBudget || 0);
+                                            const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
+                                            const estimatedLoanAmount = totalProjectCost * (financingPercent / 100);
+                                            const typicalFeesAmount = estimatedLoanAmount * defaults.typicalFees;
+                                            
+                                            if (newLoanType === 'HARD_MONEY') {
+                                                handleInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.4));
+                                                handleInputChange('processingFee', Math.round(typicalFeesAmount * 0.3));
+                                                handleInputChange('docPrepFee', Math.round(typicalFeesAmount * 0.3));
+                                            } else if (newLoanType === 'CONVENTIONAL') {
+                                                handleInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.5));
+                                                handleInputChange('processingFee', Math.round(typicalFeesAmount * 0.5));
+                                            } else if (newLoanType === 'PORTFOLIO') {
+                                                handleInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.4));
+                                                handleInputChange('processingFee', Math.round(typicalFeesAmount * 0.3));
+                                                handleInputChange('docPrepFee', Math.round(typicalFeesAmount * 0.3));
+                                            }
+                                        }
+                                        
+                                        // Calculate PMI for conventional loans
+                                        const results = calculateLoan(inputs);
+                                        if (newLoanType === 'CONVENTIONAL' && results.qualifiedLoanAmount > 0 && inputs.purchasePrice > 0) {
+                                            const downPaymentAmount = results.gapAmount || 0;
+                                            const downPaymentPercent = (downPaymentAmount / inputs.purchasePrice) * 100;
+                                            const monthlyPMI = calculatePMI(results.qualifiedLoanAmount, downPaymentPercent);
+                                            handleInputChange('includePMI', monthlyPMI > 0);
+                                            handleInputChange('monthlyPMI', monthlyPMI);
+                                        } else {
+                                            handleInputChange('includePMI', false);
+                                            handleInputChange('monthlyPMI', 0);
+                                        }
+                                    }
+                                }}
+                            >
+                                <option value="HARD_MONEY">Hard Money (~12%, interest-only, 6-12 mo term)</option>
+                                <option value="CONVENTIONAL">Conventional (~3.5%, PITI, 30-year amortized)</option>
+                                <option value="PORTFOLIO">Portfolio Lender (~7%, 5-year term, varies)</option>
+                                <option value="OTHER">Other (custom terms)</option>
+                            </select>
+                            <div className="mt-2 space-y-1">
+                                {inputs.loanType === 'HARD_MONEY' && (
+                                    <div className="text-[10px] text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
+                                        <strong>Hard Money Assumptions:</strong> Interest-only payments, 6-12 month terms, no property taxes/insurance in payment, prepayment penalty typical, 1 point + 3% fees typical.
+                                    </div>
+                                )}
+                                {inputs.loanType === 'CONVENTIONAL' && (
+                                    <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                                        <strong>Conventional Assumptions:</strong> 30-year amortized payments, PITI includes taxes & insurance, PMI required if &lt;20% down, no prepayment penalty, minimal points/fees.
+                                    </div>
+                                )}
+                                {inputs.loanType === 'PORTFOLIO' && (
+                                    <div className="text-[10px] text-gray-600 bg-purple-50 p-2 rounded border border-purple-200">
+                                        <strong>Portfolio Assumptions:</strong> 5-year term typical (varies), amortized or interest-only (varies), PITI varies by lender, no PMI, no prepayment penalty, 2% fees typical.
+                                    </div>
+                                )}
+                                {inputs.loanType === 'OTHER' && (
+                                    <div className="text-[10px] text-gray-500 italic">
+                                        Custom loan terms. Configure all settings manually below.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-3 gap-4">
                             <InputGroup label="Rate" id="rate" value={inputs.interestRate} onChange={v => handleInputChange('interestRate', v)} suffix="%" step={0.125} />
                             <InputGroup label="Points" id="pts" value={inputs.originationPoints} onChange={v => handleInputChange('originationPoints', v)} suffix="pts" />
                             <InputGroup label="Term" id="term" value={inputs.loanTermMonths} onChange={v => handleInputChange('loanTermMonths', v)} suffix="mo" />
                         </div>
+
+                        {/* PITI Fields for Conventional Loans */}
+                        {inputs.loanType === 'CONVENTIONAL' && (
+                            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <input
+                                        type="checkbox"
+                                        id="includePITI"
+                                        checked={inputs.includePITI || false}
+                                        onChange={(e) => handleInputChange('includePITI', e.target.checked)}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="includePITI" className="text-sm font-bold text-blue-900 cursor-pointer">
+                                        Include PITI in Monthly Payment
+                                    </label>
+                                </div>
+                                <div className="text-xs text-blue-800 mb-3">
+                                    PITI = Principal + Interest + Taxes + Insurance. Conventional loans typically include property taxes and insurance in the monthly payment.
+                                </div>
+                                {inputs.includePITI && (
+                                    <div className="grid grid-cols-2 gap-4 mt-3">
+                                        <InputGroup
+                                            label="Monthly Property Taxes (PITI)"
+                                            id="monthlyPITITaxes"
+                                            value={inputs.monthlyPITITaxes || 0}
+                                            onChange={(v) => handleInputChange('monthlyPITITaxes', v)}
+                                            prefix="$"
+                                            helpText="Monthly property taxes included in payment"
+                                        />
+                                        <InputGroup
+                                            label="Monthly Insurance (PITI)"
+                                            id="monthlyPITIInsurance"
+                                            value={inputs.monthlyPITIInsurance || 0}
+                                            onChange={(v) => handleInputChange('monthlyPITIInsurance', v)}
+                                            prefix="$"
+                                            helpText="Monthly insurance included in payment"
+                                        />
+                                    </div>
+                                )}
+                                
+                                {/* PMI Section */}
+                                {results.qualifiedLoanAmount > 0 && inputs.purchasePrice > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-blue-300">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <input
+                                                type="checkbox"
+                                                id="includePMI"
+                                                checked={inputs.includePMI || false}
+                                                onChange={(e) => {
+                                                    handleInputChange('includePMI', e.target.checked);
+                                                    if (!e.target.checked) {
+                                                        handleInputChange('monthlyPMI', 0);
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="includePMI" className="text-sm font-bold text-blue-900 cursor-pointer">
+                                                Include PMI (Private Mortgage Insurance)
+                                            </label>
+                                        </div>
+                                        <div className="text-xs text-blue-800 mb-2">
+                                            PMI is typically required if down payment &lt;20%. Rate: 0.5-1% of loan annually.
+                                        </div>
+                                        {inputs.includePMI && (
+                                            <div className="mt-2">
+                                                <InputGroup
+                                                    label="Monthly PMI"
+                                                    id="monthlyPMI"
+                                                    value={inputs.monthlyPMI || 0}
+                                                    onChange={(v) => handleInputChange('monthlyPMI', v)}
+                                                    prefix="$"
+                                                    helpText="Monthly PMI cost (auto-calculated if down payment <20%)"
+                                                />
+                                                {results.gapAmount > 0 && (
+                                                    <div className="text-[10px] text-blue-700 mt-1">
+                                                        Down Payment: {formatCurrency(results.gapAmount)} ({((results.gapAmount / inputs.purchasePrice) * 100).toFixed(1)}%)
+                                                        {((results.gapAmount / inputs.purchasePrice) * 100) < 20 && (
+                                                            <span className="text-orange-600 font-semibold ml-2">⚠️ PMI typically required</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Prepayment Penalty Info */}
+                        {inputs.prepaymentPenalty && (
+                            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+                                ⚠️ <strong>Prepayment Penalty:</strong> This loan type typically includes a prepayment penalty. 
+                                {inputs.prepaymentPenaltyAmount > 0 && ` Amount: ${formatCurrency(inputs.prepaymentPenaltyAmount)}`}
+                            </div>
+                        )}
                         
                         {/* DYNAMIC LENDER FEES FOR BASELINE */}
                         <div className="pt-4 border-t border-gray-100">
@@ -1257,4 +1684,5 @@ const App: React.FC = () => {
   );
 };
 
+export default App;
 export default App;

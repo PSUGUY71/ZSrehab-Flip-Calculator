@@ -1,10 +1,10 @@
 import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
+import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensitivityAnalysis';
 import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
 
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
     purchasePrice,
-    asIsValue,
     rehabBudget,
     arv,
     financingPercentage,
@@ -15,8 +15,18 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     earnestMoneyDeposit,
     buyerAgentCommissionRate,
     buyerAgentCommissionBrokerRate,
+    loanType,
     interestRate,
     originationPoints,
+    loanTermMonths,
+    includePITI,
+    monthlyPITITaxes,
+    monthlyPITIInsurance,
+    includePMI,
+    monthlyPMI,
+    prepaymentPenalty,
+    prepaymentPenaltyAmount,
+    interestOnly,
     liquidity,
     ficoScore,
     experienceLevel,
@@ -118,10 +128,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
-  // LTV = Loan-to-Value = Loan Amount / Purchase Price (or As-Is Value if available)
-  // Use asIsValue if provided, otherwise use purchasePrice
-  const propertyValue = asIsValue > 0 ? asIsValue : purchasePrice;
-  const ltv = propertyValue > 0 ? (qualifiedLoanAmount / propertyValue) * 100 : 0;
+  // LTV = Loan-to-Value = Loan Amount / Purchase Price
+  const ltv = purchasePrice > 0 ? (qualifiedLoanAmount / purchasePrice) * 100 : 0;
   
   // LTC = Loan-to-Cost = Loan Amount / Total Project Cost
   // Total Project Cost = Purchase Price + Rehab Budget
@@ -328,29 +336,58 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Use qualifiedLoanAmount (the actual loan amount that will be funded) for payment calculations
   const annualInterest = qualifiedLoanAmount * (interestRate / 100);
   
-  // Monthly Payment Calculation (Amortized - 30-year term)
-  // Formula: Payment = L × r ÷ (1 − (1 + r)^−n)
-  // Where: 
-  //   L = qualifiedLoanAmount (actual funded loan amount, capped at 75% of ARV if needed)
-  //   r = annual interest rate ÷ 12 ÷ 100 (monthly rate as decimal)
-  //   n = 360 (30 years × 12 months)
+  // Monthly Payment Calculation (varies by loan type)
   let monthlyPayment = 0;
+  let monthlyPrincipalAndInterest = 0;
+  
   if (interestRate > 0 && qualifiedLoanAmount > 0) {
     const L = qualifiedLoanAmount; // Actual loan amount that will be funded
-    const r = interestRate / 12 / 100; // Monthly rate as decimal (e.g., 6.375 ÷ 12 ÷ 100 = 0.0053125)
-    const n = 360; // 30-year loan term (30 × 12 = 360 months)
+    const r = interestRate / 12 / 100; // Monthly rate as decimal
     
-    // Payment = L × r ÷ (1 − (1 + r)^−n)
-    const denominator = 1 - Math.pow(1 + r, -n);
-    if (denominator > 0) {
-      monthlyPayment = L * (r / denominator);
+    if (loanType === 'HARD_MONEY') {
+      // Hard Money: Interest-only payments
+      monthlyPrincipalAndInterest = annualInterest / 12;
+      monthlyPayment = monthlyPrincipalAndInterest;
+    } else if (loanType === 'CONVENTIONAL') {
+      // Conventional: Amortized payments (typically 30-year term)
+      const n = loanTermMonths > 0 ? loanTermMonths : 360; // Use loan term or default to 30 years
+      
+      // Payment = L × r ÷ (1 − (1 + r)^−n)
+      const denominator = 1 - Math.pow(1 + r, -n);
+      if (denominator > 0) {
+        monthlyPrincipalAndInterest = L * (r / denominator);
+      } else {
+        // Fallback to interest-only if denominator is invalid
+        monthlyPrincipalAndInterest = annualInterest / 12;
+      }
+      
+      // Add PITI (Principal, Interest, Taxes, Insurance) if included
+      if (includePITI) {
+        monthlyPayment = monthlyPrincipalAndInterest + (monthlyPITITaxes || 0) + (monthlyPITIInsurance || 0);
+      } else {
+        monthlyPayment = monthlyPrincipalAndInterest;
+      }
+      
+      // Add PMI (Private Mortgage Insurance) if required
+      if (includePMI && monthlyPMI > 0) {
+        monthlyPayment += monthlyPMI;
+      }
     } else {
-      // Fallback to interest-only if denominator is invalid
-      monthlyPayment = annualInterest / 12;
+      // Portfolio or Other: Typically amortized, but can vary
+      // Default to amortized with specified term
+      const n = loanTermMonths > 0 ? loanTermMonths : 360;
+      const denominator = 1 - Math.pow(1 + r, -n);
+      if (denominator > 0) {
+        monthlyPrincipalAndInterest = L * (r / denominator);
+      } else {
+        monthlyPrincipalAndInterest = annualInterest / 12;
+      }
+      monthlyPayment = monthlyPrincipalAndInterest;
     }
   } else {
     // Fallback to interest-only if zero interest or zero loan
-    monthlyPayment = annualInterest / 12;
+    monthlyPrincipalAndInterest = annualInterest / 12;
+    monthlyPayment = monthlyPrincipalAndInterest;
   }
   
   const perDiemInterest = annualInterest / 360;
@@ -368,6 +405,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const yearlyDuesCost = includeYearlyDues ? yearlyDues : 0;
   
   // Calculate monthly interest based on progressive draws
+  // For hard money: Interest-only payments based on drawn amount
+  // For conventional/portfolio: Use amortized payment calculation
   // Month 1: Purchase price only (based on financing percentage)
   // Month 2: Purchase price + 25% of rehab (both based on financing percentage)
   // Month 3: Purchase price + 50% of rehab (both based on financing percentage)
@@ -393,9 +432,17 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // This ensures we don't calculate interest on more than the actual loan
     drawnAmount = Math.min(drawnAmount, qualifiedLoanAmount);
     
-    // Calculate monthly interest: (drawn amount × annual interest rate) / 12
-    const annualInterest = drawnAmount * (interestRate / 100);
-    return annualInterest / 12;
+    if (loanType === 'HARD_MONEY') {
+      // Hard Money: Interest-only payments
+      const annualInterest = drawnAmount * (interestRate / 100);
+      return annualInterest / 12;
+    } else {
+      // Conventional/Portfolio: For progressive draws, use interest-only calculation
+      // (The full amortized payment is calculated separately for the total loan)
+      // Progressive draws are typically interest-only even for amortized loans
+      const annualInterest = drawnAmount * (interestRate / 100);
+      return annualInterest / 12;
+    }
   };
   
   // Calculate total holding costs with progressive draws
@@ -635,7 +682,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // REQUIRED LIQUIDITY FORMULA (Lender Requirement):
   // This is the amount of liquid cash the lender requires you to prove you have in bank statements.
   // Formula: Max(Option A, Option B) where:
-  //   Option A = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + (25% of Rehab Budget)
+  //   Option A = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + (15% of Rehab Budget)
   //   Option B = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + $15,000
   // 
   // Components:
@@ -643,15 +690,23 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   //   - Gap: Down payment amount (Purchase Price - Financed Amount - EMD - Seller Buy Back)
   //   - Per Diem Interest: Prepaid interest for days between closing and first payment
   //   - Commission Credit: Reduces cash needed (if you're the agent)
-  //   - Buffer: Either 25% of rehab OR $15,000 (whichever is greater)
+  //   - Buffer: Either 15% of rehab OR $15,000 (whichever is greater)
   //
   // This ensures lenders verify you have sufficient reserves and aren't borrowing the down payment.
   const liquidityClosingCosts = totalClosingCosts + gapAmount + perDiemInterest - buyerAgentCommissionCredit;
   
-  const liquidityOptionA = liquidityClosingCosts + (rehabBudget * 0.25);
+  // Contingency: 15% of rehab budget (automatic calculation)
+  const rehabContingency = rehabBudget * 0.15;
+  
+  const liquidityOptionA = liquidityClosingCosts + rehabContingency;
   const liquidityOptionB = liquidityClosingCosts + 15000;
   
   const requiredLiquidity = Math.max(liquidityOptionA, liquidityOptionB);
+  
+  // Emergency buffer: 5-10% of total deal cost (suggested, not required by lender)
+  const totalDealCost = purchasePrice + rehabBudget;
+  const emergencyBuffer5Percent = totalDealCost * 0.05;
+  const emergencyBuffer10Percent = totalDealCost * 0.10;
 
   // 13. Seller Analysis Logic
   const sellerCommissionCost = purchasePrice * (sellerAgentCommissionRate / 100);
@@ -803,12 +858,17 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // General
     perDiemInterest,
     monthlyPayment,
+    monthlyPrincipalAndInterest,
+    monthlyPMI: (includePMI && monthlyPMI > 0) ? monthlyPMI : 0,
     totalClosingCosts,
     totalCashToClose,
     gapAmount,
     prepaidCosts,
     totalPaidOut: prepaidCosts + totalCashToClose,
     requiredLiquidity,
+    rehabContingency,
+    emergencyBuffer5Percent,
+    emergencyBuffer10Percent,
     isEligible,
     eligibilityReasons,
 
@@ -831,6 +891,31 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalProjectCostBasis,
     totalCashInvested,
     profitScenarios: scenarios,
+    
+    // Sensitivity Analysis
+    purchaseSensitivityScenarios: generatePurchaseSensitivity(
+      purchasePrice,
+      netProfit,
+      arv,
+      rehabBudget,
+      totalClosingCosts,
+      totalHoldingCosts,
+      totalExitCosts,
+      financingPercent,
+      MAX_LTV_PERCENT
+    ),
+    rehabSensitivityScenarios: generateRehabSensitivity(
+      rehabBudget,
+      netProfit,
+      arv,
+      purchasePrice,
+      totalClosingCosts,
+      gapAmount,
+      totalHoldingCosts,
+      totalExitCosts,
+      financingPercent,
+      MAX_LTV_PERCENT
+    ),
 
     // Refi
     refinanceLoanAmount,

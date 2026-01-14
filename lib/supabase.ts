@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Use environment variables if available, otherwise use defaults
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://fexamlfuwtsdbymscpfv.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZleGFtbGZ1d3RzZGJ5bXNjcGZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxODM3NDYsImV4cCI6MjA4MTc1OTc0Nn0.6kRjHd0cNGErSbnn59EsV4CCrJwssui_DDaI-Q5iSo4';
 
 // Debug: Log environment variable status (remove in production)
 if (import.meta.env.DEV) {

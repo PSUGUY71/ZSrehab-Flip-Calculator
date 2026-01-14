@@ -1,9 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
 import { formatCurrency } from '../utils/calculations';
 import { RehabLineItems } from './RehabLineItems';
 import { HelpTooltip } from './HelpTooltip';
+import { estimateHoldingCosts } from '../utils/stateHoldingCosts';
+import { getAllStateCodes, getStateName, getStateDefaults, applyStateDefaults } from '../utils/stateDefaults';
+import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
+import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 
 interface InputSectionsProps {
   inputs: LoanInputs;
@@ -75,6 +79,75 @@ export const InputSections: React.FC<InputSectionsProps> = ({
     }
   };
 
+  // Auto-estimate holding costs when holding months >= 3
+  const hasAutoEstimatedRef = useRef<string>('');
+  useEffect(() => {
+    // Create a key to track if we've estimated for this specific combination
+    const estimateKey = `${inputs.holdingPeriodMonths}-${inputs.state}-${inputs.purchasePrice}`;
+    
+    // Only auto-estimate if:
+    // 1. Holding months >= 3
+    // 2. State is selected
+    // 3. Purchase price > 0
+    // 4. We haven't already auto-estimated for this combination
+    if (
+      inputs.holdingPeriodMonths >= 3 &&
+      inputs.state &&
+      inputs.purchasePrice > 0 &&
+      hasAutoEstimatedRef.current !== estimateKey
+    ) {
+      const estimates = estimateHoldingCosts(
+        inputs.purchasePrice,
+        inputs.state,
+        inputs.monthlyElectric
+      );
+
+      // Only auto-populate if values are currently zero/unchecked
+      if (!inputs.includeMonthlyInsurance && inputs.monthlyInsurance === 0) {
+        onInputChange('includeMonthlyInsurance', true);
+        onInputChange('monthlyInsurance', estimates.monthlyInsurance);
+      }
+      
+      if (!inputs.includeMonthlyTaxes && inputs.monthlyTaxes === 0) {
+        onInputChange('includeMonthlyTaxes', true);
+        onInputChange('monthlyTaxes', estimates.monthlyTaxes);
+      }
+
+      // Only set utilities if currently zero
+      if (inputs.monthlyElectric === 0) {
+        onInputChange('monthlyElectric', estimates.monthlyUtilities);
+      }
+
+      hasAutoEstimatedRef.current = estimateKey;
+    }
+
+    // Reset flag when holding months changes to < 3
+    if (inputs.holdingPeriodMonths < 3) {
+      hasAutoEstimatedRef.current = '';
+    }
+  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice]);
+
+  // Calculate estimated holding costs for display
+  const holdingCostEstimates = useMemo(() => {
+    if (inputs.holdingPeriodMonths >= 3 && inputs.state && inputs.purchasePrice > 0) {
+      return estimateHoldingCosts(
+        inputs.purchasePrice,
+        inputs.state,
+        inputs.monthlyElectric
+      );
+    }
+    return null;
+  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice, inputs.monthlyElectric]);
+
+  // Check if holding costs are too low (validation)
+  const monthlyHoldingCostTotal = useMemo(() => {
+    const interest = results.monthlyPayment || 0;
+    const utilities = results.monthlyUtilitiesCost || 0;
+    return interest + utilities;
+  }, [results.monthlyPayment, results.monthlyUtilitiesCost]);
+
+  const hasInsufficientHoldingCosts = inputs.holdingPeriodMonths >= 3 && monthlyHoldingCostTotal < 500;
+
   return (
     <div className="w-full lg:w-1/2 space-y-6">
       {/* Property Info */}
@@ -100,26 +173,33 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <select 
                 className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
                 value={inputs.state} 
-                onChange={(e) => onInputChange('state', e.target.value)}
+                onChange={(e) => {
+                  const newState = e.target.value;
+                  onInputChange('state', newState);
+                  
+                  // Auto-populate state defaults when state changes
+                  if (newState) {
+                    const defaults = applyStateDefaults(inputs, newState, false);
+                    Object.entries(defaults).forEach(([key, value]) => {
+                      onInputChange(key as keyof LoanInputs, value);
+                    });
+                  }
+                }}
               >
                 <option value="">Select State</option>
-                <option value="PA">PA</option>
-                <option value="NJ">NJ</option>
-                <option value="NY">NY</option>
-                <option value="CA">CA</option>
-                <option value="TX">TX</option>
-                <option value="FL">FL</option>
-                <option value="IL">IL</option>
-                <option value="MD">MD</option>
-                <option value="VA">VA</option>
-                <option value="NC">NC</option>
-                <option value="SC">SC</option>
-                <option value="GA">GA</option>
-                <option value="OH">OH</option>
-                <option value="MI">MI</option>
-                <option value="AZ">AZ</option>
-                <option value="NV">NV</option>
+                {getAllStateCodes()
+                  .sort((a, b) => getStateName(a).localeCompare(getStateName(b)))
+                  .map((code) => (
+                    <option key={code} value={code}>
+                      {getStateName(code)} ({code})
+                    </option>
+                  ))}
               </select>
+              {inputs.state && getStateDefaults(inputs.state) && (
+                <div className="mt-1 text-[10px] text-blue-600 italic">
+                  💡 Closing costs set for {getStateName(inputs.state)}. Verify with your lender.
+                </div>
+              )}
             </div>
             <InputGroup 
               label="Zip Code" 
@@ -258,14 +338,109 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 {formatCurrency(results.purchasePricePerSqFt)} / SqFt
               </div>
             </div>
-            <InputGroup 
-              label="Rehab Budget" 
-              id="rehab" 
-              value={inputs.rehabBudget} 
-              onChange={(v) => onInputChange('rehabBudget', v)} 
-              prefix="$"
-              helpText="Total budget for renovations and repairs"
-            />
+            <div>
+              <InputGroup 
+                label="Rehab Budget" 
+                id="rehab" 
+                value={inputs.rehabBudget} 
+                onChange={(v) => onInputChange('rehabBudget', v)} 
+                prefix="$"
+                helpText="Total budget for renovations and repairs"
+              />
+              
+              {/* Rehab Budget Analysis */}
+              {(() => {
+                const analysis = analyzeRehabBudget(
+                  inputs.rehabBudget,
+                  inputs.purchasePrice,
+                  inputs.sqFt
+                );
+                
+                if (!analysis) return null;
+                
+                return (
+                  <div className="mt-3 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg space-y-3">
+                    {/* Metrics Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-white rounded p-2 border border-blue-100">
+                        <div className="text-[10px] text-gray-600 uppercase font-semibold">Cost per SqFt</div>
+                        <div className="text-sm font-bold text-blue-900">
+                          {formatCurrency(analysis.perSqft)}
+                        </div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          {analysis.perSqft >= 50 && analysis.perSqft <= 150 ? (
+                            <span className="text-green-600">✓ Typical range</span>
+                          ) : (
+                            <span className="text-orange-600">Outside typical</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-white rounded p-2 border border-blue-100">
+                        <div className="text-[10px] text-gray-600 uppercase font-semibold">% of Purchase</div>
+                        <div className="text-sm font-bold text-blue-900">
+                          {analysis.percentOfPurchase.toFixed(1)}%
+                        </div>
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          {analysis.percentOfPurchase >= 20 && analysis.percentOfPurchase <= 40 ? (
+                            <span className="text-green-600">✓ Typical range</span>
+                          ) : (
+                            <span className="text-orange-600">Outside typical</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Warnings */}
+                    {analysis.warnings.length > 0 && (
+                      <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 space-y-1">
+                        <div className="text-xs font-bold text-yellow-900 uppercase mb-1">Warnings</div>
+                        {analysis.warnings.map((warning, idx) => (
+                          <div key={idx} className="text-xs text-yellow-800">
+                            {warning}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Contingency Recommendations */}
+                    <div className="bg-white border border-blue-200 rounded p-3 space-y-2">
+                      <div className="text-xs font-bold text-blue-900 uppercase mb-2">Recommended Contingency</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-[10px] text-gray-600">15% Contingency</div>
+                          <div className="text-sm font-bold text-blue-700">
+                            {formatCurrency(analysis.recommendedContingency15)}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] text-gray-600">20% Contingency</div>
+                          <div className="text-sm font-bold text-blue-700">
+                            {formatCurrency(analysis.recommendedContingency20)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-gray-600 italic mt-1">
+                        Add this buffer to your budget to account for unexpected costs
+                      </div>
+                    </div>
+                    
+                    {/* Profit Impact */}
+                    <div className="bg-red-50 border-2 border-red-200 rounded p-3">
+                      <div className="text-xs font-bold text-red-900 uppercase mb-1">
+                        Profit Impact if 20% Over Budget
+                      </div>
+                      <div className="text-lg font-bold text-red-700">
+                        -{formatCurrency(analysis.profitImpactOf20Over)}
+                      </div>
+                      <div className="text-[10px] text-red-600 mt-1">
+                        Your profit would decrease by this amount if rehab costs exceed budget by 20%
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
           
           {/* Itemized Rehab Breakdown */}
@@ -291,7 +466,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               totalRehabBudget={inputs.rehabBudget}
             />
           </div>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div>
               <InputGroup 
                 label="Est. ARV" 
@@ -305,14 +480,6 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 {formatCurrency(results.arvPerSqFt)} / SqFt
               </div>
             </div>
-            <InputGroup 
-              label="As-Is Value" 
-              id="asis" 
-              value={inputs.asIsValue} 
-              onChange={(v) => onInputChange('asIsValue', v)} 
-              prefix="$"
-              helpText="Current value of the property before renovations"
-            />
           </div>
           <div className="border-t border-gray-100 pt-4">
             <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Est. Closing Date</label>
@@ -700,7 +867,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               onChange={(v) => onInputChange('titleInsuranceRate', v)} 
               suffix="%" 
               step={0.01}
-              helpText="Leave blank (0) to use PA Title Insurance Rate Table chart automatically. Enter a percentage to manually override the chart calculation."
+              helpText={`Title insurance rate${inputs.state && getStateDefaults(inputs.state) ? (getStateDefaults(inputs.state)!.titleInsuranceRate === 0 ? ' - ' + getStateName(inputs.state) + ' uses rate table/chart (leave at 0)' : ' - Default ' + getStateDefaults(inputs.state)!.titleInsuranceRate + '% for ' + getStateName(inputs.state)) : ' - Enter percentage or leave at 0 for rate table'}. Enter a percentage to manually override.`}
             />
             <InputGroup
               label="CPL Fee" 
@@ -708,7 +875,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.cplFee} 
               onChange={(v) => onInputChange('cplFee', v)} 
               prefix="$" 
-              helpText="CPL (Certificate of Property Location) fee - always $125 payable directly to Penn Attorneys"
+              helpText={`CPL (Certificate of Property Location) fee${inputs.state && getStateDefaults(inputs.state) ? ` - ${getStateDefaults(inputs.state)!.cplFee > 0 ? formatCurrency(getStateDefaults(inputs.state)!.cplFee) + ' for ' + getStateName(inputs.state) : 'Not applicable in ' + getStateName(inputs.state)}` : ' - Varies by state'}`}
             />
             <InputGroup
               label="Number of Endorsements" 
@@ -1013,9 +1180,12 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               label="Mo. Electric" 
               id="elec" 
               value={inputs.monthlyElectric} 
-              onChange={(v) => onInputChange('monthlyElectric', v)} 
+              onChange={(v) => {
+                const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
+                onInputChange('monthlyElectric', Math.max(0, numValue));
+              }} 
               prefix="$"
-              helpText="Monthly electric utility cost during holding period"
+              helpText={`Monthly electric utility cost during holding period. ${holdingCostEstimates && inputs.monthlyElectric === 0 ? `Regional estimate: ${formatCurrency(holdingCostEstimates.monthlyUtilities)}/mo for ${inputs.state}.` : 'Typical range: $100-$300/month for vacant/rehab properties.'}`}
             />
             <InputGroup 
               label="Mo. Internet" 
@@ -1035,28 +1205,95 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             />
           </div>
           
-          {/* Holding Costs Warning */}
-          {inputs.holdingPeriodMonths > 3 && !inputs.includeMonthlyInsurance && !inputs.includeMonthlyTaxes && (
-            <div className="mt-4 p-3 bg-red-100 border-2 border-red-300 rounded-lg">
-              <div className="flex items-start gap-2">
-                <span className="text-red-700 text-lg font-bold">🔴</span>
-                <div className="flex-1">
-                  <div className="text-sm font-bold text-red-900 mb-1">HOLDING COSTS WARNING</div>
-                  <div className="text-xs text-red-800 mb-2">
-                    You're planning a {inputs.holdingPeriodMonths}-month hold but have no insurance or property taxes included.
-                  </div>
-                  <div className="text-xs text-red-700 mb-2">
-                    For vacant/rehab properties:
-                    <ul className="list-disc list-inside ml-2 mt-1">
-                      <li>Insurance: $75-$200/month typical</li>
-                      <li>Property Tax: Varies by state</li>
-                    </ul>
-                  </div>
-                  <div className="text-xs font-semibold text-red-900">
-                    👉 Check the boxes below or add estimated monthly costs:
+          {/* Holding Costs Warning & Auto-Estimation */}
+          {inputs.holdingPeriodMonths >= 3 && (
+            <div className="mt-4 space-y-3">
+              {/* Validation Warning - Insufficient Holding Costs */}
+              {hasInsufficientHoldingCosts && (
+                <div className="p-4 bg-red-100 border-2 border-red-400 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-700 text-xl font-bold">⚠️</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-red-900 mb-1">INSUFFICIENT HOLDING COSTS DETECTED</div>
+                      <div className="text-xs text-red-800 mb-2">
+                        Your current monthly holding costs ({formatCurrency(monthlyHoldingCostTotal)}) are below $500/month, which is very conservative for a {inputs.holdingPeriodMonths}-month hold.
+                      </div>
+                      <div className="text-xs text-red-700 mb-2">
+                        <strong>Typical monthly costs for vacant/rehab properties:</strong>
+                        <ul className="list-disc list-inside ml-2 mt-1">
+                          <li>Insurance: $150-$200/month (vacant property insurance)</li>
+                          <li>Property Tax: Varies by state (typically $100-$400/month)</li>
+                          <li>Utilities: $100-$300/month (electric, water, etc.)</li>
+                          <li>Total: $500-$1,000+/month is realistic</li>
+                        </ul>
+                      </div>
+                      <div className="text-xs font-semibold text-red-900">
+                        👉 Ensure all holding costs are included below to avoid underestimating expenses.
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Auto-Estimation Info */}
+              {holdingCostEstimates && inputs.state && (
+                <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-700 text-lg font-bold">💡</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-blue-900 mb-1">AUTO-ESTIMATED HOLDING COSTS</div>
+                      <div className="text-xs text-blue-800 mb-2">
+                        Based on {inputs.state} state averages and property value:
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                        <div className="bg-white p-2 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-900">Insurance</div>
+                          <div className="text-blue-700">{formatCurrency(holdingCostEstimates.monthlyInsurance)}/mo</div>
+                          <div className="text-[10px] text-blue-600 mt-1">State-based estimate</div>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-900">Property Tax</div>
+                          <div className="text-blue-700">{formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo</div>
+                          <div className="text-[10px] text-blue-600 mt-1">State-based estimate</div>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-blue-200">
+                          <div className="font-semibold text-blue-900">Utilities</div>
+                          <div className="text-blue-700">{formatCurrency(holdingCostEstimates.monthlyUtilities)}/mo</div>
+                          <div className="text-[10px] text-blue-600 mt-1">Regional average</div>
+                        </div>
+                        <div className="bg-blue-100 p-2 rounded border-2 border-blue-300">
+                          <div className="font-bold text-blue-900">Total Est.</div>
+                          <div className="text-blue-800 font-bold">{formatCurrency(holdingCostEstimates.totalMonthlyEstimate)}/mo</div>
+                          {holdingCostEstimates.isVeryConservative && (
+                            <div className="text-[10px] text-orange-600 font-semibold mt-1">⚠️ Very conservative</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xs text-blue-700 italic">
+                        These estimates have been auto-populated below. Adjust as needed based on your actual costs.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Missing Insurance/Taxes Warning */}
+              {!inputs.includeMonthlyInsurance && !inputs.includeMonthlyTaxes && (
+                <div className="p-3 bg-yellow-100 border-2 border-yellow-300 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-700 text-lg font-bold">⚠️</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-yellow-900 mb-1">RECOMMENDED: Add Insurance & Taxes</div>
+                      <div className="text-xs text-yellow-800 mb-2">
+                        You're planning a {inputs.holdingPeriodMonths}-month hold. Insurance and property taxes are typically required.
+                      </div>
+                      <div className="text-xs font-semibold text-yellow-900">
+                        👉 Check the boxes below to include these costs (estimates provided above).
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1071,8 +1308,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 onChange={(e) => onInputChange('includeMonthlyInsurance', e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <label htmlFor="includeMonthlyInsurance" className="text-sm font-semibold text-gray-700 cursor-pointer">
+              <label htmlFor="includeMonthlyInsurance" className="text-sm font-semibold text-gray-700 cursor-pointer flex-1">
                 Add Monthly Insurance
+                {holdingCostEstimates && (
+                  <span className="text-xs text-blue-600 font-normal ml-2">
+                    (Est: {formatCurrency(holdingCostEstimates.monthlyInsurance)}/mo - {inputs.state} state average)
+                  </span>
+                )}
               </label>
             </div>
             {inputs.includeMonthlyInsurance && (
@@ -1081,9 +1323,12 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Monthly Insurance" 
                   id="monthlyInsurance" 
                   value={inputs.monthlyInsurance} 
-                  onChange={(v) => onInputChange('monthlyInsurance', v)} 
+                  onChange={(v) => {
+                    const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
+                    onInputChange('monthlyInsurance', Math.max(0, numValue));
+                  }} 
                   prefix="$"
-                  helpText="Monthly insurance cost during holding period"
+                  helpText={`Monthly insurance cost during holding period. ${holdingCostEstimates ? `State-based estimate: ${formatCurrency(holdingCostEstimates.monthlyInsurance)}/mo for ${inputs.state}.` : 'Typical range: $150-$200/month for vacant/rehab properties.'}`}
                 />
               </div>
             )}
@@ -1096,8 +1341,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 onChange={(e) => onInputChange('includeMonthlyTaxes', e.target.checked)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <label htmlFor="includeMonthlyTaxes" className="text-sm font-semibold text-gray-700 cursor-pointer">
+              <label htmlFor="includeMonthlyTaxes" className="text-sm font-semibold text-gray-700 cursor-pointer flex-1">
                 Add Monthly Taxes
+                {holdingCostEstimates && (
+                  <span className="text-xs text-blue-600 font-normal ml-2">
+                    (Est: {formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo - {inputs.state} state average)
+                  </span>
+                )}
               </label>
             </div>
             {inputs.includeMonthlyTaxes && (
@@ -1106,9 +1356,12 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Monthly Taxes" 
                   id="monthlyTaxes" 
                   value={inputs.monthlyTaxes} 
-                  onChange={(v) => onInputChange('monthlyTaxes', v)} 
+                  onChange={(v) => {
+                    const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
+                    onInputChange('monthlyTaxes', Math.max(0, numValue));
+                  }} 
                   prefix="$"
-                  helpText="Monthly property tax cost during holding period"
+                  helpText={`Monthly property tax cost during holding period. ${holdingCostEstimates ? `State-based estimate: ${formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo for ${inputs.state}.` : 'Varies by state and property value.'}`}
                 />
               </div>
             )}
@@ -1307,7 +1560,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-blue-200">
                     <div className="flex flex-col">
                       <span className="text-gray-700 font-medium">Monthly Mortgage Payment</span>
-                      <span className="text-[10px] text-gray-500">Principal + Interest</span>
+                      <span className="text-[10px] text-gray-500">
+                        {inputs.loanType === 'CONVENTIONAL' && inputs.includePITI 
+                          ? 'PITI (Principal + Interest + Taxes + Insurance)'
+                          : inputs.loanType === 'HARD_MONEY'
+                            ? 'Interest-Only'
+                            : 'Principal + Interest'}
+                      </span>
                     </div>
                     <div className="text-right">
                       <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
@@ -1315,6 +1574,26 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                         {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
                       </div>
                     </div>
+                    {inputs.loanType === 'CONVENTIONAL' && inputs.includePITI && results.monthlyPrincipalAndInterest && (
+                      <div className="mt-2 text-[10px] text-gray-600 pl-2 border-l-2 border-blue-200 space-y-0.5">
+                        <div className="flex justify-between">
+                          <span>Principal + Interest:</span>
+                          <span>{formatCurrency(results.monthlyPrincipalAndInterest)}</span>
+                        </div>
+                        {(inputs.monthlyPITITaxes || 0) > 0 && (
+                          <div className="flex justify-between">
+                            <span>Property Taxes:</span>
+                            <span>{formatCurrency(inputs.monthlyPITITaxes || 0)}</span>
+                          </div>
+                        )}
+                        {(inputs.monthlyPITIInsurance || 0) > 0 && (
+                          <div className="flex justify-between">
+                            <span>Insurance:</span>
+                            <span>{formatCurrency(inputs.monthlyPITIInsurance || 0)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1521,6 +1800,131 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Number of previous real estate deals completed"
             />
           </div>
+          {/* Loan Type Selector */}
+          <div className="mb-4">
+            <label className="text-xs font-semibold text-gray-500 uppercase block mb-2">Loan Type</label>
+            <select
+              className="w-full rounded-md border-gray-300 py-2 text-sm border pl-3"
+              value={inputs.loanType || 'HARD_MONEY'}
+              onChange={(e) => {
+                const newLoanType = e.target.value as 'HARD_MONEY' | 'CONVENTIONAL' | 'PORTFOLIO' | 'OTHER';
+                const oldLoanType = inputs.loanType || 'HARD_MONEY';
+                
+                // Show warning if switching types (unless it's the first selection)
+                if (oldLoanType !== newLoanType && oldLoanType !== '') {
+                  const confirmed = window.confirm(
+                    '⚠️ WARNING: Changing loan type will recalculate your entire deal.\n\n' +
+                    'This will update:\n' +
+                    '• Interest rate and loan term\n' +
+                    '• Monthly payment calculation\n' +
+                    '• Holding costs\n' +
+                    '• Down payment requirements (PMI if applicable)\n' +
+                    '• All profit calculations\n\n' +
+                    'Continue?'
+                  );
+                  if (!confirmed) {
+                    return; // Don't change if user cancels
+                  }
+                }
+                
+                onInputChange('loanType', newLoanType);
+                
+                // Auto-update ALL defaults based on loan type
+                if (newLoanType !== 'OTHER') {
+                  const defaults = getLoanTypeDefaults(newLoanType);
+                  
+                  // Update interest rate
+                  onInputChange('interestRate', defaults.rate * 100);
+                  
+                  // Update loan term
+                  onInputChange('loanTermMonths', defaults.term);
+                  
+                  // Update interest-only flag
+                  onInputChange('interestOnly', defaults.interestOnly === true);
+                  
+                  // Update PITI inclusion
+                  if (defaults.includesTaxInsurance === true) {
+                    onInputChange('includePITI', true);
+                  } else if (defaults.includesTaxInsurance === false) {
+                    onInputChange('includePITI', false);
+                  }
+                  
+                  // Update prepayment penalty
+                  onInputChange('prepaymentPenalty', defaults.prepaymentPenalty);
+                  
+                  // Update typical points
+                  if (typeof defaults.typicalPoints === 'number') {
+                    onInputChange('originationPoints', defaults.typicalPoints);
+                  }
+                  
+                  // Calculate and update typical lender fees (3% of loan for hard money, etc.)
+                  if (inputs.purchasePrice > 0 || inputs.rehabBudget > 0) {
+                    const totalProjectCost = (inputs.purchasePrice || 0) + (inputs.rehabBudget || 0);
+                    const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
+                    const estimatedLoanAmount = totalProjectCost * (financingPercent / 100);
+                    const typicalFeesAmount = estimatedLoanAmount * defaults.typicalFees;
+                    
+                    // Distribute typical fees across lender fee fields
+                    // For hard money: 3% typically split across underwriting, processing, doc prep
+                    if (newLoanType === 'HARD_MONEY') {
+                      onInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.4));
+                      onInputChange('processingFee', Math.round(typicalFeesAmount * 0.3));
+                      onInputChange('docPrepFee', Math.round(typicalFeesAmount * 0.3));
+                    } else if (newLoanType === 'CONVENTIONAL') {
+                      // Conventional: 1% typically in underwriting/processing
+                      onInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.5));
+                      onInputChange('processingFee', Math.round(typicalFeesAmount * 0.5));
+                    } else if (newLoanType === 'PORTFOLIO') {
+                      // Portfolio: 2% typically split
+                      onInputChange('underwritingFee', Math.round(typicalFeesAmount * 0.4));
+                      onInputChange('processingFee', Math.round(typicalFeesAmount * 0.3));
+                      onInputChange('docPrepFee', Math.round(typicalFeesAmount * 0.3));
+                    }
+                  }
+                  
+                  // Calculate PMI for conventional loans if down payment < 20%
+                  if (newLoanType === 'CONVENTIONAL' && results.qualifiedLoanAmount > 0 && inputs.purchasePrice > 0) {
+                    const downPaymentAmount = results.gapAmount || 0;
+                    const downPaymentPercent = (downPaymentAmount / inputs.purchasePrice) * 100;
+                    const monthlyPMI = calculatePMI(results.qualifiedLoanAmount, downPaymentPercent);
+                    onInputChange('includePMI', monthlyPMI > 0);
+                    onInputChange('monthlyPMI', monthlyPMI);
+                  } else {
+                    onInputChange('includePMI', false);
+                    onInputChange('monthlyPMI', 0);
+                  }
+                }
+              }}
+            >
+              <option value="HARD_MONEY">Hard Money (~12%, interest-only, 6-12 mo term)</option>
+              <option value="CONVENTIONAL">Conventional (~3.5%, PITI, 30-year amortized)</option>
+              <option value="PORTFOLIO">Portfolio Lender (~7%, 5-year term, varies)</option>
+              <option value="OTHER">Other (custom terms)</option>
+            </select>
+            <div className="mt-2 space-y-1">
+              {inputs.loanType === 'HARD_MONEY' && (
+                <div className="text-[10px] text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
+                  <strong>Hard Money Assumptions:</strong> Interest-only payments, 6-12 month terms, no property taxes/insurance in payment, prepayment penalty typical, 1 point + 3% fees typical.
+                </div>
+              )}
+              {inputs.loanType === 'CONVENTIONAL' && (
+                <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                  <strong>Conventional Assumptions:</strong> 30-year amortized payments, PITI includes taxes & insurance, PMI required if &lt;20% down, no prepayment penalty, minimal points/fees.
+                </div>
+              )}
+              {inputs.loanType === 'PORTFOLIO' && (
+                <div className="text-[10px] text-gray-600 bg-purple-50 p-2 rounded border border-purple-200">
+                  <strong>Portfolio Assumptions:</strong> 5-year term typical (varies), amortized or interest-only (varies), PITI varies by lender, no PMI, no prepayment penalty, 2% fees typical.
+                </div>
+              )}
+              {inputs.loanType === 'OTHER' && (
+                <div className="text-[10px] text-gray-500 italic">
+                  Custom loan terms. Configure all settings manually below.
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-1">
               <InputGroup 
@@ -1530,15 +1934,18 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 onChange={(v) => onInputChange('interestRate', v)} 
                 suffix="%" 
                 step={0.125}
-                helpText="Annual interest rate on the loan"
+                helpText={`Annual interest rate (typical: ${inputs.loanType === 'HARD_MONEY' ? '12%' : inputs.loanType === 'CONVENTIONAL' ? '3.5%' : '6-8%'})`}
               />
               <div 
-                className={`mt-2 p-2 rounded text-xs ${inputs.interestRate === 0 ? 'bg-red-100 border border-red-300 text-red-800' : ''}`}
-                style={inputs.interestRate === 0 ? {} : { backgroundColor: '#FFF3CD', color: '#721C24', border: '1px solid #FFC107' }}
+                className={`mt-2 p-2 rounded text-xs ${inputs.interestRate === 0 ? 'bg-red-100 border border-red-300 text-red-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'}`}
               >
                 ⚠️ <strong>IMPORTANT:</strong> {inputs.interestRate === 0 
-                  ? 'Interest rate is 0% (unrealistic). Typical hard money is 12%. Monthly payment and holding costs will be $0.'
-                  : 'Interest rate defaults to 12% (typical hard money). If using conventional/portfolio financing, update this rate. Monthly payment and holding costs will recalculate automatically.'}
+                  ? 'Interest rate is 0% (unrealistic). Monthly payment and holding costs will be $0.'
+                  : inputs.loanType === 'HARD_MONEY'
+                    ? 'Hard money: Interest-only payments. No property taxes/insurance in payment.'
+                    : inputs.loanType === 'CONVENTIONAL'
+                      ? 'Conventional: Amortized payments. PITI (taxes + insurance) included if enabled below.'
+                      : 'Monthly payment and holding costs will recalculate automatically.'}
               </div>
             </div>
             <InputGroup 
@@ -1555,9 +1962,104 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.loanTermMonths} 
               onChange={(v) => onInputChange('loanTermMonths', v)} 
               suffix="mo"
-              helpText="Loan term in months"
+              helpText={`Loan term in months (${inputs.loanType === 'HARD_MONEY' ? 'typically 12' : 'typically 360 for amortized'})`}
             />
           </div>
+
+          {/* PITI Fields for Conventional Loans */}
+          {inputs.loanType === 'CONVENTIONAL' && (
+            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="includePITI"
+                  checked={inputs.includePITI || false}
+                  onChange={(e) => onInputChange('includePITI', e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="includePITI" className="text-sm font-bold text-blue-900 cursor-pointer">
+                  Include PITI in Monthly Payment
+                </label>
+              </div>
+              <div className="text-xs text-blue-800 mb-3">
+                PITI = Principal + Interest + Taxes + Insurance. Conventional loans typically include property taxes and insurance in the monthly payment.
+              </div>
+              {inputs.includePITI && (
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <InputGroup
+                    label="Monthly Property Taxes (PITI)"
+                    id="monthlyPITITaxes"
+                    value={inputs.monthlyPITITaxes || 0}
+                    onChange={(v) => onInputChange('monthlyPITITaxes', v)}
+                    prefix="$"
+                    helpText="Monthly property taxes included in payment"
+                  />
+                  <InputGroup
+                    label="Monthly Insurance (PITI)"
+                    id="monthlyPITIInsurance"
+                    value={inputs.monthlyPITIInsurance || 0}
+                    onChange={(v) => onInputChange('monthlyPITIInsurance', v)}
+                    prefix="$"
+                    helpText="Monthly insurance included in payment"
+                  />
+                </div>
+              )}
+              
+              {/* PMI Section */}
+              {results.qualifiedLoanAmount > 0 && inputs.purchasePrice > 0 && (
+                <div className="mt-4 pt-4 border-t border-blue-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      id="includePMI"
+                      checked={inputs.includePMI || false}
+                      onChange={(e) => {
+                        onInputChange('includePMI', e.target.checked);
+                        if (!e.target.checked) {
+                          onInputChange('monthlyPMI', 0);
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor="includePMI" className="text-sm font-bold text-blue-900 cursor-pointer">
+                      Include PMI (Private Mortgage Insurance)
+                    </label>
+                  </div>
+                  <div className="text-xs text-blue-800 mb-2">
+                    PMI is typically required if down payment &lt;20%. Rate: 0.5-1% of loan annually.
+                  </div>
+                  {inputs.includePMI && (
+                    <div className="mt-2">
+                      <InputGroup
+                        label="Monthly PMI"
+                        id="monthlyPMI"
+                        value={inputs.monthlyPMI || 0}
+                        onChange={(v) => onInputChange('monthlyPMI', v)}
+                        prefix="$"
+                        helpText="Monthly PMI cost (auto-calculated if down payment <20%)"
+                      />
+                      {results.gapAmount > 0 && (
+                        <div className="text-[10px] text-blue-700 mt-1">
+                          Down Payment: {formatCurrency(results.gapAmount)} ({((results.gapAmount / inputs.purchasePrice) * 100).toFixed(1)}%)
+                          {((results.gapAmount / inputs.purchasePrice) * 100) < 20 && (
+                            <span className="text-orange-600 font-semibold ml-2">⚠️ PMI typically required</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Prepayment Penalty Info */}
+          {inputs.prepaymentPenalty && (
+            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+              ⚠️ <strong>Prepayment Penalty:</strong> This loan type typically includes a prepayment penalty. 
+              {inputs.prepaymentPenaltyAmount > 0 && ` Amount: ${formatCurrency(inputs.prepaymentPenaltyAmount)}`}
+            </div>
+          )}
 
           {/* Lender Fees */}
           <div className="pt-4 border-t border-gray-100">

@@ -30,7 +30,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100">
         <div className="bg-blue-900 p-8 text-center">
           <div className="inline-block bg-white text-blue-900 p-3 rounded-lg font-bold text-3xl mb-4 shadow-lg">ZS</div>
-          <h1 className="text-2xl font-bold text-white mb-1">ZSrehab Flip Calculator</h1>
+          <h1 className="text-2xl font-bold text-white mb-1">ZS Flip Calculator</h1>
           <div className="text-blue-200 text-sm font-medium">Hideout Version</div>
           <p className="text-blue-300 text-xs mt-1 opacity-80">Real Estate Investment Platform</p>
         </div>

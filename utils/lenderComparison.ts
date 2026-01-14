@@ -55,8 +55,7 @@ export const calculateLoanForLender = (baseInputs: LoanInputs, baseResults: Calc
     results.gapAmount = Math.max(0, baseInputs.purchasePrice - loanForPurchasePrice);
     
     // Recalculate LTV, LTC, and LTARV with the adjusted loan amount
-    const propertyValue = baseInputs.asIsValue > 0 ? baseInputs.asIsValue : baseInputs.purchasePrice;
-    results.ltv = propertyValue > 0 ? (finalLoanAmount / propertyValue) * 100 : 0;
+    results.ltv = baseInputs.purchasePrice > 0 ? (finalLoanAmount / baseInputs.purchasePrice) * 100 : 0;
     results.ltc = totalProjectCost > 0 ? (finalLoanAmount / totalProjectCost) * 100 : 0;
     results.ltarv = baseInputs.arv > 0 ? (finalLoanAmount / baseInputs.arv) * 100 : 0;
   }
@@ -75,8 +74,7 @@ export const calculateLoanForLender = (baseInputs: LoanInputs, baseResults: Calc
     comparisonMonthlyPayment = annualInterest / 12;
     
     // Recalculate LTV, LTC, and LTARV with the override loan amount
-    const propertyValue = baseInputs.asIsValue > 0 ? baseInputs.asIsValue : baseInputs.purchasePrice;
-    results.ltv = propertyValue > 0 ? (comparisonLoanAmount / propertyValue) * 100 : 0;
+    results.ltv = baseInputs.purchasePrice > 0 ? (comparisonLoanAmount / baseInputs.purchasePrice) * 100 : 0;
     const totalProjectCost = baseInputs.purchasePrice + baseInputs.rehabBudget;
     results.ltc = totalProjectCost > 0 ? (comparisonLoanAmount / totalProjectCost) * 100 : 0;
     results.ltarv = baseInputs.arv > 0 ? (comparisonLoanAmount / baseInputs.arv) * 100 : 0;

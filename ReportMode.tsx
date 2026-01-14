@@ -76,7 +76,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             <div className="bg-blue-900 text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg">ZS</div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 leading-none print:text-xl">
-                ZSrehab Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version</span>
+                ZS Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : appVersion === 'HIDEOUT' ? 'Hideout' : 'Custom'} Version</span>
               </h1>
               <span className="text-sm text-gray-500 font-medium tracking-wide block mt-1 print:text-xs">
                 INVESTMENT DEAL ANALYSIS • {new Date().toLocaleDateString()}

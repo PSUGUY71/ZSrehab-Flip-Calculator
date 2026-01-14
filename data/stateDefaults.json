@@ -1,0 +1,514 @@
+{
+  "AL": {
+    "name": "Alabama",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.42,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "south"
+  },
+  "AK": {
+    "name": "Alaska",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.18,
+    "insurancePerMonthPer100k": 12,
+    "utilitiesRegion": "other"
+  },
+  "AZ": {
+    "name": "Arizona",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0.1,
+    "typicalClosingCostPercent": 1.8,
+    "propertyTaxRate": 0.62,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "AR": {
+    "name": "Arkansas",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.62,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "south"
+  },
+  "CA": {
+    "name": "California",
+    "cplFee": 350,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 1.1,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 0.73,
+    "insurancePerMonthPer100k": 6,
+    "utilitiesRegion": "other"
+  },
+  "CO": {
+    "name": "Colorado",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.51,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "other"
+  },
+  "CT": {
+    "name": "Connecticut",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.75,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 1.73,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "northeast"
+  },
+  "DE": {
+    "name": "Delaware",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 2.0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.56,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "northeast"
+  },
+  "DC": {
+    "name": "District of Columbia",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 1.1,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 0.55,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "northeast"
+  },
+  "FL": {
+    "name": "Florida",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.98,
+    "insurancePerMonthPer100k": 18,
+    "utilitiesRegion": "south"
+  },
+  "GA": {
+    "name": "Georgia",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.1,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.91,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "south"
+  },
+  "HI": {
+    "name": "Hawaii",
+    "cplFee": 300,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0.1,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 0.28,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "other"
+  },
+  "ID": {
+    "name": "Idaho",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.69,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "IL": {
+    "name": "Illinois",
+    "cplFee": 100,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.5,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 2.3,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "other"
+  },
+  "IN": {
+    "name": "Indiana",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.87,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "IA": {
+    "name": "Iowa",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.57,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "KS": {
+    "name": "Kansas",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.41,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "other"
+  },
+  "KY": {
+    "name": "Kentucky",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.86,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "south"
+  },
+  "LA": {
+    "name": "Louisiana",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.51,
+    "insurancePerMonthPer100k": 15,
+    "utilitiesRegion": "south"
+  },
+  "ME": {
+    "name": "Maine",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.36,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "northeast"
+  },
+  "MD": {
+    "name": "Maryland",
+    "cplFee": 125,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.5,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.1,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "northeast"
+  },
+  "MA": {
+    "name": "Massachusetts",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 1.23,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "northeast"
+  },
+  "MI": {
+    "name": "Michigan",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.8,
+    "propertyTaxRate": 1.78,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "other"
+  },
+  "MN": {
+    "name": "Minnesota",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.33,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.12,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "other"
+  },
+  "MS": {
+    "name": "Mississippi",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.81,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "south"
+  },
+  "MO": {
+    "name": "Missouri",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.97,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "MT": {
+    "name": "Montana",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.84,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "NE": {
+    "name": "Nebraska",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.73,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "NV": {
+    "name": "Nevada",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.6,
+    "insurancePerMonthPer100k": 6,
+    "utilitiesRegion": "other"
+  },
+  "NH": {
+    "name": "New Hampshire",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.75,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 2.18,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "northeast"
+  },
+  "NJ": {
+    "name": "New Jersey",
+    "cplFee": 125,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.5,
+    "typicalClosingCostPercent": 2.5,
+    "propertyTaxRate": 2.4,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "northeast"
+  },
+  "NM": {
+    "name": "New Mexico",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.8,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "NY": {
+    "name": "New York",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 1.0,
+    "typicalClosingCostPercent": 3.0,
+    "propertyTaxRate": 1.8,
+    "insurancePerMonthPer100k": 12,
+    "utilitiesRegion": "northeast"
+  },
+  "NC": {
+    "name": "North Carolina",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0.2,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.84,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "south"
+  },
+  "ND": {
+    "name": "North Dakota",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.99,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "OH": {
+    "name": "Ohio",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.56,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "OK": {
+    "name": "Oklahoma",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.88,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "south"
+  },
+  "OR": {
+    "name": "Oregon",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.97,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "PA": {
+    "name": "Pennsylvania",
+    "cplFee": 125,
+    "titleInsuranceRate": 0,
+    "transferTaxRate": 0.5,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.5,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "northeast",
+    "note": "PA uses Title Insurance Rate Table chart (leave rate at 0)"
+  },
+  "RI": {
+    "name": "Rhode Island",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.53,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "northeast"
+  },
+  "SC": {
+    "name": "South Carolina",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.57,
+    "insurancePerMonthPer100k": 10,
+    "utilitiesRegion": "south"
+  },
+  "SD": {
+    "name": "South Dakota",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.31,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "TN": {
+    "name": "Tennessee",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.71,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "south"
+  },
+  "TX": {
+    "name": "Texas",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.6,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 2.0,
+    "insurancePerMonthPer100k": 15,
+    "utilitiesRegion": "south"
+  },
+  "UT": {
+    "name": "Utah",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.63,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "VT": {
+    "name": "Vermont",
+    "cplFee": 150,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 1.9,
+    "insurancePerMonthPer100k": 9,
+    "utilitiesRegion": "northeast"
+  },
+  "VA": {
+    "name": "Virginia",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.8,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "south"
+  },
+  "WA": {
+    "name": "Washington",
+    "cplFee": 200,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 2.0,
+    "propertyTaxRate": 0.98,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  },
+  "WV": {
+    "name": "West Virginia",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.58,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "south"
+  },
+  "WI": {
+    "name": "Wisconsin",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 1.76,
+    "insurancePerMonthPer100k": 8,
+    "utilitiesRegion": "other"
+  },
+  "WY": {
+    "name": "Wyoming",
+    "cplFee": 0,
+    "titleInsuranceRate": 0.5,
+    "transferTaxRate": 0,
+    "typicalClosingCostPercent": 1.5,
+    "propertyTaxRate": 0.61,
+    "insurancePerMonthPer100k": 7,
+    "utilitiesRegion": "other"
+  }
+}
+

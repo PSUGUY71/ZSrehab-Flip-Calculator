@@ -53,7 +53,6 @@ export interface LoanInputs {
 
   // Deal Numbers
   purchasePrice: number;
-  asIsValue: number;
   rehabBudget: number;
   rehabLineItems: RehabLineItem[]; // Itemized rehab breakdown
   arv: number; // After Repair Value
@@ -77,9 +76,26 @@ export interface LoanInputs {
   liquidity: number; // Cash on hand
 
   // Loan Settings (defaults available)
+  loanType: 'HARD_MONEY' | 'CONVENTIONAL' | 'PORTFOLIO' | 'OTHER';
   interestRate: number; // Percentage
   originationPoints: number; // Percentage
   loanTermMonths: number;
+  
+  // PITI fields for conventional loans (Principal, Interest, Taxes, Insurance)
+  includePITI: boolean; // Whether to include taxes and insurance in monthly payment
+  monthlyPITITaxes: number; // Monthly property taxes (if included in payment)
+  monthlyPITIInsurance: number; // Monthly insurance (if included in payment)
+  
+  // PMI (Private Mortgage Insurance) for conventional loans
+  includePMI: boolean; // Whether PMI is required (typically if <20% down)
+  monthlyPMI: number; // Monthly PMI cost (typically 0.5-1% of loan annually)
+  
+  // Prepayment penalty
+  prepaymentPenalty: boolean; // Whether prepayment penalty applies
+  prepaymentPenaltyAmount: number; // Prepayment penalty amount or percentage
+  
+  // Loan characteristics
+  interestOnly: boolean; // Whether loan is interest-only (hard money) or amortized
   
   // Baseline Lender Fees
   underwritingFee: number;
@@ -267,6 +283,9 @@ export interface CalculatedResults {
   
   // Proof of Funds Requirements
   requiredLiquidity: number;
+  rehabContingency: number; // 15% of rehab budget (automatic)
+  emergencyBuffer5Percent: number; // 5% of total deal cost (suggested)
+  emergencyBuffer10Percent: number; // 10% of total deal cost (suggested)
   
   // Eligibility
   isEligible: boolean;
@@ -307,6 +326,10 @@ export interface CalculatedResults {
   sellerCommissionCost: number;
   sellerTransferTaxCost: number;
   totalBuyingCosts: number;
+  
+  // Sensitivity Analysis
+  purchaseSensitivityScenarios?: import('./utils/sensitivityAnalysis').PurchaseSensitivityScenario[];
+  rehabSensitivityScenarios?: import('./utils/sensitivityAnalysis').RehabSensitivityScenario[];
 }
 
 export const DEFAULT_INPUTS: LoanInputs = {
@@ -323,7 +346,6 @@ export const DEFAULT_INPUTS: LoanInputs = {
   foundationType: 'Basement',
 
   purchasePrice: 0, 
-  asIsValue: 0,
   rehabBudget: 0,
   rehabLineItems: [],
   arv: 0,
@@ -342,9 +364,18 @@ export const DEFAULT_INPUTS: LoanInputs = {
   ficoScore: 720,
   experienceLevel: 0,
   liquidity: 100000, // Default liquidity to avoid eligibility errors on blank form
+  loanType: 'HARD_MONEY', // Default to hard money
   interestRate: 12, // Default to 12% (typical hard money rate)
-  originationPoints: 0,
-  loanTermMonths: 12,
+  originationPoints: 1, // Typical hard money points
+  loanTermMonths: 6, // Typical hard money term (6 months)
+  includePITI: false, // Hard money doesn't include PITI
+  monthlyPITITaxes: 0,
+  monthlyPITIInsurance: 0,
+  includePMI: false, // Hard money doesn't have PMI
+  monthlyPMI: 0,
+  prepaymentPenalty: true, // Hard money typically has prepayment penalty
+  prepaymentPenaltyAmount: 0,
+  interestOnly: true, // Hard money is interest-only
   
   underwritingFee: 0,
   processingFee: 0,
