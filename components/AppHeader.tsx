@@ -37,7 +37,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="flex items-center gap-3">
           <div className="bg-blue-900 text-white p-2 rounded font-bold tracking-tighter text-xl">ZS</div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Flip Calculator</h1>
+            <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Calculator</h1>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 font-medium tracking-wide">100% LOAN QUALIFIER</span>
               <span className="text-xs text-blue-600 font-medium">User: {currentUser.username}</span>
