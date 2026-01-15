@@ -53,6 +53,7 @@ export interface LoanInputs {
 
   // Deal Numbers
   purchasePrice: number;
+  appraised_value: number; // Appraised value for LTV calculation (lender standard; defaults to purchase price if not set)
   rehabBudget: number;
   rehabLineItems: RehabLineItem[]; // Itemized rehab breakdown
   arv: number; // After Repair Value
@@ -346,6 +347,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   foundationType: 'Basement',
 
   purchasePrice: 0, 
+  appraised_value: 0, // Defaults to purchase price if 0 in calculations
   rehabBudget: 0,
   rehabLineItems: [],
   arv: 0,
@@ -396,6 +398,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   walkerWire: 0,
   
   recordingFees: 0,
+  titleCompanyCharges: 0, // Title company charges (for non-Hideout versions)
   
   // Additional Costs
   inspectionCost: 0,

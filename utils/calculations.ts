@@ -5,6 +5,7 @@ import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
     purchasePrice,
+    appraised_value,
     rehabBudget,
     arv,
     financingPercentage,
@@ -128,8 +129,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
-  // LTV = Loan-to-Value = Loan Amount / Purchase Price
-  const ltv = purchasePrice > 0 ? (qualifiedLoanAmount / purchasePrice) * 100 : 0;
+  // LTV = Loan-to-Value = Loan Amount / Appraised Value (lender standard)
+  // Use appraised_value if provided; otherwise fall back to purchase price
+  const valueForLTV = appraised_value > 0 ? appraised_value : purchasePrice;
+  const ltv = valueForLTV > 0 ? (qualifiedLoanAmount / valueForLTV) * 100 : 0;
   
   // LTC = Loan-to-Cost = Loan Amount / Total Project Cost
   // Total Project Cost = Purchase Price + Rehab Budget
@@ -858,8 +861,6 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // General
     perDiemInterest,
     monthlyPayment,
-    monthlyPrincipalAndInterest,
-    monthlyPMI: (includePMI && monthlyPMI > 0) ? monthlyPMI : 0,
     totalClosingCosts,
     totalCashToClose,
     gapAmount,

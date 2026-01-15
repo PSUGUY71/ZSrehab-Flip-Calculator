@@ -340,6 +340,22 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </div>
             <div>
               <InputGroup 
+                label="Appraised Value (LTV Basis)" 
+                id="appraised_value" 
+                value={inputs.appraised_value} 
+                onChange={(v) => onInputChange('appraised_value', v)} 
+                prefix="$" 
+                step={1000}
+                helpText="Appraised value used for LTV calculation (leave 0 to use purchase price)"
+              />
+              <div className="text-[10px] text-gray-400 text-right mt-1 font-medium">
+                {inputs.appraised_value > 0 ? `${((inputs.purchasePrice / inputs.appraised_value) * 100).toFixed(1)}% of appraised` : 'Uses purchase price'}
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <InputGroup 
                 label="Rehab Budget" 
                 id="rehab" 
                 value={inputs.rehabBudget} 
