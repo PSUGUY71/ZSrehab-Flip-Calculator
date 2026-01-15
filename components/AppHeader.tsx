@@ -1,8 +1,11 @@
 import React from 'react';
-import { User, SavedDeal } from '../types';
+import { SavedDeal } from '../types';
 
 interface AppHeaderProps {
-  currentUser: User;
+  currentUser: {
+    username?: string | null;
+    email?: string | null;
+  };
   savedDeals: SavedDeal[];
   saveNotification: string | null;
   appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
@@ -31,6 +34,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     console.log('📊 AppHeader: savedDeals count =', savedDeals.length, 'deals:', savedDeals.map(d => ({ id: d.id, name: d.name })));
   }, [savedDeals]);
 
+  const displayName = currentUser?.username?.trim()
+    || currentUser?.email?.trim()
+    || 'Guest';
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
@@ -39,8 +46,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div>
             <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Calculator</h1>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-medium tracking-wide">100% LOAN QUALIFIER</span>
-              <span className="text-xs text-blue-600 font-medium">User: {currentUser.username}</span>
+              {/* 100% LOAN QUALIFIER removed */}
+              <span className="text-xs text-blue-600 font-medium">User: {displayName}</span>
             </div>
           </div>
         </div>
