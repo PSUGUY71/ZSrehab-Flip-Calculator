@@ -3,6 +3,7 @@ import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './typ
 import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
+import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
@@ -517,13 +518,22 @@ const App: React.FC = () => {
           // Only if they're at defaults to avoid overwriting user edits
           updated.cplFee = stateCosts.cplFee;
           updated.transferTaxRate = stateCosts.transferTaxRate;
-          
-          // For title insurance rate: 
-          // - PA: leave at 0 to use PA Title Insurance Rate Table chart
-          // - Other states: leave at 0 (users can set manually if needed)
-          // The lookup table has dollar estimates, but titleInsuranceRate is a percentage
-          // So we'll leave it and let users override if needed
         }
+      }
+      
+      // Auto-populate holding costs when exit strategy changes
+      if (field === 'exitStrategy' && (value === 'SELL' || value === 'REFI')) {
+        const template = getHoldingCostTemplate(value as 'SELL' | 'REFI', prev.arv || 100000);
+        updated.monthlyElectric = template.monthlyElectric;
+        updated.monthlyInternet = template.monthlyInternet;
+        updated.monthlyPropane = template.monthlyPropane;
+        updated.monthlyInsurance = template.monthlyInsurance;
+        updated.monthlyTaxes = Math.round(template.monthlyTaxes);
+        updated.yearlyWater = template.yearlyWater;
+        updated.yearlyDues = template.yearlyDues;
+        updated.includeMonthlyInsurance = true;
+        updated.includeMonthlyTaxes = true;
+        updated.includeYearlyWater = true;
       }
       
       return updated;
