@@ -11,6 +11,7 @@ import { SensitivityAnalysis } from './SensitivityAnalysis';
 import { SellerNetAnalysis } from './SellerNetAnalysis';
 import { CashRequiredSummary } from './CashRequiredSummary';
 import { RealismCheckPanel } from './RealismCheckPanel';
+import { DealViabilityIndicator } from './DealViabilityIndicator';
 
 interface LenderComparisonResult {
   lenderUpfrontFeesAdjusted: number;
@@ -69,6 +70,17 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
       <div className="sticky top-24 space-y-6">
         {/* Cash Required Summary */}
         <CashRequiredSummary inputs={inputs} results={results} />
+
+        {/* Deal Viability Indicator - HIGHEST PRIORITY */}
+        <DealViabilityIndicator
+          profitMargin={results.profitMargin}
+          irr={results.irr}
+          seventyPercentRuleMet={results.seventyPercentRuleMet}
+          ltv={results.ltv}
+          arv={inputs.arv}
+          purchasePrice={inputs.purchasePrice}
+          afterTaxProfit={results.afterTaxProfit}
+        />
 
         {/* Eligibility Alert */}
         <div className="bg-gray-50 rounded-xl p-2">

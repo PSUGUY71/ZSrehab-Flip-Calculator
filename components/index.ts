@@ -26,6 +26,7 @@ export { EligibilityAlert } from './EligibilityAlert';
 export { ValidationAlert } from './ValidationAlert';
 export { AssumptionsSummary } from './AssumptionsSummary';
 export { CostsBreakdown } from './CostsBreakdown';
+export { DealViabilityIndicator } from './DealViabilityIndicator';
 
 // Layout Sections
 export { InputSections } from './InputSections';
