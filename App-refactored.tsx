@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './types';
 import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
+import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
@@ -15,6 +16,7 @@ import {
   LenderModal,
   InputSections,
   ResultsColumn,
+  ValidationAlert,
 } from './components';
 
 const App: React.FC = () => {
@@ -280,6 +282,12 @@ const App: React.FC = () => {
     }
     return results; // Fallback to current results if no baseline stored
   }, [originalBaselineInputs, results]);
+
+  // Validation
+  const validationErrors = useMemo(() => validateLoanInputs(inputs), [inputs]);
+  const validationWarnings = validationErrors.filter(e => e.severity === 'warning');
+  const validationCriticalErrors = validationErrors.filter(e => e.severity === 'error');
+  const hasErrors = validationCriticalErrors.length > 0;
 
   const comparisonData = useMemo(() => {
     return lenders
@@ -1022,6 +1030,9 @@ const App: React.FC = () => {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Validation Alert - Show at top if there are errors or warnings */}
+        <ValidationAlert errors={validationCriticalErrors} warnings={validationWarnings} />
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Inputs */}
           <InputSections
