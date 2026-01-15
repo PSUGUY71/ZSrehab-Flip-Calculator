@@ -311,6 +311,7 @@ export interface CalculatedResults {
   roi: number;
   projectRoi: number;
   netMargin: number;
+  irr: number | null; // Internal Rate of Return (annualized, as decimal, e.g., 0.25 for 25%; null if cannot be calculated)
   
   totalProjectCostBasis: number;
   totalCashInvested: number; // Added

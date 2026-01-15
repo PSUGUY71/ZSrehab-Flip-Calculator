@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalculatedResults, LoanInputs } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
+import { formatIRR } from '../utils/irrCalculation';
 import { HelpTooltip } from './HelpTooltip';
 
 interface ValuationReturnsProps {
@@ -68,7 +69,26 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ inputs, resu
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
+        {/* IRR - MOST IMPORTANT METRIC FOR INVESTORS */}
+        <div className="bg-red-50 rounded p-2 text-center border-2 border-red-300">
+          <div className="text-[10px] text-red-700 font-bold uppercase tracking-wide">
+            Internal Rate of Return
+          </div>
+          <div className="text-lg font-bold text-red-700 mt-1">
+            {results.irr !== null && results.irr !== undefined 
+              ? formatIRR(results.irr)
+              : 'N/A'
+            }
+          </div>
+          <div className="text-[9px] text-red-600 mt-0.5">Annualized Return</div>
+          <div className="text-[9px] text-red-500 mt-1 italic">
+            {results.irr !== null 
+              ? 'Lender/Partner standard metric' 
+              : 'Check inputs'}
+          </div>
+        </div>
+
         {/* Cash on Cash Return */}
         <div className="bg-green-50 rounded p-2 text-center border border-green-100">
           <div className="text-[10px] text-green-600 font-bold uppercase tracking-wide">

@@ -1,6 +1,7 @@
 import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
 import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensitivityAnalysis';
 import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
+import { calculateFlipIRR, formatIRR } from './irrCalculation';
 
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
@@ -551,6 +552,20 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 3. Net Margin (Return on Sales)
   const netMargin = arv > 0 ? (netProfit / arv) * 100 : 0;
   
+  // 4. IRR (Internal Rate of Return)
+  // Calculate IRR based on actual cash flows: initial investment, monthly costs, and exit proceeds
+  const irrResult = calculateFlipIRR({
+    downPayment: gapAmount,                              // Down payment (gap)
+    closingCostsAndFees: totalClosingCosts,             // Acquisition closing costs
+    rehabBudget: rehabBudget,                            // Rehab (treated as upfront for IRR purposes)
+    monthlyHoldingCosts: monthlyHoldingCost,             // Average monthly carrying costs
+    holdingMonths: holdingPeriodMonths,                  // How long we hold
+    saleProceeds: arv,                                   // Gross ARV
+    sellingCosts: totalExitCosts,                        // Selling costs (commission, transfer tax, etc.)
+    loanPayoff: qualifiedLoanAmount                      // Loan balance to pay off at sale
+  });
+  const irr = irrResult; // Will be null if can't calculate, otherwise a decimal
+  
   // 11. Scenarios Calculation
   const baselineFixedCosts = qualifiedLoanAmount + totalBuyingCosts + totalHoldingCosts;
   
@@ -889,6 +904,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     roi,
     projectRoi,
     netMargin,
+    irr,
     totalProjectCostBasis,
     totalCashInvested,
     profitScenarios: scenarios,
