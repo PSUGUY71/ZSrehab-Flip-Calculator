@@ -1501,21 +1501,21 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor="showAfterTaxProfit" className="text-xs font-bold text-gray-700 cursor-pointer">
-                Show after-tax profit?
+                ✓ Show after-tax profit (now default)
               </label>
             </div>
-            {inputs.showAfterTaxProfit && (
-              <div className="mt-2">
-                <InputGroup 
-                  label="Capital Gains Tax Rate %" 
-                  id="capitalGainsTaxRate" 
-                  value={inputs.capitalGainsTaxRate || 20} 
-                  onChange={(v) => onInputChange('capitalGainsTaxRate', v)} 
-                  suffix="%"
-                  helpText="Capital gains tax rate on profit from sale. Default 20% for self-employed (long-term capital gains). Short-term (held < 1 year) is taxed as ordinary income."
-                />
-              </div>
-            )}
+            
+            {/* Capital Gains Tax Rate - Always shown (after-tax profit is now default) */}
+            <div>
+              <InputGroup 
+                label="Capital Gains Tax Rate %" 
+                id="capitalGainsTaxRate" 
+                value={inputs.capitalGainsTaxRate || 20} 
+                onChange={(v) => onInputChange('capitalGainsTaxRate', v)} 
+                suffix="%"
+                helpText="Capital gains tax rate on profit from sale. Default 20% for self-employed (long-term gains). Adjust for your actual tax situation."
+              />
+            </div>
           </div>
           
           {/* Monthly Holding Cost Summary */}
