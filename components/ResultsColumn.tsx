@@ -3,6 +3,7 @@ import { LoanInputs, CalculatedResults, LenderOption } from '../types';
 import { EligibilityAlert } from './EligibilityAlert';
 import { ValuationReturns } from './ValuationReturns';
 import { LoanEstimateCard } from './LoanEstimateCard';
+import { CostsBreakdown } from './CostsBreakdown';
 import { SeventyPercentRuleCard } from './SeventyPercentRuleCard';
 import { LenderComparison } from './LenderComparison';
 import { ClosingProfitCard } from './ClosingProfitCard';
@@ -85,6 +86,11 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
         {/* Loan Estimate Card */}
         <div className="bg-green-50 rounded-xl p-2">
           <LoanEstimateCard inputs={inputs} results={results} />
+        </div>
+
+        {/* Costs Breakdown - NEW: Acquisition vs Disposition */}
+        <div className="bg-orange-50 rounded-xl p-2">
+          <CostsBreakdown results={results} />
         </div>
 
         {/* 70% Rule Card */}
