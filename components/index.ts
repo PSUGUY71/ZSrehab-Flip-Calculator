@@ -23,6 +23,7 @@ export { ClosingProfitCard } from './ClosingProfitCard';
 export { SensitivityAnalysis } from './SensitivityAnalysis';
 export { SellerNetAnalysis } from './SellerNetAnalysis';
 export { EligibilityAlert } from './EligibilityAlert';
+export { AssumptionsSummary } from './AssumptionsSummary';
 
 // Layout Sections
 export { InputSections } from './InputSections';

@@ -6,6 +6,7 @@ import { FeeBreakdownItem } from './components/FeeBreakdownItem';
 import { ClosingProfitCard } from './components/ClosingProfitCard';
 import { EligibilityAlert } from './components/EligibilityAlert';
 import { ValuationReturns } from './components/ValuationReturns';
+import { AssumptionsSummary } from './components/AssumptionsSummary';
 
 interface LenderComparisonResult {
   lenderUpfrontFeesAdjusted: number;
@@ -188,6 +189,11 @@ export const ReportMode: React.FC<ReportModeProps> = ({
         {/* Eligibility Alert - compact */}
         <div className="mb-2 print:mb-0.5 print:mt-0.5">
           <EligibilityAlert results={results} />
+        </div>
+
+        {/* Assumptions Summary - NEW */}
+        <div className="mb-4 print:mb-2 print:mt-1" style={{ pageBreakInside: 'avoid' }}>
+          <AssumptionsSummary inputs={inputs} results={results} />
         </div>
 
         {/* Notes if any - compact */}
