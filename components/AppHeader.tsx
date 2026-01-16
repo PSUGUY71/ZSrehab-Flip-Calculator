@@ -13,6 +13,7 @@ interface AppHeaderProps {
   onNewDeal: () => void;
   onSaveDeal: () => void;
   onOpenDealModal: () => void;
+  onOpenSettings: () => void;
   onReportMode: () => void;
   onLogout: () => void;
 }
@@ -26,6 +27,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onNewDeal,
   onSaveDeal,
   onOpenDealModal,
+  onOpenSettings,
   onReportMode,
   onLogout,
 }) => {
@@ -133,6 +135,28 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               />
             </svg>
             Report
+          </button>
+          <div className="h-6 w-px bg-gray-300 mx-2"></div>
+          <button
+            onClick={onOpenSettings}
+            className="text-gray-500 hover:text-blue-600 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1"
+            title="Settings"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.592c.55 0 1.02.398 1.11.94m-9.474 0a23.474 23.474 0 07.5 0m0 0a20.614 20.614 0 003.946 2.764A12.012 12.012 0 0112 9.25c4.1 0 7.625-2.087 9.738-5.493a20.615 20.615 0 003.946-2.764m-9.474 0c.054-.337.112-.662.184-.974m5.858 5.408a3 3 0 11-6 0 3 3 0 016 0zm12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Settings
           </button>
           <div className="h-6 w-px bg-gray-300 mx-2"></div>
           <button

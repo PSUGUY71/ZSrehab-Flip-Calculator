@@ -4,6 +4,7 @@ import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
+import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
@@ -18,6 +19,7 @@ import {
   InputSections,
   ResultsColumn,
   ValidationAlert,
+  UserSettings,
 } from './components';
 
 const App: React.FC = () => {
@@ -50,6 +52,10 @@ const App: React.FC = () => {
   
   // Validation State - Track if user has interacted with form
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  
+  // User Settings State
+  const [userPreferences, setUserPreferences] = useState(DEFAULT_PREFERENCES);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
@@ -129,6 +135,14 @@ const App: React.FC = () => {
       setIsClearingOnLogin(false);
     }
   }, [currentUser?.id, currentUser?.email]); // Trigger when user ID or email changes (login/logout)
+
+  // Load user preferences when user logs in
+  useEffect(() => {
+    if (currentUser?.email) {
+      const prefs = loadUserPreferences(currentUser.email);
+      setUserPreferences(prefs);
+    }
+  }, [currentUser?.email]);
 
   useEffect(() => {
     let isMounted = true; // Flag to prevent state updates if component unmounts
@@ -506,6 +520,15 @@ const App: React.FC = () => {
     setSavedDeals([]);
     setCurrentDealId(null); // Clear current deal ID on logout
     setIsReportMode(false);
+  };
+
+  // --- USER SETTINGS HANDLERS ---
+  const handleSaveUserPreferences = (prefs: typeof userPreferences) => {
+    setUserPreferences(prefs);
+    if (currentUser?.email) {
+      saveUserPreferences(currentUser.email, prefs);
+    }
+    setIsSettingsModalOpen(false);
   };
 
   // --- INPUT HANDLERS ---
@@ -1043,6 +1066,7 @@ const App: React.FC = () => {
         onNewDeal={handleNewDeal}
         onSaveDeal={handleSaveDeal}
         onOpenDealModal={() => setIsDealModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         onReportMode={() => setIsReportMode(true)}
         onLogout={handleLogout}
       />
@@ -1110,6 +1134,16 @@ const App: React.FC = () => {
             setIsLenderModalOpen(false);
             setEditingLender(null);
           }}
+        />
+      )}
+
+      {/* User Settings Modal */}
+      {isSettingsModalOpen && (
+        <UserSettings
+          currentUser={currentUser}
+          preferences={userPreferences}
+          onSave={handleSaveUserPreferences}
+          onClose={() => setIsSettingsModalOpen(false)}
         />
       )}
     </div>

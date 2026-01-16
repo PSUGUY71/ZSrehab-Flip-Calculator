@@ -12,6 +12,7 @@ export { AppHeader } from './AppHeader';
 // Modals
 export { DealModal } from './DealModal';
 export { LenderModal } from './LenderModal';
+export { UserSettings } from './UserSettings';
 
 // Cards & Sections
 export { MaxOfferCard } from './MaxOfferCard';
