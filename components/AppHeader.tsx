@@ -52,11 +52,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </div>
 
-        {/* Version Selector - HIDDEN (auto-determined by state) */}
-        {null}
-        {/* Comment out version selector:
-        Original code hidden here - version auto-determined by state
-        */}
+        {/* Version Selector */}
+        <div className="flex items-center gap-3">
+          <select
+            value={appVersion}
+            onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM')}
+            className="border border-gray-300 rounded px-2 py-1 text-sm font-medium text-gray-700 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title="Switch between version modes"
+          >
+            <option value="NORMAL">NORMAL</option>
+            <option value="HIDEOUT">HIDEOUT</option>
+            <option value="CUSTOM">CUSTOM</option>
+          </select>
+          <span className="text-xs text-gray-500">Version</span>
+        </div>
+
         <div className="flex items-center space-x-2">
           <button
             onClick={onNewDeal}
