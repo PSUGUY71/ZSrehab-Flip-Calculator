@@ -58,7 +58,7 @@ const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   // Version State
-  const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
+  const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
   
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
   const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75% (main ARV)

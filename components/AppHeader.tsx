@@ -8,8 +8,8 @@ interface AppHeaderProps {
   };
   savedDeals: SavedDeal[];
   saveNotification: string | null;
-  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
-  onVersionChange?: (version: 'NORMAL' | 'HIDEOUT' | 'CUSTOM') => void;
+  appVersion?: 'NORMAL' | 'HIDEOUT';
+  onVersionChange?: (version: 'NORMAL' | 'HIDEOUT') => void;
   onNewDeal: () => void;
   onSaveDeal: () => void;
   onOpenDealModal: () => void;
@@ -58,13 +58,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="flex items-center gap-3">
           <select
             value={appVersion}
-            onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM')}
+            onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
             className="border border-gray-300 rounded px-2 py-1 text-sm font-medium text-gray-700 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             title="Switch between version modes"
           >
             <option value="NORMAL">NORMAL</option>
             <option value="HIDEOUT">HIDEOUT</option>
-            <option value="CUSTOM">CUSTOM</option>
           </select>
           <span className="text-xs text-gray-500">Version</span>
         </div>

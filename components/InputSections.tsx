@@ -22,7 +22,7 @@ interface InputSectionsProps {
   onRehabLineItemAdd: () => void;
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
   onRehabLineItemDelete: (id: string) => void;
-  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+  appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
 
