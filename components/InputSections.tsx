@@ -9,6 +9,7 @@ import { getAllStateCodes, getStateName, getStateDefaults, applyStateDefaults } 
 import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
+import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -221,6 +222,31 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 </div>
               )}
             </div>
+            
+            {/* County Selector - For 3rd party cost lookups */}
+            {inputs.state && (
+              <div className="col-span-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">County</label>
+                <select 
+                  className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
+                  value={inputs.county || ''}
+                  onChange={(e) => onInputChange('county', e.target.value)}
+                >
+                  <option value="">Select County (Optional)</option>
+                  {getCountiesForState(inputs.state).map((county) => (
+                    <option key={county} value={county}>
+                      {county}
+                    </option>
+                  ))}
+                </select>
+                {inputs.county && (
+                  <div className="mt-1 text-[10px] text-green-600 italic">
+                    📍 Using {inputs.county} cost averages
+                  </div>
+                )}
+              </div>
+            )}
+            
             <InputGroup 
               label="Zip Code" 
               id="zip" 

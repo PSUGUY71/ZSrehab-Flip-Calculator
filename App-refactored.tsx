@@ -4,6 +4,7 @@ import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
+import { getCountyThirdPartyCosts } from './utils/thirdPartyCosts';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
@@ -565,6 +566,15 @@ const App: React.FC = () => {
         updated.includeMonthlyInsurance = true;
         updated.includeMonthlyTaxes = true;
         updated.includeYearlyWater = true;
+      }
+
+      // Auto-populate 3rd party costs when county changes (NORMAL version)
+      if (field === 'county' && typeof value === 'string' && prev.state) {
+        const countyCosts = getCountyThirdPartyCosts(prev.state, value as string);
+        updated.inspectionCost = countyCosts.inspectionCost;
+        updated.appraisalCost = countyCosts.appraisalCost;
+        // Title insurance cost is stored as a percentage, so convert to decimal
+        updated.titleInsurancePercentage = countyCosts.titleInsuranceCost * 100;
       }
       
       return updated;

@@ -41,6 +41,7 @@ export interface LoanInputs {
   // Property Info
   address: string;
   state: string;
+  county?: string; // County for 3rd party cost lookups (NORMAL version)
   zipCode: string;
   propertyType: 'SFR' | 'Multi-Family' | 'Mixed-Use';
   units: number;
@@ -338,6 +339,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   lenderName: '',
   address: '',
   state: '',
+  county: '',
   zipCode: '',
   propertyType: 'SFR',
   units: 1,
