@@ -23,6 +23,7 @@ interface InputSectionsProps {
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
   onRehabLineItemDelete: (id: string) => void;
   appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+  hasUserInteracted?: boolean;
 }
 
 export const InputSections: React.FC<InputSectionsProps> = ({
@@ -37,6 +38,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemUpdate,
   onRehabLineItemDelete,
   appVersion = 'HIDEOUT',
+  hasUserInteracted = false,
 }) => {
   const ltvOptions = [
     { label: '60%', value: 0.60 },
@@ -163,8 +165,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
   return (
     <div className="w-full lg:w-1/2 space-y-6">
-      {/* Validation Alert - Only show if there are errors or warnings after user enters data */}
-      {(validationErrors.length > 0 || validationWarnings.length > 0) && (
+      {/* Validation Alert - Only show if user has interacted AND there are errors or warnings */}
+      {hasUserInteracted && (validationErrors.length > 0 || validationWarnings.length > 0) && (
         <ValidationAlert errors={validationErrors} warnings={validationWarnings} />
       )}
 

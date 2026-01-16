@@ -48,6 +48,9 @@ const App: React.FC = () => {
   const [isLenderModalOpen, setIsLenderModalOpen] = useState(false);
   const [editingLender, setEditingLender] = useState<LenderOption | null>(null);
   
+  // Validation State - Track if user has interacted with form
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
   
@@ -507,6 +510,11 @@ const App: React.FC = () => {
 
   // --- INPUT HANDLERS ---
   const handleInputChange = (field: keyof LoanInputs, value: string | number) => {
+    // Mark that user has interacted with form
+    if (!hasUserInteracted) {
+      setHasUserInteracted(true);
+    }
+
     setInputs((prev) => {
       const updated = { ...prev, [field]: value };
       
@@ -1054,6 +1062,7 @@ const App: React.FC = () => {
             onRehabLineItemUpdate={handleRehabLineItemUpdate}
             onRehabLineItemDelete={handleRehabLineItemDelete}
             appVersion={appVersion}
+            hasUserInteracted={hasUserInteracted}
           />
 
           {/* Right Column - Results */}
