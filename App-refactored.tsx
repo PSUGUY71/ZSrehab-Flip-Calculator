@@ -568,11 +568,12 @@ const App: React.FC = () => {
         updated.includeYearlyWater = true;
       }
 
-      // Auto-populate 3rd party costs when county changes (NORMAL version)
+      // Auto-populate 3rd party costs when county changes (NORMAL version - 4 main fields)
       if (field === 'county' && typeof value === 'string' && prev.state) {
         const countyCosts = getCountyThirdPartyCosts(prev.state, value as string);
         updated.inspectionCost = countyCosts.inspectionCost;
         updated.appraisalCost = countyCosts.appraisalCost;
+        updated.recordingFees = countyCosts.recordingFees;
         // Title insurance cost is stored as a percentage, so convert to decimal
         updated.titleInsurancePercentage = countyCosts.titleInsuranceCost * 100;
       }
