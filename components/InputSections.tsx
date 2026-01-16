@@ -8,6 +8,8 @@ import { estimateHoldingCosts } from '../utils/stateHoldingCosts';
 import { getAllStateCodes, getStateName, getStateDefaults, applyStateDefaults } from '../utils/stateDefaults';
 import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
+import { validateLoanInputs } from '../utils/inputValidator';
+import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
   inputs: LoanInputs;
@@ -148,8 +150,24 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
   const hasInsufficientHoldingCosts = inputs.holdingPeriodMonths >= 3 && monthlyHoldingCostTotal < 500;
 
+  // Compute validation errors and warnings
+  const validationErrors = useMemo(() => {
+    const allErrors = validateLoanInputs(inputs);
+    return allErrors.filter((err) => err.severity === 'error');
+  }, [inputs]);
+
+  const validationWarnings = useMemo(() => {
+    const allErrors = validateLoanInputs(inputs);
+    return allErrors.filter((err) => err.severity === 'warning');
+  }, [inputs]);
+
   return (
     <div className="w-full lg:w-1/2 space-y-6">
+      {/* Validation Alert - Only show if there are errors or warnings after user enters data */}
+      {(validationErrors.length > 0 || validationWarnings.length > 0) && (
+        <ValidationAlert errors={validationErrors} warnings={validationWarnings} />
+      )}
+
       {/* Property Info */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">

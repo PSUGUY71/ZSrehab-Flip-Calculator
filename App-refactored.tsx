@@ -1040,9 +1040,6 @@ const App: React.FC = () => {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Validation Alert - Show at top if there are errors or warnings */}
-        <ValidationAlert errors={validationCriticalErrors} warnings={validationWarnings} />
-
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Inputs */}
           <InputSections
