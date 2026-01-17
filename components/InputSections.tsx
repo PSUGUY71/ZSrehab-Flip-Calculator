@@ -1486,7 +1486,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <InputGroup 
                 label="SELLER AGENT COMMISSION %" 
                 id="sellerAgentComm" 
-                value={inputs.sellingSellerAgentCommissionRate || 3} 
+                value={inputs.sellingSellerAgentCommissionRate ?? 3} 
                 onChange={(v) => onInputChange('sellingSellerAgentCommissionRate', v)} 
                 suffix="%"
                 helpText="Seller agent commission: typically 2.5-3% of ARV. This commission is paid from sale proceeds and reduces your profit. If you are the seller's agent, you can add it back to profit."
@@ -1494,7 +1494,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <InputGroup 
                 label="BUYER AGENT COMMISSION %" 
                 id="buyerAgentComm" 
-                value={inputs.sellingBuyerAgentCommissionRate || 3} 
+                value={inputs.sellingBuyerAgentCommissionRate ?? 3} 
                 onChange={(v) => onInputChange('sellingBuyerAgentCommissionRate', v)} 
                 suffix="%"
                 helpText="Buyer agent commission: typically 2.5-3% of ARV. This commission is paid from sale proceeds and reduces your profit."
