@@ -39,8 +39,8 @@ export const DealViabilityIndicator: React.FC<DealViabilityProps> = ({
   }
 
   // Check LTV (target: < 75%)
-  if (ltv !== null && ltv > 0.75) {
-    issues.push(`LTV ${(ltv * 100).toFixed(1)}% (target: < 75%)`);
+  if (ltv !== null && ltv > 75) {
+    issues.push(`LTV ${ltv.toFixed(1)}% (target: < 75%)`);
   }
 
   // Check for negative profit
@@ -142,7 +142,7 @@ export const DealViabilityIndicator: React.FC<DealViabilityProps> = ({
         )}
         {ltv !== null && (
           <div className="bg-white rounded px-2 py-1">
-            <span className="font-semibold">LTV:</span> {(ltv * 100).toFixed(1)}%
+            <span className="font-semibold">LTV:</span> {ltv.toFixed(1)}%
           </div>
         )}
         {seventyPercentRuleMet && (
