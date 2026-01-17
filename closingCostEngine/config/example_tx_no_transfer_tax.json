@@ -1,0 +1,61 @@
+{
+  "jurisdiction_id": "TX",
+  "level": "state",
+  "state": "TX",
+  "description": "Texas - No state transfer tax",
+  
+  "transfer_taxes": [],
+  
+  "recording": {
+    "id": "recording_tx",
+    "deed_recording": {
+      "per_document_fee": 0,
+      "per_page_fee": 1.50
+    },
+    "mortgage_recording": {
+      "per_document_fee": 0,
+      "per_page_fee": 1.50
+    }
+  },
+  
+  "title": {
+    "id": "title_tx",
+    "pricing_method": "rate_table",
+    "lender_policy": {
+      "base_on": "loan_amount",
+      "rate_table": {
+        "entries": [
+          { "loan_min": 0, "loan_max": 10000, "rate": 0.008 },
+          { "loan_min": 10000, "loan_max": 50000, "rate": 0.007 },
+          { "loan_min": 50000, "loan_max": 100000, "rate": 0.006 },
+          { "loan_min": 100000, "loan_max": null, "rate": 0.005 }
+        ]
+      }
+    },
+    "simultaneous_issue_discount": {
+      "applies": true,
+      "discount_pct": 20
+    }
+  },
+  
+  "settlement": {
+    "settlement_fee": {
+      "amount": 400,
+      "payer": "split",
+      "split_buyer_pct": 50,
+      "split_seller_pct": 50
+    },
+    "attorney_fee": {
+      "amount": 500,
+      "payer": "seller"
+    }
+  },
+  
+  "proration": {
+    "id": "proration_tx",
+    "day_count": "actual_365",
+    "closing_day_owner": "buyer",
+    "rounding": "cents",
+    "default_proration_style": "paid_in_advance_common"
+  }
+}

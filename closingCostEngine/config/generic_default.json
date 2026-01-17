@@ -1,0 +1,96 @@
+{
+  "jurisdiction_id": "DEFAULT",
+  "level": "state",
+  "state": "DEFAULT",
+  "description": "Default jurisdiction profile with placeholder values",
+  
+  "transfer_taxes": [
+    {
+      "id": "transfer_tax_default",
+      "description": "Transfer/Deed Tax",
+      "base_type": "price",
+      "calc_type": "percent",
+      "payer_default": "split",
+      "split_buyer_pct": 50,
+      "split_seller_pct": 50,
+      "rate": 0.005
+    }
+  ],
+  
+  "recording": {
+    "id": "recording_default",
+    "deed_recording": {
+      "per_document_fee": 50,
+      "per_page_fee": 1
+    },
+    "mortgage_recording": {
+      "per_document_fee": 50,
+      "per_page_fee": 1
+    },
+    "ancillary_recording": {
+      "miscellaneous": {
+        "per_document_fee": 25,
+        "per_page_fee": 0.50
+      }
+    }
+  },
+  
+  "title": {
+    "id": "title_default",
+    "pricing_method": "percent",
+    "lender_policy": {
+      "base_on": "loan_amount",
+      "percent": 0.005
+    },
+    "owner_policy": {
+      "base_on": "purchase_price",
+      "percent": 0.006
+    },
+    "simultaneous_issue_discount": {
+      "applies": true,
+      "discount_pct": 25
+    },
+    "endorsements": {
+      "ALTA-1": 100,
+      "ALTA-2": 150
+    },
+    "cpl": 150
+  },
+  
+  "settlement": {
+    "settlement_fee": {
+      "amount": 500,
+      "payer": "split",
+      "split_buyer_pct": 50,
+      "split_seller_pct": 50
+    },
+    "attorney_fee": {
+      "amount": 600,
+      "payer": "seller"
+    },
+    "notary_fee": {
+      "amount": 150,
+      "payer": "seller"
+    },
+    "wire_fee": {
+      "amount": 25,
+      "payer": "buyer"
+    },
+    "courier_fee": {
+      "amount": 50,
+      "payer": "seller"
+    },
+    "payoff_statement_fee": {
+      "amount": 100,
+      "payer": "seller"
+    }
+  },
+  
+  "proration": {
+    "id": "proration_default",
+    "day_count": "actual_365",
+    "closing_day_owner": "buyer",
+    "rounding": "cents",
+    "default_proration_style": "paid_in_advance_common"
+  }
+}

@@ -12452,3 +12452,17 @@ export const getCostLabel = (key: keyof CountyLevelCosts): string => {
   };
   return labels[key];
 };
+
+/**
+ * Convert county-level costs to form input demo data
+ * This maps CountyLevelCosts fields to LoanInputs field names
+ */
+export const convertCountyCostsToFormData = (costs: CountyLevelCosts): Record<string, number> => {
+  return {
+    inspectionCost: costs.inspectionCost,
+    appraisalCost: costs.appraisalCost,
+    recordingFees: costs.recordingFees,
+    // titleInsuranceRate stays as percentage from form
+    legalSettlementFees: costs.lawyerFee,
+  };
+};

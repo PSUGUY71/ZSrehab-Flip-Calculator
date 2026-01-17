@@ -9,7 +9,7 @@ import { getAllStateCodes, getStateName, getStateDefaults, applyStateDefaults } 
 import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
-import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
+import { getCountiesForState, getCountyThirdPartyCosts, convertCountyCostsToFormData } from '../utils/thirdPartyCosts';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -230,7 +230,21 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 <select 
                   className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
                   value={inputs.county || ''}
-                  onChange={(e) => onInputChange('county', e.target.value)}
+                  onChange={(e) => {
+                    const county = e.target.value;
+                    onInputChange('county', county);
+                    
+                    // Auto-populate demo data for 3rd party costs when county is selected
+                    if (county && inputs.state) {
+                      const costs = getCountyThirdPartyCosts(inputs.state, county);
+                      const formData = convertCountyCostsToFormData(costs);
+                      
+                      // Apply all demo data
+                      Object.entries(formData).forEach(([field, value]) => {
+                        onInputChange(field as keyof LoanInputs, value);
+                      });
+                    }
+                  }}
                 >
                   <option value="">Select County (Optional)</option>
                   {getCountiesForState(inputs.state).map((county) => (

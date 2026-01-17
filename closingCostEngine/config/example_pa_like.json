@@ -1,0 +1,123 @@
+{
+  "jurisdiction_id": "PA",
+  "level": "state",
+  "state": "PA",
+  "description": "Pennsylvania - Multiple stacked transfer taxes including school tax",
+  
+  "transfer_taxes": [
+    {
+      "id": "transfer_tax_deed",
+      "description": "Pennsylvania Deed Transfer Tax",
+      "base_type": "price",
+      "calc_type": "percent",
+      "payer_default": "split",
+      "split_buyer_pct": 50,
+      "split_seller_pct": 50,
+      "rate": 0.010
+    },
+    {
+      "id": "transfer_tax_mortgage",
+      "description": "Pennsylvania Mortgage Recording Tax",
+      "base_type": "loan",
+      "calc_type": "percent",
+      "payer_default": "buyer",
+      "rate": 0.005
+    },
+    {
+      "id": "transfer_tax_school",
+      "description": "School District Transfer Tax",
+      "base_type": "price",
+      "calc_type": "tiered_brackets",
+      "payer_default": "seller",
+      "brackets": {
+        "brackets": [
+          { "min_inclusive": 0, "max_inclusive": 100000, "rate": 0.005 },
+          { "min_inclusive": 100000, "max_inclusive": 500000, "rate": 0.010 },
+          { "min_inclusive": 500000, "max_inclusive": null, "rate": 0.015 }
+        ]
+      }
+    }
+  ],
+  
+  "recording": {
+    "id": "recording_pa",
+    "deed_recording": {
+      "per_document_fee": 75,
+      "per_page_fee": 2
+    },
+    "mortgage_recording": {
+      "per_document_fee": 75,
+      "per_page_fee": 2
+    }
+  },
+  
+  "title": {
+    "id": "title_pa",
+    "pricing_method": "rate_table",
+    "lender_policy": {
+      "base_on": "loan_amount",
+      "rate_table": {
+        "entries": [
+          { "loan_min": 0, "loan_max": 25000, "flat": 300 },
+          { "loan_min": 25000, "loan_max": 100000, "rate": 0.006 },
+          { "loan_min": 100000, "loan_max": 500000, "rate": 0.005 },
+          { "loan_min": 500000, "loan_max": null, "rate": 0.004 }
+        ]
+      }
+    },
+    "owner_policy": {
+      "base_on": "purchase_price",
+      "rate_table": {
+        "entries": [
+          { "loan_min": 0, "loan_max": 25000, "flat": 350 },
+          { "loan_min": 25000, "loan_max": 100000, "rate": 0.007 },
+          { "loan_min": 100000, "loan_max": 500000, "rate": 0.006 },
+          { "loan_min": 500000, "loan_max": null, "rate": 0.005 }
+        ]
+      }
+    },
+    "simultaneous_issue_discount": {
+      "applies": true,
+      "discount_pct": 25
+    },
+    "endorsements": {
+      "ALTA-1": 125,
+      "ALTA-2": 175,
+      "ALTA-8.1": 200
+    },
+    "cpl": 175
+  },
+  
+  "settlement": {
+    "settlement_fee": {
+      "amount": 600,
+      "payer": "split",
+      "split_buyer_pct": 50,
+      "split_seller_pct": 50
+    },
+    "attorney_fee": {
+      "amount": 750,
+      "payer": "seller"
+    },
+    "notary_fee": {
+      "amount": 200,
+      "payer": "seller"
+    },
+    "wire_fee": {
+      "amount": 35,
+      "payer": "buyer"
+    },
+    "payoff_statement_fee": {
+      "amount": 150,
+      "payer": "seller"
+    }
+  },
+  
+  "proration": {
+    "id": "proration_pa",
+    "day_count": "actual_365",
+    "closing_day_owner": "buyer",
+    "rounding": "cents",
+    "default_proration_style": "paid_in_advance_common"
+  }
+}
