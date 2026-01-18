@@ -5,6 +5,7 @@ import { calculateFlipIRR, formatIRR } from './irrCalculation';
 
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
+    appVersion,
     purchasePrice,
     appraised_value,
     rehabBudget,
@@ -278,14 +279,20 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   
   // Hideout Transfer Fee: Use PA Title Insurance Rate Table chart based on purchase price
   // This uses the same chart as title insurance
+  // NOTE: Hideout Transfer is ONLY for HIDEOUT version, not NORMAL
   let calculatedHideoutTransferFee = 0;
-  if (hideoutTransferFee && hideoutTransferFee > 0) {
-    // Manual override: use provided value
-    calculatedHideoutTransferFee = hideoutTransferFee;
-  } else {
-    // Default: use PA Title Insurance Rate Table chart based on purchase price
-    calculatedHideoutTransferFee = calculatePATitleInsurance(purchasePrice);
+  if (appVersion !== 'NORMAL') {
+    if (hideoutTransferFee && hideoutTransferFee > 0) {
+      // Manual override: use provided value
+      calculatedHideoutTransferFee = hideoutTransferFee;
+    } else {
+      // Default: use PA Title Insurance Rate Table chart based on purchase price
+      calculatedHideoutTransferFee = calculatePATitleInsurance(purchasePrice);
+    }
   }
+  
+  // For NORMAL version, also zero out hideout prorated dues
+  const finalHideoutProratedDues = appVersion === 'NORMAL' ? 0 : hideoutProratedDues;
   
   // CPL fee is always $125 payable to Penn Attorneys (default if not specified)
   const cplFeeCost = cplFee || 125;
@@ -300,7 +307,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // Inspection and Appraisal are prepaid before closing, not included in closing costs
   // Note: Walker fees, Hideout Transfer, Dues, and Sewer & Water are only used in HIDEOUT version
-  // They will be 0 for other versions, so including them here is safe
+  // They will be 0 for NORMAL version (enforced by version checks above)
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
@@ -311,8 +318,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     titleCompanyChargesAmount + // Only non-zero in non-HIDEOUT versions
     (recordingFees || 0) + 
     (insuranceCost || 0) + // Insurance is due at closing
-    (calculatedHideoutTransferFee || 0) + // Only non-zero in HIDEOUT version
-    (hideoutProratedDues || 0) + // Only non-zero in HIDEOUT version
+    (calculatedHideoutTransferFee || 0) + // Only non-zero in HIDEOUT version (version checked)
+    (finalHideoutProratedDues || 0) + // Only non-zero in HIDEOUT version (version checked)
     (roamingwoodProrated || 0) +
     (schoolTaxProrated || 0) +
     (sewerWaterProrated || 0); // Only non-zero in HIDEOUT version
@@ -861,7 +868,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalWalkerFees,
 
     hideoutTransferCost: calculatedHideoutTransferFee,
-    hideoutProratedDues,
+    hideoutProratedDues: finalHideoutProratedDues,
     
     roamingwoodProrated,
     schoolTaxProrated,

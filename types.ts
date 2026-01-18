@@ -35,6 +35,9 @@ export interface LenderOption {
 }
 
 export interface LoanInputs {
+  // App Version
+  appVersion: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+  
   // Lender Info
   lenderName: string;
 
@@ -336,6 +339,7 @@ export interface CalculatedResults {
 }
 
 export const DEFAULT_INPUTS: LoanInputs = {
+  appVersion: 'HIDEOUT',
   lenderName: '',
   address: '',
   state: '',

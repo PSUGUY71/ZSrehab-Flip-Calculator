@@ -25,7 +25,7 @@ interface ComparisonDataItem {
 interface ReportModeProps {
   inputs: LoanInputs;
   results: CalculatedResults;
-  appVersion?: 'NORMAL' | 'HIDEOUT';
+  appVersion?: 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
   lenders?: LenderOption[];
   comparisonData?: ComparisonDataItem[];
   bestLenderFees?: number | null;
@@ -259,12 +259,16 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 <FeeBreakdownItem label="Recording" value={results.recordingCost} />
               <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
                 <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-                <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-              <FeeBreakdownItem 
-                label="Dues (Pro)" 
-                value={results.hideoutProratedDues}
-                subtext="(calculated January through December)"
-              />
+                {appVersion !== 'NORMAL' && (
+                  <>
+                    <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+                    <FeeBreakdownItem 
+                      label="Dues (Pro)" 
+                      value={results.hideoutProratedDues}
+                      subtext="(calculated January through December)"
+                    />
+                  </>
+                )}
               <FeeBreakdownItem 
                 label="City/Town Taxes (Pro)" 
                 value={results.roamingwoodProrated}

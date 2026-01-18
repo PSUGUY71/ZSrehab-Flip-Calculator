@@ -621,8 +621,12 @@ const App: React.FC = () => {
                                 <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
                                 <FeeBreakdownItem label="Recording" value={results.recordingCost} />
                                 <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-                                <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
-                                <FeeBreakdownItem label="Hideout Dues (Pro)" value={results.hideoutProratedDues} />
+                                {appVersion !== 'NORMAL' && (
+                                  <>
+                                    <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+                                    <FeeBreakdownItem label="Hideout Dues (Pro)" value={results.hideoutProratedDues} />
+                                  </>
+                                )}
                                 <FeeBreakdownItem label="Roamingwood (Pro)" value={results.roamingwoodProrated} />
                                 <FeeBreakdownItem label="School Tax (Pro)" value={results.schoolTaxProrated} />
 
@@ -748,7 +752,11 @@ const App: React.FC = () => {
           <div className="absolute left-1/2 transform -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-2">
             <select 
               value={appVersion} 
-              onChange={(e) => setAppVersion(e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM')}
+              onChange={(e) => {
+                const newVersion = e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+                setAppVersion(newVersion);
+                setInputs(prev => ({ ...prev, appVersion: newVersion }));
+              }}
               className="bg-blue-50 text-blue-800 px-4 py-1 rounded-full text-xs font-bold border border-blue-100 shadow-sm uppercase tracking-wide appearance-none cursor-pointer hover:bg-blue-100 transition"
             >
               <option value="NORMAL">Normal Version</option>
