@@ -129,7 +129,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       </div>
 
       {/* Summary */}
-      <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+      <div className="bg-white p-3 rounded-lg border border-gray-200">
         <div className="space-y-1 text-xs">
           <div className="flex justify-between font-semibold text-gray-800">
             <span>Total Acquisition Costs</span>

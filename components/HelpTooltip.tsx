@@ -56,7 +56,7 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, description, ex
             </div>
             <p className="text-xs text-gray-700 mb-3">{description}</p>
             {formula && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mb-3">
                 <p className="text-[10px] font-semibold text-amber-700 mb-1">Formula:</p>
                 <p className="text-xs font-mono text-gray-800">{formula}</p>
               </div>

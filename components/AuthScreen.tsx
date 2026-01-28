@@ -26,7 +26,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   handleSignup,
 }) => {
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center p-4 font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4 font-sans text-gray-800">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-amber-200">
         <div className="bg-gray-900 p-8 text-center">
           <div className="inline-block bg-amber-400 text-gray-900 p-3 rounded-lg font-bold text-3xl mb-4 shadow-lg">ZS</div>

@@ -25,7 +25,7 @@ export const DealModal: React.FC<DealModalProps> = ({
           {savedDeals.map((d) => (
             <div
               key={d.id}
-              className="flex justify-between items-center p-3 border border-amber-200 rounded-lg hover:bg-amber-50 group cursor-pointer transition-colors"
+              className="flex justify-between items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 group cursor-pointer transition-colors"
               onClick={() => onLoadDeal(d)}
             >
               <div className="flex flex-col overflow-hidden flex-1 min-w-0">

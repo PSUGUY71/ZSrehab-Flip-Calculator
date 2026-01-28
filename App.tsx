@@ -720,7 +720,7 @@ const App: React.FC = () => {
 
   // --- RENDER: MAIN EDITOR ---
   return (
-    <div className="min-h-screen bg-amber-50 flex flex-col font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-100 flex flex-col font-sans text-gray-800">
       {/* Header */}
       <header className="bg-gray-900 border-b border-amber-200 sticky top-0 z-30 shadow-lg no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
@@ -800,10 +800,10 @@ const App: React.FC = () => {
             {/* ... Inputs Column ... */}
             <div className="w-full lg:w-1/2 space-y-6">
                  {/* Property Info */}
-                <section className="bg-white rounded-xl shadow-md border border-amber-200">
-                    <div className="bg-amber-50 px-6 py-3 border-b border-amber-200 flex justify-between items-center">
+                <section className="bg-white rounded-xl shadow-md border border-gray-200">
+                    <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
                         <h2 className="text-sm font-bold text-gray-800 uppercase">Property Information</h2>
-                        <span className="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-lg font-bold">Lender: {inputs.lenderName}</span>
+                        <span className="text-[10px] bg-gray-100 text-gray-900 px-2 py-0.5 rounded-lg font-bold">Lender: {inputs.lenderName}</span>
                     </div>
                     <div className="p-6 space-y-4">
                         <InputGroup label="Property Address" id="address" value={inputs.address} onChange={v => handleInputChange('address', v)} type="text" />

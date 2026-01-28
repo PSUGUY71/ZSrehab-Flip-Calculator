@@ -71,25 +71,25 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">💰 Key Purchase Numbers</h3>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Purchase Price</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.purchasePrice)}
               </div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Rehab Budget</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.rehabBudget)}
               </div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
               <div className="text-xs text-gray-600 font-bold uppercase">ARV (After Repair)</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.arv)}
               </div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Total Project Cost</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.purchasePrice + inputs.rehabBudget)}
@@ -102,20 +102,20 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">🏦 Loan & Financing</h3>
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div className="text-xs text-amber-700 font-bold uppercase">Financing %</div>
-              <div className="text-lg font-bold text-amber-900 mt-1">{inputs.financingPercentage}%</div>
-              <div className="text-xs text-amber-600 mt-1">Loan Type: {inputs.loanType}</div>
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">Financing %</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">{inputs.financingPercentage}%</div>
+              <div className="text-xs text-gray-600 mt-1">Loan Type: {inputs.loanType}</div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div className="text-xs text-amber-700 font-bold uppercase">Qualified Loan</div>
-              <div className="text-lg font-bold text-amber-900 mt-1">
+            <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">Qualified Loan</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(results.qualifiedLoanAmount)}
               </div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div className="text-xs text-amber-700 font-bold uppercase">Down Payment</div>
-              <div className="text-lg font-bold text-amber-900 mt-1">
+            <div className="bg-white p-3 rounded-lg border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">Down Payment</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(results.gapAmount)}
               </div>
             </div>
@@ -126,26 +126,26 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">📊 Lender Ratios</h3>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-purple-50 p-3 rounded border border-purple-200">
-              <div className="text-xs text-purple-700 font-bold uppercase">LTV</div>
-              <div className="text-lg font-bold text-purple-900 mt-1">{formatPercent(results.ltv)}</div>
-              <div className="text-xs text-purple-600 mt-1 text-center">Loan / Value</div>
+            <div className="bg-white p-3 rounded border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">LTV</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">{formatPercent(results.ltv)}</div>
+              <div className="text-xs text-gray-600 mt-1 text-center">Loan / Value</div>
             </div>
-            <div className="bg-purple-50 p-3 rounded border border-purple-200">
-              <div className="text-xs text-purple-700 font-bold uppercase">LTC</div>
-              <div className="text-lg font-bold text-purple-900 mt-1">{formatPercent(results.ltc)}</div>
-              <div className="text-xs text-purple-600 mt-1 text-center">Loan / Cost</div>
+            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">LTC</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">{formatPercent(results.ltc)}</div>
+              <div className="text-xs text-gray-600 mt-1 text-center">Loan / Cost</div>
             </div>
-            <div className="bg-purple-50 p-3 rounded border border-purple-200">
-              <div className="text-xs text-purple-700 font-bold uppercase">LTARV</div>
-              <div className="text-lg font-bold text-purple-900 mt-1">{formatPercent(results.ltarv)}</div>
-              <div className="text-xs text-purple-600 mt-1 text-center">Loan / ARV</div>
+            <div className="bg-white p-3 rounded border border-gray-200">
+              <div className="text-xs text-gray-700 font-bold uppercase">LTARV</div>
+              <div className="text-lg font-bold text-gray-900 mt-1">{formatPercent(results.ltarv)}</div>
+              <div className="text-xs text-gray-600 mt-1 text-center">Loan / ARV</div>
             </div>
-            <div className={`p-3 rounded border-2 ${results.passes70Rule ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-              <div className={`text-xs font-bold uppercase ${results.passes70Rule ? 'text-green-700' : 'text-red-700'}`}>
+            <div className={`p-3 rounded border-2 ${results.passes70Rule ? 'bg-gray-50 border-gray-300' : 'bg-gray-100 border-gray-300'}`}>
+              <div className={`text-xs font-bold uppercase ${results.passes70Rule ? 'text-gray-700' : 'text-gray-700'}`}>
                 70% Rule
               </div>
-              <div className={`text-lg font-bold mt-1 ${results.passes70Rule ? 'text-green-900' : 'text-red-900'}`}>
+              <div className={`text-lg font-bold mt-1 ${results.passes70Rule ? 'text-gray-900' : 'text-gray-900'}`}>
                 {results.passes70Rule ? '✓ PASS' : '✗ FAIL'}
               </div>
             </div>
@@ -153,10 +153,10 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         </div>
 
         {/* Profitability & Returns (THE KEY RESULTS) */}
-        <div className="mb-6 bg-gradient-to-r from-amber-50 to-green-50 p-4 rounded-lg border-2 border-amber-400">
+        <div className="mb-6 bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg border-2 border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-3">🎯 Profitability & Returns</h3>
           <div className="grid grid-cols-5 gap-3">
-            <div className="bg-white p-3 rounded border border-green-300">
+            <div className="bg-white p-3 rounded border border-gray-200">
               <div className="text-xs text-gray-700 font-bold uppercase">Gross Profit</div>
               <div className="text-lg font-bold text-green-700 mt-1">
                 {formatCurrency(results.netProfit)}

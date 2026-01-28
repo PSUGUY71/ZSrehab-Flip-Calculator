@@ -205,7 +205,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           subtext="(calculated quarterly)"
         />
 
-        <div className="my-4 bg-amber-50 p-4 rounded border border-amber-200">
+        <div className="my-4 bg-gray-100 p-4 rounded border border-gray-200">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Cash Required to Close</h3>
           <ResultRow label="Lender Fees" value={results.totalLenderFees} />
           {/* Detailed Lender Fee Breakdown in Cash Required */}

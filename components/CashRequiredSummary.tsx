@@ -81,7 +81,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
         {/* Timeline Breakdown */}
         <div className="space-y-3">
           {/* 1. Earnest Money (Pre-Offer) */}
-          <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r p-3">
+          <div className="bg-gray-50 border-l-4 border-gray-400 rounded-r p-3">
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-blue-900 uppercase">1. Earnest Money</div>
