@@ -52,14 +52,14 @@ export const DealModal: React.FC<DealModalProps> = ({
                 </button>
                 <button
                   onClick={() => onCloneDeal(d)}
-                  className="text-green-600 text-xs font-bold px-2 py-1 bg-green-100 rounded-lg hover:bg-green-200"
+                  className="text-gray-700 text-xs font-bold px-2 py-1 bg-gray-100 rounded-lg hover:bg-gray-200"
                   title="Clone/duplicate this deal"
                 >
                   Clone
                 </button>
                 <button
                   onClick={(e) => onDeleteDeal(d.id, e)}
-                  className="text-red-600 text-xs font-bold px-2 py-1 bg-red-100 rounded-lg hover:bg-red-200"
+                  className="text-gray-700 text-xs font-bold px-2 py-1 bg-gray-100 rounded-lg hover:bg-gray-200"
                   title="Delete this deal"
                 >
                   Delete

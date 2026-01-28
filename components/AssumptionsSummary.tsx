@@ -227,7 +227,7 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         </div>
 
         {/* Cash Requirements */}
-        <div className="mb-6 bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 mb-3">💵 Cash Requirements</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>

@@ -39,7 +39,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             {authMode === 'LOGIN' ? 'Welcome Back' : 'Create Account'}
           </h2>
           {authError && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-4 border border-red-100">
+            <div className="bg-gray-100 text-gray-700 p-3 rounded-md text-sm mb-4 border border-gray-300">
               {authError}
             </div>
           )}

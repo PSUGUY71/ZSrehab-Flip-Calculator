@@ -59,13 +59,13 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
   let titleColor = 'text-gray-900';
   
   if (hasInsufficientLiquidity) {
-    boxColor = 'border-red-400 bg-red-50';
+    boxColor = 'border-gray-400 bg-gray-50';
     titleColor = 'text-red-900';
   } else if (isUnrealistic) {
-    boxColor = 'border-yellow-400 bg-yellow-50';
+    boxColor = 'border-gray-400 bg-white';
     titleColor = 'text-yellow-900';
   } else if (totalLiquidityNeeded > 0) {
-    boxColor = 'border-green-400 bg-green-50';
+    boxColor = 'border-gray-400 bg-gray-100';
     titleColor = 'text-green-900';
   }
 
@@ -95,7 +95,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           </div>
 
           {/* 2. Down Payment (At Closing) */}
-          <div className="bg-green-50 border-l-4 border-green-400 rounded-r p-3">
+          <div className="bg-white border-l-4 border-gray-400 rounded-r p-3">
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-green-900 uppercase">2. Down Payment</div>
@@ -122,7 +122,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           </div>
 
           {/* 3. Monthly During Hold */}
-          <div className="bg-purple-50 border-l-4 border-purple-400 rounded-r p-3">
+          <div className="bg-gray-50 border-l-4 border-gray-400 rounded-r p-3">
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-purple-900 uppercase">3. Monthly During Hold</div>
@@ -153,7 +153,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           </div>
 
           {/* 4. Contingency Reserves */}
-          <div className="bg-orange-50 border-l-4 border-orange-400 rounded-r p-3">
+          <div className="bg-white border-l-4 border-gray-400 rounded-r p-3">
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-orange-900 uppercase">4. Contingency Reserves</div>
@@ -176,7 +176,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
 
           {/* 5. Emergency Buffer (Suggested) */}
           {totalDealCost > 0 && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-r p-3 border-dashed">
+            <div className="bg-gray-50 border-l-4 border-gray-400 rounded-r p-3 border-dashed">
               <div className="flex justify-between items-start mb-1">
                 <div>
                   <div className="text-xs font-bold text-yellow-900 uppercase">5. Emergency Buffer (Suggested)</div>
@@ -235,7 +235,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           
           {/* Optional: With Emergency Buffer */}
           {totalDealCost > 0 && emergencyBuffer5Percent > 0 && (
-            <div className="mt-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-3">
+            <div className="mt-3 bg-white border-2 border-gray-300 rounded-lg p-3">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-sm font-bold text-yellow-900">With 5% Emergency Buffer:</span>
@@ -250,13 +250,13 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
         </div>
 
         {isUnrealistic && (
-          <div className="mt-3 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-800">
+          <div className="mt-3 p-2 bg-gray-100 border border-gray-300 rounded text-xs text-gray-700">
             ⚠️ If interest or holding costs show $0, update your rate and utilities above.
           </div>
         )}
 
         {hasInsufficientLiquidity && (
-          <div className="mt-3 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-800">
+          <div className="mt-3 p-2 bg-gray-100 border border-gray-300 rounded text-xs text-gray-700">
             ⚠️ Your liquidity ({formatCurrency(inputs.liquidity)}) is below required ({formatCurrency(totalLiquidityNeeded)}). Consider more cash reserves.
           </div>
         )}

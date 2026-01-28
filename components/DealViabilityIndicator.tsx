@@ -57,17 +57,17 @@ export const DealViabilityIndicator: React.FC<DealViabilityProps> = ({
 
   const statusColors = {
     green: {
-      bg: 'bg-green-50',
+      bg: 'bg-white',
       border: 'border-green-400',
       text: 'text-green-700',
-      badge: 'bg-green-100 text-green-800',
+      badge: 'bg-gray-100 text-gray-800',
       icon: '✓',
     },
     yellow: {
-      bg: 'bg-yellow-50',
+      bg: 'bg-gray-50',
       border: 'border-yellow-400',
       text: 'text-yellow-700',
-      badge: 'bg-yellow-100 text-yellow-800',
+      badge: 'bg-gray-100 text-gray-800',
       icon: '⚠',
     },
     red: {
