@@ -18,9 +18,9 @@ export const LenderModal: React.FC<LenderModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 no-print">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="bg-blue-900 p-6">
+        <div className="bg-gray-900 p-6">
           <h3 className="text-white font-bold text-xl">Lender Configuration</h3>
-          <p className="text-blue-200 text-xs mt-1">Define financing terms to compare and apply to active deal</p>
+          <p className="text-amber-200 text-xs mt-1">Define financing terms to compare and apply to active deal</p>
         </div>
         <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
           <div className="grid grid-cols-2 gap-4">
@@ -97,7 +97,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
                       className={`flex-1 px-2 py-1.5 text-xs font-bold rounded border transition ${
                         !editingLender.useCustomFinancing &&
                         editingLender.financingPercentage === percent
-                          ? 'bg-blue-600 text-white border-blue-600'
+                          ? 'bg-amber-600 text-white border-amber-600'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
@@ -260,7 +260,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
           </button>
           <button
             onClick={onSave}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition shadow-lg"
+            className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-sm hover:bg-amber-700 transition shadow-lg"
           >
             Save Profile
           </button>

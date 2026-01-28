@@ -14,7 +14,7 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, description, ex
     <div className="relative inline-block">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-blue-600 hover:text-blue-800 focus:outline-none"
+        className="text-amber-600 hover:text-amber-800 focus:outline-none"
         title="Click for help"
         type="button"
       >
@@ -41,9 +41,9 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, description, ex
             onClick={() => setIsOpen(false)}
           />
           {/* Tooltip */}
-          <div className="absolute z-50 w-80 bg-white border-2 border-blue-500 rounded-lg shadow-xl p-4 left-0 mt-2">
+          <div className="absolute z-50 w-80 bg-white border-2 border-amber-500 rounded-lg shadow-xl p-4 left-0 mt-2">
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-bold text-blue-900 text-sm">{title}</h3>
+              <h3 className="font-bold text-amber-900 text-sm">{title}</h3>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -56,8 +56,8 @@ export const HelpTooltip: React.FC<HelpTooltipProps> = ({ title, description, ex
             </div>
             <p className="text-xs text-gray-700 mb-3">{description}</p>
             {formula && (
-              <div className="bg-gray-50 border border-gray-200 rounded p-2 mb-3">
-                <p className="text-[10px] font-semibold text-gray-600 mb-1">Formula:</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">
+                <p className="text-[10px] font-semibold text-amber-700 mb-1">Formula:</p>
                 <p className="text-xs font-mono text-gray-800">{formula}</p>
               </div>
             )}

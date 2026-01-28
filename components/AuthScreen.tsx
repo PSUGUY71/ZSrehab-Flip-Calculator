@@ -26,10 +26,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   handleSignup,
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans text-slate-800">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100">
-        <div className="bg-blue-900 p-8 text-center">
-          <div className="inline-block bg-white text-blue-900 p-3 rounded-lg font-bold text-3xl mb-4 shadow-lg">ZS</div>
+    <div className="min-h-screen bg-amber-50 flex flex-col items-center justify-center p-4 font-sans text-gray-800">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-amber-200">
+        <div className="bg-gray-900 p-8 text-center">
+          <div className="inline-block bg-amber-400 text-gray-900 p-3 rounded-lg font-bold text-3xl mb-4 shadow-lg">ZS</div>
           <h1 className="text-2xl font-bold text-white mb-1">ZS Flip Calculator</h1>
           <div className="text-blue-200 text-sm font-medium">Hideout Version</div>
           <p className="text-blue-300 text-xs mt-1 opacity-80">Real Estate Investment Platform</p>
@@ -48,7 +48,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <label className="block text-sm font-semibold text-gray-600 mb-1">Email</label>
               <input
                 type="email"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                className="w-full rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 border"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
                 placeholder="Enter email"
@@ -58,7 +58,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <label className="block text-sm font-semibold text-gray-600 mb-1">Password</label>
               <input
                 type="password"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border"
+                className="w-full rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-2 border"
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
                 placeholder="Enter password"
@@ -66,7 +66,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition shadow-md mt-2"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-lg transition shadow-md mt-2"
             >
               {authMode === 'LOGIN' ? 'Log In' : 'Sign Up'}
             </button>

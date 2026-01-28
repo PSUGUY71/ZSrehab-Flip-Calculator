@@ -36,16 +36,16 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
       <div className="flex justify-end mb-3">
         <button
           onClick={handleExportPDF}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm flex items-center gap-2 transition-colors"
+          className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-md"
         >
           📥 Export to PDF
         </button>
       </div>
 
       {/* Assumptions Summary Content (for PDF and display) */}
-      <div ref={contentRef} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div ref={contentRef} className="bg-white p-6 rounded-lg shadow-md border border-amber-200">
         {/* Header */}
-        <div className="mb-6 pb-4 border-b-2 border-blue-600">
+        <div className="mb-6 pb-4 border-b-2 border-amber-500">
           <h2 className="text-2xl font-bold text-gray-900">Deal Analysis Summary</h2>
           <p className="text-sm text-gray-600 mt-1">ZS Calculator - {new Date().toLocaleDateString()}</p>
         </div>
@@ -54,12 +54,12 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">📍 Deal Overview</h3>
           <div className="grid grid-cols-2 gap-4">
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-amber-500 pl-4">
               <div className="text-sm text-gray-600 font-bold">Property Address</div>
               <div className="text-md font-semibold text-gray-900">{dealName}</div>
               <div className="text-sm text-gray-600 mt-1">{stateName}</div>
             </div>
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-amber-500 pl-4">
               <div className="text-sm text-gray-600 font-bold">Holding Period</div>
               <div className="text-md font-semibold text-gray-900">{inputs.holdingPeriodMonths} months</div>
               <div className="text-sm text-gray-600 mt-1">Exit Strategy: {inputs.exitStrategy}</div>
@@ -71,25 +71,25 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">💰 Key Purchase Numbers</h3>
           <div className="grid grid-cols-4 gap-4">
-            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Purchase Price</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.purchasePrice)}
               </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Rehab Budget</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.rehabBudget)}
               </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
               <div className="text-xs text-gray-600 font-bold uppercase">ARV (After Repair)</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.arv)}
               </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded border border-gray-200">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
               <div className="text-xs text-gray-600 font-bold uppercase">Total Project Cost</div>
               <div className="text-lg font-bold text-gray-900 mt-1">
                 {formatCurrency(inputs.purchasePrice + inputs.rehabBudget)}
@@ -102,20 +102,20 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         <div className="mb-6">
           <h3 className="text-lg font-bold text-gray-900 mb-3">🏦 Loan & Financing</h3>
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-3 rounded border border-blue-200">
-              <div className="text-xs text-blue-700 font-bold uppercase">Financing %</div>
-              <div className="text-lg font-bold text-blue-900 mt-1">{inputs.financingPercentage}%</div>
-              <div className="text-xs text-blue-600 mt-1">Loan Type: {inputs.loanType}</div>
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <div className="text-xs text-amber-700 font-bold uppercase">Financing %</div>
+              <div className="text-lg font-bold text-amber-900 mt-1">{inputs.financingPercentage}%</div>
+              <div className="text-xs text-amber-600 mt-1">Loan Type: {inputs.loanType}</div>
             </div>
-            <div className="bg-blue-50 p-3 rounded border border-blue-200">
-              <div className="text-xs text-blue-700 font-bold uppercase">Qualified Loan</div>
-              <div className="text-lg font-bold text-blue-900 mt-1">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <div className="text-xs text-amber-700 font-bold uppercase">Qualified Loan</div>
+              <div className="text-lg font-bold text-amber-900 mt-1">
                 {formatCurrency(results.qualifiedLoanAmount)}
               </div>
             </div>
-            <div className="bg-blue-50 p-3 rounded border border-blue-200">
-              <div className="text-xs text-blue-700 font-bold uppercase">Down Payment</div>
-              <div className="text-lg font-bold text-blue-900 mt-1">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <div className="text-xs text-amber-700 font-bold uppercase">Down Payment</div>
+              <div className="text-lg font-bold text-amber-900 mt-1">
                 {formatCurrency(results.gapAmount)}
               </div>
             </div>
@@ -153,7 +153,7 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
         </div>
 
         {/* Profitability & Returns (THE KEY RESULTS) */}
-        <div className="mb-6 bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border-2 border-green-400">
+        <div className="mb-6 bg-gradient-to-r from-amber-50 to-green-50 p-4 rounded-lg border-2 border-amber-400">
           <h3 className="text-lg font-bold text-gray-900 mb-3">🎯 Profitability & Returns</h3>
           <div className="grid grid-cols-5 gap-3">
             <div className="bg-white p-3 rounded border border-green-300">

@@ -17,7 +17,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <h2 className="text-lg font-bold uppercase">{inputs.lenderName || 'BASELINE'} ESTIMATE</h2>
         <div className="text-right">
           <div className="text-xs opacity-70">QUALIFIED LOAN</div>
-          <div className="text-2xl font-bold text-green-400">
+          <div className="text-2xl font-bold text-amber-400">
             {formatCurrency(results.qualifiedLoanAmount)}
           </div>
         </div>
@@ -35,7 +35,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           </div>
         )}
         {/* Max Allowable Offer with Detailed Breakdown */}
-        <div className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="my-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-sm font-bold text-gray-900">Max Allowable Offer Calculation:</span>
             <HelpTooltip
@@ -51,23 +51,23 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             </div>
             <div className="flex justify-between">
               <span>2. Less: Rehab Budget</span>
-              <span className="font-medium text-red-600">-{formatCurrency(inputs.rehabBudget)}</span>
+              <span className="font-medium text-amber-600">-{formatCurrency(inputs.rehabBudget)}</span>
             </div>
-            <div className="flex justify-between pt-1 border-t border-blue-200 font-bold text-sm">
+            <div className="flex justify-between pt-1 border-t border-amber-200 font-bold text-sm">
               <span>3. Result:</span>
-              <span className="text-blue-700">{formatCurrency(results.maxAllowableOffer)} (maximum you can offer)</span>
+              <span className="text-amber-700">{formatCurrency(results.maxAllowableOffer)} (maximum you can offer)</span>
             </div>
-            <div className="pt-2 mt-2 border-t border-blue-200">
+            <div className="pt-2 mt-2 border-t border-amber-200">
               <div className="flex justify-between items-center">
                 <span>Your Current Purchase:</span>
                 <span className="font-semibold">{formatCurrency(inputs.purchasePrice)}</span>
               </div>
               {inputs.purchasePrice > results.maxAllowableOffer && results.maxAllowableOffer > 0 ? (
-                <div className="mt-1 text-red-700 font-semibold text-xs">
+                <div className="mt-1 text-amber-700 font-semibold text-xs">
                   Status: ⚠️ OVER by {formatCurrency(inputs.purchasePrice - results.maxAllowableOffer)}
                 </div>
               ) : (
-                <div className="mt-1 text-green-700 font-semibold text-xs">
+                <div className="mt-1 text-amber-700 font-semibold text-xs">
                   Status: ✓ Within limit
                 </div>
               )}
@@ -80,7 +80,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         </div>
         
         {/* Monthly Payment */}
-        <div className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <div className="my-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex flex-col">
@@ -88,7 +88,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <span className="text-[10px] text-gray-500">Interest + Insurance + Taxes</span>
               </div>
               <div className="text-right">
-                <span className="text-xl font-bold text-blue-600">
+                <span className="text-xl font-bold text-amber-600">
                   {formatCurrency(
                     results.monthlyPayment + 
                     (inputs.includeMonthlyInsurance ? (inputs.monthlyInsurance || 0) : 0) + 
@@ -142,7 +142,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-500">Current ARV</span>
                 </div>
-                <span className="text-sm font-semibold text-blue-600">
+                <span className="text-sm font-semibold text-amber-600">
                   {formatCurrency(inputs.arv || 0)}
                 </span>
               </div>
@@ -151,7 +151,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                   <span className="text-xs text-gray-400">% of ARV</span>
                   <span className="text-[10px] text-gray-300">(Loan from Financing% ÷ ARV) × 100</span>
                 </div>
-                <span className={`text-sm font-bold ${results.ltarv > 75 ? 'text-red-600' : 'text-gray-900'}`}>
+                <span className={`text-sm font-bold ${results.ltarv > 75 ? 'text-amber-600' : 'text-gray-900'}`}>
                   {results.ltarv ? results.ltarv.toFixed(2) : '0.00'}%
                 </span>
               </div>
@@ -205,7 +205,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           subtext="(calculated quarterly)"
         />
 
-        <div className="my-4 bg-yellow-50 p-4 rounded border border-yellow-200">
+        <div className="my-4 bg-amber-50 p-4 rounded border border-amber-200">
           <h3 className="font-bold text-gray-800 uppercase mb-2">Cash Required to Close</h3>
           <ResultRow label="Lender Fees" value={results.totalLenderFees} />
           {/* Detailed Lender Fee Breakdown in Cash Required */}
@@ -259,7 +259,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           />
           
           {inputs.earnestMoneyDeposit > 0 && (
-            <div className="pl-3 py-1 text-[11px] text-green-700">
+            <div className="pl-3 py-1 text-[11px] text-amber-700">
               <div className="flex justify-between">
                 <span>Earnest Money Deposit (Applied):</span>
                 <span className="font-medium">-{formatCurrency(inputs.earnestMoneyDeposit)}</span>
@@ -292,7 +292,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 </span>
               )}
             </div>
-            <span className={results.totalCashToClose < 0 ? 'text-green-600' : ''}>
+            <span className={results.totalCashToClose < 0 ? 'text-amber-600' : ''}>
               {formatCurrency(Math.abs(results.totalCashToClose))}
             </span>
           </div>
@@ -310,10 +310,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           </div>
           
           {/* Total Paid Out */}
-          <div className="mt-4 pt-4 border-t-2 border-yellow-400">
+          <div className="mt-4 pt-4 border-t-2 border-amber-400">
             <div className="flex justify-between font-bold text-xl pt-2 text-gray-900">
               <span>Total Paid Out</span>
-              <span className="text-blue-600">
+              <span className="text-amber-600">
                 {formatCurrency(results.totalPaidOut)}
               </span>
             </div>
@@ -334,7 +334,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               </div>
               <span
                 className={`text-sm font-bold ${
-                  inputs.liquidity >= results.requiredLiquidity ? 'text-green-600' : 'text-red-600'
+                  inputs.liquidity >= results.requiredLiquidity ? 'text-amber-600' : 'text-amber-600'
                 }`}
               >
                 {formatCurrency(results.requiredLiquidity)}
@@ -343,8 +343,8 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             {inputs.liquidity > 0 && (
               <div className={`text-[10px] p-2 rounded ${
                 inputs.liquidity >= results.requiredLiquidity 
-                  ? 'bg-green-50 text-green-800 border border-green-200' 
-                  : 'bg-red-50 text-red-800 border border-red-200'
+                  ? 'bg-amber-50 text-amber-800 border border-amber-200' 
+                  : 'bg-amber-50 text-amber-800 border border-amber-200'
               }`}>
                 {inputs.liquidity >= results.requiredLiquidity ? (
                   <span>✓ Your liquid savings ({formatCurrency(inputs.liquidity)}) meet the requirement.</span>

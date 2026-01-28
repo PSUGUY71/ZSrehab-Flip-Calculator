@@ -41,15 +41,15 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     || 'Guest';
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm no-print">
+    <header className="bg-gray-900 border-b border-amber-200 sticky top-0 z-30 shadow-lg no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-900 text-white p-2 rounded font-bold tracking-tighter text-xl">ZS</div>
+          <div className="bg-amber-400 text-gray-900 p-2 rounded-lg font-bold tracking-tighter text-xl">ZS</div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Calculator</h1>
+            <h1 className="text-lg font-bold text-white leading-none">ZS Calculator</h1>
             <div className="flex items-center gap-2">
               {/* 100% LOAN QUALIFIER removed */}
-              <span className="text-xs text-blue-600 font-medium">User: {displayName}</span>
+              <span className="text-xs text-amber-300 font-medium">User: {displayName}</span>
             </div>
           </div>
         </div>
@@ -59,25 +59,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <select
             value={appVersion}
             onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
-            className="border border-gray-300 rounded px-2 py-1 text-sm font-medium text-gray-700 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-amber-400 rounded-lg px-2 py-1 text-sm font-medium text-gray-900 bg-amber-100 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400"
             title="Switch between version modes"
           >
             <option value="NORMAL">NORMAL</option>
             <option value="HIDEOUT">HIDEOUT</option>
           </select>
-          <span className="text-xs text-gray-500">Version</span>
+          <span className="text-xs text-amber-200">Version</span>
         </div>
 
         <div className="flex items-center space-x-2">
           <button
             onClick={onNewDeal}
-            className="text-gray-500 hover:text-blue-600 font-medium px-3 py-1 rounded text-sm transition"
+            className="text-amber-200 hover:text-amber-300 font-medium px-3 py-1 rounded-lg text-sm transition"
           >
             New
           </button>
           <button
             onClick={onSaveDeal}
-            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2 relative"
+            className="bg-amber-400 border border-amber-400 hover:bg-amber-500 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 relative"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -96,13 +96,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
           <button
             onClick={onOpenDealModal}
-            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2"
+            className="bg-gray-800 border border-amber-400 hover:bg-gray-700 text-amber-400 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-4 h-4 text-gray-500"
+              className="w-4 h-4 text-amber-400"
             >
               <path
                 fillRule="evenodd"
@@ -113,11 +113,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </svg>
             My Deals ({savedDeals.length})
           </button>
-          <div className="h-6 w-px bg-gray-300 mx-2"></div>
+          <div className="h-6 w-px bg-amber-300 mx-2"></div>
           <button
             type="button"
             onClick={onReportMode}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-sm"
+            className="bg-amber-500 hover:bg-amber-600 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-md"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -135,10 +135,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </svg>
             Report
           </button>
-          <div className="h-6 w-px bg-gray-300 mx-2"></div>
+          <div className="h-6 w-px bg-amber-300 mx-2"></div>
           <button
             onClick={onOpenSettings}
-            className="text-gray-500 hover:text-blue-600 font-medium px-2 py-1 rounded text-xs transition flex items-center gap-1"
+            className="text-amber-200 hover:text-amber-300 font-medium px-2 py-1 rounded-lg text-xs transition flex items-center gap-1"
             title="Settings"
           >
             <svg
@@ -157,10 +157,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </svg>
             Settings
           </button>
-          <div className="h-6 w-px bg-gray-300 mx-2"></div>
+          <div className="h-6 w-px bg-amber-300 mx-2"></div>
           <button
             onClick={onLogout}
-            className="text-gray-400 hover:text-red-500 font-medium px-2 py-1 rounded text-xs transition"
+            className="text-amber-200 hover:text-red-400 font-medium px-2 py-1 rounded-lg text-xs transition"
             title="Log Out"
           >
             Log Out

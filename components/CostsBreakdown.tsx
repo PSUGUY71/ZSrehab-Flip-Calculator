@@ -32,7 +32,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
   const totalHoldingCosts = results.totalHoldingCosts || 0;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
+    <div className="bg-white p-4 rounded-lg shadow-md border border-amber-200 space-y-4">
       <h3 className="text-xs font-bold text-gray-400 uppercase mb-3">Costs Breakdown (Transparent)</h3>
 
       {/* Acquisition Costs */}
@@ -78,7 +78,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       </div>
 
       {/* Holding Costs */}
-      <div className="border-l-4 border-blue-500 pl-4">
+      <div className="border-l-4 border-amber-500 pl-4">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-sm font-bold text-gray-800">📅 Holding Costs (Monthly Carrying)</h4>
           <span className="text-lg font-bold text-blue-700">
@@ -129,7 +129,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       </div>
 
       {/* Summary */}
-      <div className="bg-gray-50 p-3 rounded border border-gray-200">
+      <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
         <div className="space-y-1 text-xs">
           <div className="flex justify-between font-semibold text-gray-800">
             <span>Total Acquisition Costs</span>
@@ -151,7 +151,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       </div>
 
       {/* Formula Display */}
-      <div className="bg-blue-50 p-3 rounded border border-blue-200 text-xs">
+      <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs">
         <div className="font-bold text-blue-900 mb-2">Profit Calculation:</div>
         <div className="space-y-1 text-blue-800 font-mono text-[11px]">
           <div>Profit = ARV - Purchase Price - Rehab Budget - Total Costs</div>

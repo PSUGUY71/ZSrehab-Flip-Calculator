@@ -720,19 +720,19 @@ const App: React.FC = () => {
 
   // --- RENDER: MAIN EDITOR ---
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-amber-50 flex flex-col font-sans text-gray-800">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm no-print">
+      <header className="bg-gray-900 border-b border-amber-200 sticky top-0 z-30 shadow-lg no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
-             <div className="bg-blue-900 text-white p-2 rounded font-bold tracking-tighter text-xl">ZS</div>
+             <div className="bg-amber-400 text-gray-900 p-2 rounded-lg font-bold tracking-tighter text-xl">ZS</div>
              <div>
-               <h1 className="text-lg font-bold text-gray-900 leading-none">ZS Flip Calculator</h1>
+               <h1 className="text-lg font-bold text-white leading-none">ZS Flip Calculator</h1>
                <div className="flex items-center gap-2">
-                   <span className="text-xs text-gray-500 font-medium tracking-wide">100% LOAN QUALIFIER</span>
-                   <span className="text-xs text-blue-600 font-medium">User: {currentUser.email}</span>
+                   <span className="text-xs text-amber-300 font-medium tracking-wide">100% LOAN QUALIFIER</span>
+                   <span className="text-xs text-amber-300 font-medium">User: {currentUser.email}</span>
                    {inputs.state && (
-                     <span className="text-xs text-green-600 font-medium">
+                     <span className="text-xs text-amber-200 font-medium">
                        • {getStateName(inputs.state)}
                      </span>
                    )}
@@ -742,7 +742,7 @@ const App: React.FC = () => {
           
           {/* State Change Notification */}
           {stateChangeNotification && (
-            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2">
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-amber-500 text-gray-900 px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2 font-medium">
               <span>✓</span>
               <span>{stateChangeNotification}</span>
             </div>
@@ -757,7 +757,7 @@ const App: React.FC = () => {
                 setAppVersion(newVersion);
                 setInputs(prev => ({ ...prev, appVersion: newVersion }));
               }}
-              className="bg-blue-50 text-blue-800 px-4 py-1 rounded-full text-xs font-bold border border-blue-100 shadow-sm uppercase tracking-wide appearance-none cursor-pointer hover:bg-blue-100 transition"
+              className="bg-amber-100 text-amber-900 px-4 py-1 rounded-full text-xs font-bold border border-amber-300 shadow-sm uppercase tracking-wide appearance-none cursor-pointer hover:bg-amber-200 transition"
             >
               <option value="NORMAL">Normal Version</option>
               <option value="HIDEOUT">Hideout Version</option>
@@ -768,28 +768,28 @@ const App: React.FC = () => {
           <div className="flex items-center space-x-2">
              <button 
                onClick={() => setShowStateSelection(true)} 
-               className="text-gray-500 hover:text-blue-600 font-medium px-3 py-1 rounded text-sm transition"
+               className="text-amber-200 hover:text-amber-300 font-medium px-3 py-1 rounded-lg text-sm transition"
                title="Change State"
              >
                {inputs.state ? getStateName(inputs.state) : 'Select State'}
              </button>
-             <button onClick={handleNewDeal} className="text-gray-500 hover:text-blue-600 font-medium px-3 py-1 rounded text-sm transition">New</button>
-             <button onClick={handleSaveDeal} className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2 relative">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-500"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
+             <button onClick={handleNewDeal} className="text-amber-200 hover:text-amber-300 font-medium px-3 py-1 rounded-lg text-sm transition">New</button>
+             <button onClick={handleSaveDeal} className="bg-amber-400 border border-amber-400 hover:bg-amber-500 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 relative">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-900"><path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" /></svg>
                  Save
-                 {saveNotification && <div className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded shadow whitespace-nowrap z-50">{saveNotification}</div>}
+                 {saveNotification && <div className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-amber-300 text-xs py-1 px-2 rounded-lg shadow whitespace-nowrap z-50">{saveNotification}</div>}
              </button>
-             <button onClick={() => setIsDealModalOpen(true)} className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-500"><path fillRule="evenodd" d="M2 3.75A.75.75 0 012.75 3h14.5a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75H2.75A.75.75 0 012 16.25V3.75zm1.5 1.5v11h13v-11h-13z" clipRule="evenodd" /><path d="M6.25 6.75a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5zm0 3.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5z" /></svg>
+             <button onClick={() => setIsDealModalOpen(true)} className="bg-gray-800 border border-amber-400 hover:bg-gray-700 text-amber-400 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-amber-400"><path fillRule="evenodd" d="M2 3.75A.75.75 0 012.75 3h14.5a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75H2.75A.75.75 0 012 16.25V3.75zm1.5 1.5v11h13v-11h-13z" clipRule="evenodd" /><path d="M6.25 6.75a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5zm0 3.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-4.5z" /></svg>
                  My Deals ({savedDeals.length})
              </button>
-             <div className="h-6 w-px bg-gray-300 mx-2"></div>
-             <button type="button" onClick={() => setIsReportMode(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-sm">
+             <div className="h-6 w-px bg-amber-300 mx-2"></div>
+             <button type="button" onClick={() => setIsReportMode(true)} className="bg-amber-500 hover:bg-amber-600 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-md">
                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.198-.54-1.214-1.201l.228-2.267m7.144 0h-7.144m7.144 0l-7.144 0M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 9.148A4.689 4.689 0 015.65 8.5m15.75 0a48.868 48.868 0 01-.001 4.726C21.402 11.965 20.208 12 18.75 12m-13.5 0c-1.261 0-2.614-.034-3.808.138m3.808-.138c.344-.982 1.009-1.875 1.938-2.618 3.562-2.832 8.796-2.834 12.378 0 .966.772 1.637 1.745 1.938 2.79m-9.435-10.825a1.033 1.033 0 011.055-.003 3.84 3.84 0 002.3.755 3.84 3.84 0 002.3-.755 1.033 1.033 0 011.055.003c.969.673 1.527 2.22 1.09 3.443C15.844 7.07 14.118 8 12 8c-2.118 0-3.844-.93-4.902-2.396-.437-1.223.12-2.77 1.09-3.443z" /></svg>
                Report
              </button>
-             <div className="h-6 w-px bg-gray-300 mx-2"></div>
-             <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 font-medium px-2 py-1 rounded text-xs transition" title="Log Out">Log Out</button>
+             <div className="h-6 w-px bg-amber-300 mx-2"></div>
+             <button onClick={handleLogout} className="text-amber-200 hover:text-red-400 font-medium px-2 py-1 rounded-lg text-xs transition" title="Log Out">Log Out</button>
           </div>
         </div>
       </header>
@@ -800,10 +800,10 @@ const App: React.FC = () => {
             {/* ... Inputs Column ... */}
             <div className="w-full lg:w-1/2 space-y-6">
                  {/* Property Info */}
-                <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+                <section className="bg-white rounded-xl shadow-md border border-amber-200">
+                    <div className="bg-amber-50 px-6 py-3 border-b border-amber-200 flex justify-between items-center">
                         <h2 className="text-sm font-bold text-gray-800 uppercase">Property Information</h2>
-                        <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">Lender: {inputs.lenderName}</span>
+                        <span className="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-lg font-bold">Lender: {inputs.lenderName}</span>
                     </div>
                     <div className="p-6 space-y-4">
                         <InputGroup label="Property Address" id="address" value={inputs.address} onChange={v => handleInputChange('address', v)} type="text" />

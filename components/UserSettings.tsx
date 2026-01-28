@@ -59,11 +59,11 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">User Settings</h2>
           <button
             onClick={handleCancel}
-            className="text-white hover:bg-blue-800 rounded-full p-1 transition"
+            className="text-white hover:bg-amber-800 rounded-full p-1 transition"
             title="Close"
           >
             <svg
@@ -130,7 +130,7 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                   onChange={(e) => handleChange('defaultFinancingPercentage', parseInt(e.target.value))}
                   className="flex-1"
                 />
-                <span className="text-sm font-bold text-blue-600 w-12 text-right">
+                <span className="text-sm font-bold text-amber-600 w-12 text-right">
                   {formData.defaultFinancingPercentage}%
                 </span>
               </div>
@@ -152,7 +152,7 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                   onChange={(e) => handleChange('defaultCapitalGainsTaxRate', parseInt(e.target.value))}
                   className="flex-1"
                 />
-                <span className="text-sm font-bold text-blue-600 w-12 text-right">
+                <span className="text-sm font-bold text-amber-600 w-12 text-right">
                   {formData.defaultCapitalGainsTaxRate}%
                 </span>
               </div>
@@ -174,7 +174,7 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                   onChange={(e) => handleChange('defaultHoldingPeriodMonths', parseInt(e.target.value))}
                   className="flex-1"
                 />
-                <span className="text-sm font-bold text-blue-600 w-12 text-right">
+                <span className="text-sm font-bold text-amber-600 w-12 text-right">
                   {formData.defaultHoldingPeriodMonths}m
                 </span>
               </div>
@@ -209,10 +209,10 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
           >
             Cancel
           </button>
-          <button
+            <button
             onClick={handleSave}
             disabled={!hasChanges || isSaving}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-amber-600 text-white rounded text-sm font-medium hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>

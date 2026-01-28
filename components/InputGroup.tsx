@@ -34,14 +34,14 @@ export const InputGroup: React.FC<InputGroupProps> = ({
   return (
     <div className="flex flex-col space-y-1">
       <div className="flex items-center gap-1">
-        <label htmlFor={id} className="text-xs font-semibold text-gray-500 uppercase tracking-wide print:text-gray-800">
+        <label htmlFor={id} className="text-xs font-semibold text-amber-800 uppercase tracking-wide print:text-gray-800">
           {label}
         </label>
         {helpText && (
           <div className="relative group">
             <button
               type="button"
-              className="text-gray-400 hover:text-blue-600 focus:outline-none"
+              className="text-amber-600 hover:text-amber-800 focus:outline-none"
               onMouseEnter={() => setShowHelp(true)}
               onMouseLeave={() => setShowHelp(false)}
               onClick={() => setShowHelp(!showHelp)}
@@ -51,7 +51,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
               </svg>
             </button>
             {showHelp && (
-              <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded shadow-lg">
+              <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-amber-100 text-xs rounded-lg shadow-lg">
                 {helpText}
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
               </div>
@@ -59,10 +59,10 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           </div>
         )}
       </div>
-      <div className="relative rounded-md shadow-sm print:shadow-none">
+      <div className="relative rounded-lg shadow-sm print:shadow-none">
         {prefix && (
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 print:pl-0 print:hidden">
-            <span className="text-gray-500 sm:text-sm">{prefix}</span>
+            <span className="text-amber-600 sm:text-sm">{prefix}</span>
           </div>
         )}
         {/* Added max={max} attribute to the input element */}
@@ -73,7 +73,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           step={step}
           min={min}
           max={max}
-          className={`block w-full rounded-md border-gray-300 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm border pl-3 pr-3 ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''} print:border-none print:shadow-none print:p-0 print:pl-0 print:bg-transparent print:font-medium`}
+          className={`block w-full rounded-lg border-amber-300 py-2 focus:border-amber-500 focus:ring-amber-500 sm:text-sm border pl-3 pr-3 ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''} print:border-none print:shadow-none print:p-0 print:pl-0 print:bg-transparent print:font-medium`}
           value={value}
           onChange={(e) => {
             const val = type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
@@ -82,7 +82,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
         />
         {suffix && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 print:hidden">
-            <span className="text-gray-500 sm:text-sm">{suffix}</span>
+            <span className="text-amber-600 sm:text-sm">{suffix}</span>
           </div>
         )}
         {/* Print-only suffix/prefix text helper if needed, usually value + text is enough context */}

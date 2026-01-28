@@ -76,11 +76,11 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
       <div className="p-4 space-y-4">
         {/* Critical Issues */}
         <div>
-          <div className="text-sm font-bold text-red-700 mb-2">🔴 CRITICAL ISSUES (Fix these)</div>
+          <div className="text-sm font-bold text-amber-700 mb-2">🔴 CRITICAL ISSUES (Fix these)</div>
           {criticalIssues.length === 0 ? (
             <div className="text-xs text-gray-600">None</div>
           ) : (
-            <ul className="list-disc list-inside space-y-1 text-xs text-red-700">
+            <ul className="list-disc list-inside space-y-1 text-xs text-amber-700">
               {criticalIssues.map((issue, idx) => (
                 <li key={idx}>{issue}</li>
               ))}
@@ -91,8 +91,8 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
         {/* Assumptions to Verify */}
         {assumptions.length > 0 && (
           <div>
-            <div className="text-sm font-bold text-yellow-700 mb-2">🟡 ASSUMPTIONS TO VERIFY</div>
-            <ul className="list-disc list-inside space-y-1 text-xs text-yellow-700">
+            <div className="text-sm font-bold text-amber-700 mb-2">🟡 ASSUMPTIONS TO VERIFY</div>
+            <ul className="list-disc list-inside space-y-1 text-xs text-amber-700">
               {assumptions.map((assumption, idx) => (
                 <li key={idx}>{assumption}</li>
               ))}
@@ -102,13 +102,13 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
 
         {/* Deal Structure */}
         <div>
-          <div className="text-sm font-bold text-blue-700 mb-2">🔵 DEAL STRUCTURE</div>
+          <div className="text-sm font-bold text-amber-700 mb-2">🔵 DEAL STRUCTURE</div>
           {dealStructureIssues.length === 0 ? (
-            <div className="text-xs text-green-700">✓ Passes 70% Rule</div>
+            <div className="text-xs text-amber-700">✓ Passes 70% Rule</div>
           ) : (
             <div className="space-y-2">
               {dealStructureIssues.map((issue, idx) => (
-                <div key={idx} className="text-xs text-red-700">
+                <div key={idx} className="text-xs text-amber-700">
                   <div className="font-bold">✗ {issue.message}</div>
                   <div className="ml-4 mt-1 text-gray-600">{issue.details}</div>
                   <div className="ml-4 text-gray-600">{issue.currentPrice}</div>
@@ -122,8 +122,8 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
         {/* Good Indicators */}
         {goodIndicators.length > 0 && (
           <div>
-            <div className="text-sm font-bold text-green-700 mb-2">🟢 GOOD</div>
-            <ul className="list-disc list-inside space-y-1 text-xs text-green-700">
+            <div className="text-sm font-bold text-amber-700 mb-2">🟢 GOOD</div>
+            <ul className="list-disc list-inside space-y-1 text-xs text-amber-700">
               {goodIndicators.map((indicator, idx) => (
                 <li key={idx}>✓ {indicator}</li>
               ))}

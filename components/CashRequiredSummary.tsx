@@ -55,7 +55,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
   const isUnrealistic = inputs.interestRate === 0 || (holdingCosts === 0 && (inputs.holdingPeriodMonths || 0) > 3);
   const hasInsufficientLiquidity = inputs.liquidity > 0 && inputs.liquidity < totalLiquidityNeeded;
   
-  let boxColor = 'border-gray-300 bg-white';
+  let boxColor = 'border-amber-300 bg-white';
   let titleColor = 'text-gray-900';
   
   if (hasInsufficientLiquidity) {
@@ -81,7 +81,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
         {/* Timeline Breakdown */}
         <div className="space-y-3">
           {/* 1. Earnest Money (Pre-Offer) */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r p-3">
+          <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r p-3">
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-blue-900 uppercase">1. Earnest Money</div>
@@ -208,7 +208,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
         </div>
 
         {/* Total Liquidity Needed */}
-        <div className="border-t-2 border-gray-400 pt-4 mt-4">
+        <div className="border-t-2 border-amber-400 pt-4 mt-4">
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg p-4 text-white">
             <div className="flex justify-between items-center">
               <div className="flex flex-col">

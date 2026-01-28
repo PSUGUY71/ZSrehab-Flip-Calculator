@@ -48,7 +48,7 @@ export const StateSelectionScreen: React.FC<StateSelectionScreenProps> = ({
                 setSelectedState(e.target.value);
                 setShowPreview(true);
               }}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-3 border text-lg"
+              className="w-full rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 p-3 border text-lg"
               size={10}
             >
               <option value="">-- Select a State --</option>

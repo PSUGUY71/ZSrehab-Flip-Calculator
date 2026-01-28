@@ -83,7 +83,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
         />
 
         {/* Eligibility Alert */}
-        <div className="bg-gray-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <EligibilityAlert results={results} />
         </div>
 
@@ -91,27 +91,27 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
         <RealismCheckPanel inputs={inputs} results={results} />
 
         {/* Valuation & Returns Section */}
-        <div className="bg-blue-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <ValuationReturns inputs={inputs} results={results} />
         </div>
 
         {/* Loan Estimate Card */}
-        <div className="bg-green-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <LoanEstimateCard inputs={inputs} results={results} />
         </div>
 
         {/* Costs Breakdown - NEW: Acquisition vs Disposition */}
-        <div className="bg-orange-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <CostsBreakdown results={results} />
         </div>
 
         {/* 70% Rule Card */}
-        <div className="bg-orange-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <SeventyPercentRuleCard inputs={inputs} results={results} />
         </div>
 
         {/* Lender Comparison Section */}
-        <div className="bg-purple-50 rounded-xl p-2">
+        <div className="bg-white rounded-xl p-2 border border-amber-200">
           <LenderComparison
             inputs={inputs}
             results={results}

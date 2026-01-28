@@ -13,7 +13,7 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
   const isOver = difference > 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+    <div className="bg-white rounded-xl shadow-lg border border-amber-200">
       <div className="bg-gray-900 px-6 py-3 flex justify-between items-center text-white rounded-t-xl">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold uppercase">70% Rule Analysis</h2>
@@ -30,8 +30,8 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
         </div>
         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
           results.passes70Rule 
-            ? 'bg-green-500 text-white' 
-            : 'bg-red-500 text-white'
+            ? 'bg-amber-500 text-white' 
+            : 'bg-gray-600 text-white'
         }`}>
           {results.passes70Rule ? '✓ Pass' : '✗ Fail'}
         </div>
@@ -39,7 +39,7 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-sm font-semibold text-gray-700">70% Rule Max Purchase Price</span>
-          <span className={`text-lg font-bold ${results.passes70Rule ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`text-lg font-bold ${results.passes70Rule ? 'text-amber-700' : 'text-gray-700'}`}>
             {formatCurrency(results.maxPurchasePrice70Rule)}
           </span>
         </div>
@@ -48,18 +48,18 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
           <span className="font-medium">{formatCurrency(inputs.purchasePrice)}</span>
         </div>
         {!results.passes70Rule && (
-          <div className="bg-red-50 border border-red-200 rounded p-2">
-            <div className="text-xs text-red-700 font-semibold">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+            <div className="text-xs text-amber-800 font-semibold">
               ⚠️ You are {formatCurrency(Math.abs(difference))} over the 70% Rule
             </div>
-            <div className="text-[10px] text-red-600 mt-1">
+            <div className="text-[10px] text-amber-700 mt-1">
               This may impact profitability. Review your numbers carefully.
             </div>
           </div>
         )}
         {results.passes70Rule && (
-          <div className="bg-green-50 border border-green-200 rounded p-2">
-            <div className="text-xs text-green-700 font-semibold">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+            <div className="text-xs text-amber-800 font-semibold">
               ✓ Purchase price is within the 70% Rule guideline
             </div>
           </div>

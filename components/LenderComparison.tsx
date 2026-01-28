@@ -58,12 +58,12 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
   const baselineData = baselineResults || results;
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden no-print">
-      <div className="bg-blue-900 px-6 py-3 flex justify-between items-center text-white">
+      <div className="bg-gray-900 px-6 py-3 flex justify-between items-center text-white">
         <h2 className="text-sm font-bold uppercase tracking-wider">Lender Comparison</h2>
         <div className="flex gap-2">
           <button
             onClick={onAddLender}
-            className="bg-blue-600 hover:bg-blue-500 text-xs font-bold px-3 py-1 rounded transition shadow-sm"
+            className="bg-amber-600 hover:bg-amber-500 text-xs font-bold px-3 py-1 rounded transition shadow-sm"
           >
             Add New Lender
           </button>
@@ -81,7 +81,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                 <div className="font-bold text-gray-800 text-sm flex items-center gap-2">
                   {l.lenderName}
                   {inputs.lenderName === l.lenderName && (
-                    <span className="text-[8px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+                    <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
                       Active
                     </span>
                   )}
@@ -93,26 +93,26 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
               <div className="flex gap-2 items-center">
                 <button
                   onClick={() => onApplyLender(l)}
-                  className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-sm hover:bg-green-700 transition"
+                  className="bg-amber-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-sm hover:bg-amber-700 transition"
                 >
                   Use Numbers
                 </button>
                 <button
                   onClick={() => onEditLender(l)}
-                  className="text-blue-600 text-[10px] font-bold px-2 py-1 bg-blue-50 rounded hover:bg-blue-100"
+                  className="text-amber-600 text-[10px] font-bold px-2 py-1 bg-amber-50 rounded hover:bg-amber-100"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => onDuplicateLender(l)}
-                  className="text-purple-600 text-[10px] font-bold px-2 py-1 bg-purple-50 rounded hover:bg-purple-100"
+                  className="text-amber-600 text-[10px] font-bold px-2 py-1 bg-amber-50 rounded hover:bg-amber-100"
                   title="Duplicate this lender"
                 >
                   Dup
                 </button>
                 <button
                   onClick={() => onDeleteLender(l.id)}
-                  className="text-red-500 text-[10px] font-bold px-2 py-1 bg-red-50 rounded hover:bg-red-100"
+                  className="text-amber-500 text-[10px] font-bold px-2 py-1 bg-amber-50 rounded hover:bg-amber-100"
                 >
                   Del
                 </button>
@@ -135,18 +135,18 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                   <th className="px-2 py-2">Quick View</th>
                   <th className={`px-2 py-2 border-l ${
                     bestOverallLender === (originalBaselineLenderName || inputs.lenderName || 'BASELINE')
-                      ? 'bg-yellow-200 border-2 border-yellow-500'
+                      ? 'bg-amber-200 border-2 border-amber-500'
                       : originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName
-                      ? 'bg-green-50'
+                      ? 'bg-amber-50'
                       : 'bg-gray-100'
                   }`}>
                     <div className="flex flex-col items-center gap-1">
                       <span className="font-bold">{originalBaselineLenderName || inputs.lenderName || 'BASELINE'}</span>
                       {bestOverallLender === (originalBaselineLenderName || inputs.lenderName || 'BASELINE') && (
-                        <span className="text-[8px] bg-yellow-400 text-yellow-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
+                        <span className="text-[8px] bg-amber-400 text-amber-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
                       )}
                       {originalBaselineLenderName && inputs.lenderName === originalBaselineLenderName && bestOverallLender !== (originalBaselineLenderName || inputs.lenderName || 'BASELINE') && (
-                        <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
+                        <span className="text-[8px] text-amber-600 font-normal">(ACTIVE)</span>
                       )}
                     </div>
                   </th>
@@ -158,19 +158,19 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                         key={c.lender.id} 
                         className={`px-2 py-2 border-l font-bold ${
                           isBest
-                            ? 'bg-yellow-200 border-2 border-yellow-500'
+                            ? 'bg-amber-200 border-2 border-amber-500'
                             : isActive 
-                            ? 'bg-green-50' 
-                            : 'bg-blue-50/30'
+                            ? 'bg-amber-50' 
+                            : 'bg-amber-50/30'
                         }`}
                       >
                         <div className="flex flex-col items-center gap-1">
                           <span>{c.lender.lenderName}</span>
                           {isBest && (
-                            <span className="text-[8px] bg-yellow-400 text-yellow-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
+                            <span className="text-[8px] bg-amber-400 text-amber-900 font-bold px-1.5 py-0.5 rounded-full">⭐ BEST</span>
                           )}
                           {isActive && !isBest && (
-                            <span className="text-[8px] text-green-600 font-normal">(ACTIVE)</span>
+                            <span className="text-[8px] text-amber-600 font-normal">(ACTIVE)</span>
                           )}
                         </div>
                       </th>
@@ -246,7 +246,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                       {results.netProfit === bestProfit && (
                         <span className="text-green-600 text-xs">🏆</span>
                       )}
-                      <span className={results.netProfit === bestProfit ? 'text-green-700' : ''}>
+                      <span className={results.netProfit === bestProfit ? 'text-amber-700' : ''}>
                         {formatCurrency(results.netProfit)}
                       </span>
                     </div>
@@ -258,14 +258,14 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                       <td 
                         key={c.lender.id} 
                         className={`px-2 py-1.5 border-l font-bold ${
-                          isActive ? 'bg-green-50/30' : isBestProfit ? 'bg-green-100 border-2 border-green-400' : ''
+                          isActive ? 'bg-amber-50/30' : isBestProfit ? 'bg-amber-100 border-2 border-amber-400' : ''
                         }`}
                       >
                         <div className="flex items-center gap-1">
                           {isBestProfit && (
-                            <span className="text-green-600 text-xs">🏆</span>
+                            <span className="text-amber-600 text-xs">🏆</span>
                           )}
-                          <span className={isBestProfit ? 'text-green-700' : c.results.netProfit > results.netProfit ? 'text-green-600' : 'text-red-600'}>
+                          <span className={isBestProfit ? 'text-amber-700' : c.results.netProfit > results.netProfit ? 'text-amber-600' : 'text-amber-600'}>
                             {formatCurrency(c.results.netProfit)}
                           </span>
                         </div>
@@ -286,7 +286,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                       {baselineData.gapAmount === bestDownPayment && (
                         <span className="text-green-600 text-xs">💰</span>
                       )}
-                      <span className={baselineData.gapAmount === bestDownPayment ? 'text-green-700 font-bold' : ''}>
+                      <span className={baselineData.gapAmount === bestDownPayment ? 'text-amber-700 font-bold' : ''}>
                         {formatCurrency(baselineData.gapAmount)}
                       </span>
                     </div>
