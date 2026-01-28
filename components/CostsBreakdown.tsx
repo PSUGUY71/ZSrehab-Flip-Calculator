@@ -151,7 +151,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       </div>
 
       {/* Formula Display */}
-      <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-xs">
+      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
         <div className="font-bold text-blue-900 mb-2">Profit Calculation:</div>
         <div className="space-y-1 text-blue-800 font-mono text-[11px]">
           <div>Profit = ARV - Purchase Price - Rehab Budget - Total Costs</div>

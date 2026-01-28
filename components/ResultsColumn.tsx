@@ -135,17 +135,17 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
         </div>
 
         {/* Closing Table Profit (Detailed) */}
-        <div className="bg-indigo-50 rounded-xl p-2">
+        <div className="bg-gray-50 rounded-xl p-2">
           <ClosingProfitCard inputs={inputs} results={results} />
         </div>
 
         {/* Sensitivity Analysis */}
-        <div className="bg-pink-50 rounded-xl p-2">
+        <div className="bg-gray-50 rounded-xl p-2">
           <SensitivityAnalysis results={results} />
         </div>
 
         {/* Seller Net Analysis */}
-        <div className="bg-cyan-50 rounded-xl p-2">
+        <div className="bg-gray-50 rounded-xl p-2">
           <SellerNetAnalysis inputs={inputs} results={results} />
         </div>
       </div>

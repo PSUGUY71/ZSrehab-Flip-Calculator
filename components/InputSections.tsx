@@ -175,7 +175,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Property Information</h2>
-          <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">
+          <span className="text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded font-bold">
             Lender: {inputs.lenderName}
           </span>
         </div>
@@ -330,7 +330,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Economics */}
-      <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Deal Economics</h2>
         </div>
@@ -469,7 +469,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     
                     {/* Warnings */}
                     {analysis.warnings.length > 0 && (
-                      <div className="bg-yellow-50 border-2 border-yellow-300 rounded p-3 space-y-1">
+                      <div className="bg-gray-50 border-2 border-gray-300 rounded p-3 space-y-1">
                         <div className="text-xs font-bold text-yellow-900 uppercase mb-1">Warnings</div>
                         {analysis.warnings.map((warning, idx) => (
                           <div key={idx} className="text-xs text-yellow-800">
@@ -502,7 +502,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     </div>
                     
                     {/* Profit Impact */}
-                    <div className="bg-red-50 border-2 border-red-200 rounded p-3">
+                    <div className="bg-gray-50 border-2 border-gray-200 rounded p-3">
                       <div className="text-xs font-bold text-red-900 uppercase mb-1">
                         Profit Impact if 20% Over Budget
                       </div>
@@ -595,7 +595,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 helpText="Amount seller finances/holds note. Reduces down payment needed."
               />
             </div>
-            <div className="bg-yellow-50 p-3 rounded border border-yellow-100">
+            <div className="bg-gray-50 p-3 rounded border border-gray-200">
               <InputGroup 
                 id="buyerAgentCommissionRate" 
                 label="Buyer Agent Commission Credit" 
@@ -659,7 +659,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 onClick={() => onInputChange('useWorkBackwardMode', !inputs.useWorkBackwardMode)}
                 className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                   inputs.useWorkBackwardMode
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-gray-700 text-white'
                     : 'bg-gray-200 text-gray-700'
                 }`}
               >
@@ -667,14 +667,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </button>
             </div>
             {inputs.useWorkBackwardMode && (
-              <div className="bg-purple-50 border border-purple-200 rounded p-2 space-y-2 mb-3">
+              <div className="bg-gray-50 border border-gray-200 rounded p-2 space-y-2 mb-3">
                 <div className="flex gap-2">
                   <button
                     onClick={() => onInputChange('workBackwardModeType', 'ROI')}
                     className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
                       inputs.workBackwardModeType === 'ROI'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 border border-purple-200'
+                        ? 'bg-gray-700 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300'
                     }`}
                   >
                     Target ROI
@@ -683,8 +683,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     onClick={() => onInputChange('workBackwardModeType', 'LTC')}
                     className={`flex-1 py-1.5 px-2 rounded text-xs font-semibold transition-all ${
                       inputs.workBackwardModeType === 'LTC'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 border border-purple-200'
+                        ? 'bg-gray-700 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300'
                     }`}
                   >
                     Target LTC
@@ -755,8 +755,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
                     maxOfferLTVPercent === option.value
                       ? option.value === 0.75 
-                        ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400'
-                        : 'bg-blue-600 text-white shadow-md'
+                        ? 'bg-gray-700 text-white shadow-md ring-2 ring-gray-400'
+                        : 'bg-gray-700 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -778,7 +778,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             };
             
             return (
-              <div className={`${exceedsMax ? 'bg-red-50 border-2 border-red-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
+              <div className={`${exceedsMax ? 'bg-gray-50 border-2 border-gray-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
                 {inputs.useWorkBackwardMode ? (
                   // Work-Backward Mode Display
                   <>
@@ -791,14 +791,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                       </span>
                     </div>
                     {maxOfferResults.workBackwardMaxOffer > 0 && (
-                      <div className="text-[10px] text-purple-600 bg-purple-50 border border-purple-200 rounded p-2">
+                      <div className="text-[10px] text-gray-700 bg-gray-50 border border-gray-200 rounded p-2">
                         {inputs.workBackwardModeType === 'ROI' 
                           ? `Purchase price needed to achieve ${inputs.targetRoi}% ROI based on current deal structure`
                           : `Purchase price needed to achieve ${inputs.targetLTC}% LTC based on ARV and LTV%`}
                       </div>
                     )}
                     {maxOfferResults.workBackwardMaxOffer <= 0 && (
-                      <div className="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded p-2">
+                      <div className="text-[10px] text-gray-700 bg-gray-50 border border-gray-200 rounded p-2">
                         Cannot achieve target {inputs.workBackwardModeType === 'ROI' ? 'ROI' : 'LTC'} with current ARV and parameters
                       </div>
                     )}
@@ -822,7 +822,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 </div>
                 
                 {/* Always show current ARV and required ARV for each percentage */}
-                <div className={`${exceedsMax ? 'bg-red-100 border border-red-300' : 'bg-blue-50 border border-blue-200'} rounded p-2 space-y-2 mt-2`}>
+                <div className={`${exceedsMax ? 'bg-gray-100 border border-gray-300' : 'bg-gray-50 border border-gray-200'} rounded p-2 space-y-2 mt-2`}>
                   <div className={`text-xs font-semibold text-center ${exceedsMax ? 'text-red-700' : 'text-blue-700'}`}>
                     {exceedsMax ? (
                       <>⚠️ Current Purchase Price ({formatCurrency(inputs.purchasePrice)}) exceeds Max Allowable Offer</>
@@ -868,8 +868,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Seller Side Analysis */}
-      <section className="bg-cyan-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-indigo-50 px-6 py-3 border-b border-indigo-100">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-indigo-900 uppercase">Seller Side Analysis</h2>
         </div>
         <div className="p-6 grid grid-cols-2 gap-6">
@@ -1239,7 +1239,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Exit Strategy */}
-      <section className="bg-yellow-50 rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Exit Strategy</h2>
         </div>
@@ -1286,7 +1286,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             <div className="mt-4 space-y-3">
               {/* Validation Warning - Insufficient Holding Costs */}
               {hasInsufficientHoldingCosts && (
-                <div className="p-4 bg-red-100 border-2 border-red-400 rounded-lg">
+                <div className="p-4 bg-gray-100 border-2 border-gray-300 rounded-lg">
                   <div className="flex items-start gap-2">
                     <span className="text-red-700 text-xl font-bold">⚠️</span>
                     <div className="flex-1">
@@ -1313,7 +1313,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
               {/* Auto-Estimation Info */}
               {holdingCostEstimates && inputs.state && (
-                <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                <div className="p-4 bg-gray-50 border-2 border-gray-300 rounded-lg">
                   <div className="flex items-start gap-2">
                     <span className="text-blue-700 text-lg font-bold">💡</span>
                     <div className="flex-1">
@@ -1337,7 +1337,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                           <div className="text-blue-700">{formatCurrency(holdingCostEstimates.monthlyUtilities)}/mo</div>
                           <div className="text-[10px] text-blue-600 mt-1">Regional average</div>
                         </div>
-                        <div className="bg-blue-100 p-2 rounded border-2 border-blue-300">
+                        <div className="bg-gray-100 p-2 rounded border-2 border-gray-300">
                           <div className="font-bold text-blue-900">Total Est.</div>
                           <div className="text-blue-800 font-bold">{formatCurrency(holdingCostEstimates.totalMonthlyEstimate)}/mo</div>
                           {holdingCostEstimates.isVeryConservative && (
@@ -1355,7 +1355,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
               {/* Missing Insurance/Taxes Warning */}
               {!inputs.includeMonthlyInsurance && !inputs.includeMonthlyTaxes && (
-                <div className="p-3 bg-yellow-100 border-2 border-yellow-300 rounded-lg">
+                <div className="p-3 bg-gray-100 border-2 border-gray-300 rounded-lg">
                   <div className="flex items-start gap-2">
                     <span className="text-yellow-700 text-lg font-bold">⚠️</span>
                     <div className="flex-1">
@@ -1492,7 +1492,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </div>
             )}
           </div>
-          <div className="mt-4 bg-yellow-50 p-4 rounded border border-yellow-100">
+          <div className="mt-4 bg-gray-50 p-4 rounded border border-gray-200">
             <div className="mb-3">
               <h3 className="text-xs font-bold text-gray-700 uppercase mb-2">Commission Breakdown</h3>
             </div>
@@ -1579,7 +1579,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           </div>
           
           {/* Monthly Holding Cost Summary */}
-          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="text-xs font-bold text-blue-900 uppercase mb-3 flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <span>Monthly Carrying Costs Summary</span>
@@ -1836,7 +1836,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Borrower */}
-      <section className="bg-indigo-50 rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Borrower & Active Loan</h2>
           <button onClick={onCaptureBaseline} className="text-[10px] text-blue-600 hover:text-blue-500 font-bold transition">
@@ -1979,17 +1979,17 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </select>
             <div className="mt-2 space-y-1">
               {inputs.loanType === 'HARD_MONEY' && (
-                <div className="text-[10px] text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
+                <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
                   <strong>Hard Money Assumptions:</strong> Interest-only payments, 6-12 month terms, no property taxes/insurance in payment, prepayment penalty typical, 1 point + 3% fees typical.
                 </div>
               )}
               {inputs.loanType === 'CONVENTIONAL' && (
-                <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
                   <strong>Conventional Assumptions:</strong> 30-year amortized payments, PITI includes taxes & insurance, PMI required if &lt;20% down, no prepayment penalty, minimal points/fees.
                 </div>
               )}
               {inputs.loanType === 'PORTFOLIO' && (
-                <div className="text-[10px] text-gray-600 bg-purple-50 p-2 rounded border border-purple-200">
+                <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
                   <strong>Portfolio Assumptions:</strong> 5-year term typical (varies), amortized or interest-only (varies), PITI varies by lender, no PMI, no prepayment penalty, 2% fees typical.
                 </div>
               )}
@@ -2013,7 +2013,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 helpText={`Annual interest rate (typical: ${inputs.loanType === 'HARD_MONEY' ? '12%' : inputs.loanType === 'CONVENTIONAL' ? '3.5%' : '6-8%'})`}
               />
               <div 
-                className={`mt-2 p-2 rounded text-xs ${inputs.interestRate === 0 ? 'bg-red-100 border border-red-300 text-red-800' : 'bg-yellow-50 border border-yellow-200 text-yellow-800'}`}
+                className={`mt-2 p-2 rounded text-xs ${inputs.interestRate === 0 ? 'bg-gray-100 border border-gray-300 text-gray-800' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}
               >
                 ⚠️ <strong>IMPORTANT:</strong> {inputs.interestRate === 0 
                   ? 'Interest rate is 0% (unrealistic). Monthly payment and holding costs will be $0.'
@@ -2044,7 +2044,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
           {/* PITI Fields for Conventional Loans */}
           {inputs.loanType === 'CONVENTIONAL' && (
-            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <div className="mt-4 p-4 bg-gray-50 border-2 border-gray-300 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
                 <input
                   type="checkbox"
@@ -2131,7 +2131,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           
           {/* Prepayment Penalty Info */}
           {inputs.prepaymentPenalty && (
-            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+            <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700">
               ⚠️ <strong>Prepayment Penalty:</strong> This loan type typically includes a prepayment penalty. 
               {inputs.prepaymentPenaltyAmount > 0 && ` Amount: ${formatCurrency(inputs.prepaymentPenaltyAmount)}`}
             </div>
@@ -2143,7 +2143,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             
             {/* Suggested Fees Box */}
             {suggestedLenderFees && allFeesZero && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <div className="text-xs font-semibold text-blue-900 mb-2">
                   Suggested Lender Fees (based on 3% origination for hard money):
                 </div>
@@ -2161,7 +2161,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 <button
                   type="button"
                   onClick={handleApplySuggestedFees}
-                  className="w-full bg-blue-600 text-white text-xs font-semibold py-2 px-4 rounded hover:bg-blue-700 transition"
+                  className="w-full bg-gray-700 text-white text-xs font-semibold py-2 px-4 rounded hover:bg-gray-800 transition"
                 >
                   Apply Suggested Fees
                 </button>
@@ -2217,7 +2217,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Notes */}
-      <section className="bg-pink-50 rounded-xl shadow-sm border border-gray-200">
+      <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Notes</h2>
         </div>

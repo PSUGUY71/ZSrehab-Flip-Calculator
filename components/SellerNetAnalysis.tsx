@@ -9,7 +9,7 @@ interface SellerNetAnalysisProps {
 
 export const SellerNetAnalysis: React.FC<SellerNetAnalysisProps> = ({ inputs, results }) => {
   return (
-    <div className="bg-amber-50 border border-amber-300 rounded p-4 shadow-sm">
+    <div className="bg-white border border-gray-300 rounded p-4 shadow-sm">
       <div className="flex justify-between items-center border-b border-amber-200 pb-2 mb-2">
         <div className="text-amber-900 font-bold uppercase text-xs">Seller's Estimated Net Proceeds</div>
         <div className="text-amber-900 font-bold text-xl">{formatCurrency(results.sellerNetProceeds)}</div>

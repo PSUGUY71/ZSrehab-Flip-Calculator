@@ -62,7 +62,7 @@ export const StateSelectionScreen: React.FC<StateSelectionScreenProps> = ({
 
           {/* Preview of Defaults */}
           {showPreview && previewDefaults && (
-            <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <div className="mb-6 p-4 bg-gray-50 border-2 border-gray-300 rounded-lg">
               <h3 className="text-sm font-bold text-blue-900 mb-3 uppercase">
                 Estimated Closing Cost Defaults for {previewDefaults.name}
               </h3>
@@ -109,7 +109,7 @@ export const StateSelectionScreen: React.FC<StateSelectionScreenProps> = ({
                 </div>
               </div>
               {previewDefaults.note && (
-                <div className="mt-3 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-800">
+                <div className="mt-3 p-2 bg-gray-100 border border-gray-300 rounded text-xs text-gray-800">
                   <strong>Note:</strong> {previewDefaults.note}
                 </div>
               )}
@@ -125,7 +125,7 @@ export const StateSelectionScreen: React.FC<StateSelectionScreenProps> = ({
             disabled={!selectedState}
             className={`w-full py-3 px-4 rounded-md font-bold text-lg transition shadow-lg ${
               selectedState
-                ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                ? 'bg-gray-700 hover:bg-gray-800 text-white cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >

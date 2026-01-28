@@ -52,7 +52,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
     <div className="mt-3 border border-amber-200 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full bg-amber-100 hover:bg-amber-200 px-4 py-2 flex justify-between items-center transition-colors"
+        className="w-full bg-gray-100 hover:bg-gray-200 px-4 py-2 flex justify-between items-center transition-colors"
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-700 uppercase">Rehab Breakdown</span>
@@ -80,14 +80,14 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
       {isExpanded && (
         <div className="p-4 bg-white space-y-3">
           {/* Summary Row */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 flex justify-between items-center text-sm">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 flex justify-between items-center text-sm">
             <span className="font-semibold text-gray-700">Line Items Total:</span>
             <span className={`font-bold ${isMatching ? 'text-amber-600' : 'text-amber-600'}`}>
               {formatCurrency(lineItemsTotal)}
             </span>
           </div>
           {!isMatching && (
-            <div className={`text-xs p-2 rounded ${difference > 0 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+            <div className={`text-xs p-2 rounded ${difference > 0 ? 'bg-gray-50 text-gray-700 border border-gray-200' : 'bg-gray-50 text-gray-700 border border-gray-200'}`}>
               {difference > 0 
                 ? `⚠️ Line items total is ${formatCurrency(difference)} less than Rehab Budget`
                 : `⚠️ Line items total is ${formatCurrency(Math.abs(difference))} more than Rehab Budget`}
@@ -97,7 +97,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
           {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead className="bg-amber-100 border-b border-amber-200">
+              <thead className="bg-gray-100 border-b border-gray-200">
                 <tr>
                   <th className="px-2 py-2 text-left font-semibold text-gray-700">Category</th>
                   <th className="px-2 py-2 text-left font-semibold text-gray-700">Description</th>
@@ -109,7 +109,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
               </thead>
               <tbody>
                 {lineItems.map((item) => (
-                  <tr key={item.id} className="border-b border-amber-100 hover:bg-amber-50">
+                  <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-2 py-2">
                       <select
                         value={item.category}
@@ -186,7 +186,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
           {/* Add Item Button */}
           <button
             onClick={onAddItem}
-            className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded transition-colors"
+            className="w-full py-2 px-4 bg-gray-700 hover:bg-gray-800 text-white text-xs font-semibold rounded transition-colors"
           >
             + Add Line Item
           </button>

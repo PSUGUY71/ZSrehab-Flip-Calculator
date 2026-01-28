@@ -9,14 +9,14 @@ interface ClosingProfitCardProps {
 }
 
 export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, results }) => (
-  <div className="bg-teal-50 border border-teal-500 rounded p-4 shadow-sm break-inside-avoid print-color-adjust-exact print:p-2">
+  <div className="bg-white border border-gray-300 rounded p-4 shadow-sm break-inside-avoid print-color-adjust-exact print:p-2">
     <div className="flex justify-between items-center border-b border-teal-200 pb-2 mb-2 print:pb-1 print:mb-1">
       <div className="flex flex-col">
         <div className="text-teal-900 font-bold uppercase text-xs">Net Profit (Projected)</div>
         <div className="text-[9px] text-teal-600 mt-0.5">ARV - Loan - Costs - Exit - Holding</div>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs bg-teal-200 text-teal-800 px-2 py-0.5 rounded-full shadow-sm border border-teal-300">
+        <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full shadow-sm border border-gray-300">
           {formatPercent(results.roi)} ROI
         </span>
         <span className="text-teal-900 font-bold text-xl print:text-base">{formatCurrency(results.netProfit)}</span>
@@ -95,7 +95,7 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
     </div>
 
     {/* Detailed Holding Cost Section */}
-    <div className="mt-3 bg-teal-100/60 rounded p-2 border border-teal-200 print:mt-1 print:p-1">
+    <div className="mt-3 bg-gray-100/60 rounded p-2 border border-gray-200 print:mt-1 print:p-1">
       <div className="text-[10px] font-bold uppercase text-teal-800 mb-1 flex justify-between items-center">
         <span>Holding Costs Breakdown</span>
         <span className="text-teal-600 font-normal">{inputs.holdingPeriodMonths} Months</span>
@@ -132,7 +132,7 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
 
     {/* After-Tax Profit Section - NOW ALWAYS SHOWN (default for investors) */}
     {results.estimatedCapitalGainsTax > 0 && (
-      <div className="mt-3 pt-2 border-t-2 border-teal-300 bg-teal-100/40 rounded p-2 print:mt-1 print:pt-1">
+      <div className="mt-3 pt-2 border-t-2 border-gray-200 bg-gray-100/40 rounded p-2 print:mt-1 print:pt-1">
         <div className="text-xs font-bold text-teal-900 uppercase mb-2">NET PROFIT AFTER TAXES (What You Keep)</div>
         <div className="space-y-1 text-xs text-teal-800">
           <div className="flex justify-between">

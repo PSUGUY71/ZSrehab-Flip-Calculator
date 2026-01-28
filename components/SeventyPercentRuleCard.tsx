@@ -30,7 +30,7 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
         </div>
         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
           results.passes70Rule 
-            ? 'bg-amber-500 text-white' 
+            ? 'bg-gray-700 text-white' 
             : 'bg-gray-600 text-white'
         }`}>
           {results.passes70Rule ? '✓ Pass' : '✗ Fail'}

@@ -97,7 +97,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
                       className={`flex-1 px-2 py-1.5 text-xs font-bold rounded border transition ${
                         !editingLender.useCustomFinancing &&
                         editingLender.financingPercentage === percent
-                          ? 'bg-amber-600 text-white border-amber-600'
+                          ? 'bg-gray-700 text-white border-gray-700'
                           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                       }`}
                     >
@@ -260,7 +260,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
           </button>
           <button
             onClick={onSave}
-            className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-sm hover:bg-amber-700 transition shadow-lg"
+            className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg font-bold text-sm hover:bg-gray-800 transition shadow-lg"
           >
             Save Profile
           </button>

@@ -36,7 +36,7 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
       <div className="flex justify-end mb-3">
         <button
           onClick={handleExportPDF}
-          className="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-md"
+          className="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-md"
         >
           📥 Export to PDF
         </button>

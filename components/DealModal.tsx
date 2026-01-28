@@ -45,7 +45,7 @@ export const DealModal: React.FC<DealModalProps> = ({
               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={() => onLoadDeal(d)}
-                  className="text-amber-600 text-xs font-bold px-2 py-1 bg-amber-100 rounded-lg hover:bg-amber-200"
+                  className="text-gray-700 text-xs font-bold px-2 py-1 bg-gray-100 rounded-lg hover:bg-gray-200"
                   title="Load this deal"
                 >
                   Load
@@ -73,7 +73,7 @@ export const DealModal: React.FC<DealModalProps> = ({
         </div>
         <button
           onClick={onClose}
-          className="w-full bg-amber-200 hover:bg-amber-300 transition rounded-lg py-2 text-sm font-bold text-gray-900"
+          className="w-full bg-gray-200 hover:bg-gray-300 transition rounded-lg py-2 text-sm font-bold text-gray-900"
         >
           Close
         </button>

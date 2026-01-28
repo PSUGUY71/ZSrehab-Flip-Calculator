@@ -52,7 +52,7 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ inputs, resu
 
       {/* ARV Validation Warning */}
       {showARVWarning && inputs.sqFt > 0 && (
-        <div className={`mb-3 p-2 rounded-lg border-2 bg-amber-50 border-amber-400 text-amber-900`}>
+        <div className={`mb-3 p-2 rounded-lg border-2 bg-white border-gray-300 text-gray-900`}>
           <div className="text-xs font-bold mb-1">
             ⚠️ ARV Validation Warning
           </div>

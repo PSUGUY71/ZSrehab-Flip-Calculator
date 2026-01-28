@@ -98,8 +98,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
       )}
 
       {/* ARV Sensitivity (Existing) */}
-      <div className="bg-white rounded-xl shadow-lg border-2 border-amber-200 overflow-hidden">
-        <div className="bg-amber-100 p-2 text-xs font-bold uppercase text-center text-amber-900 border-b border-amber-200">
+      <div className="bg-white rounded-xl shadow-lg border-2 border-gray-300 overflow-hidden">
+        <div className="bg-gray-100 p-2 text-xs font-bold uppercase text-center text-gray-900 border-b border-gray-200">
           ARV Sensitivity Analysis
         </div>
         <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
@@ -113,7 +113,7 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
           <div
             key={idx}
             className={`grid grid-cols-5 text-xs text-center p-2 border-b border-gray-100 last:border-0 ${
-              s.label === 'Baseline' ? 'bg-amber-50 font-bold' : ''
+              s.label === 'Baseline' ? 'bg-gray-50 font-bold' : ''
             }`}
           >
             <div>{s.label}</div>

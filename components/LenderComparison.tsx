@@ -63,7 +63,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
         <div className="flex gap-2">
           <button
             onClick={onAddLender}
-            className="bg-amber-600 hover:bg-amber-500 text-xs font-bold px-3 py-1 rounded transition shadow-sm"
+            className="bg-gray-700 hover:bg-gray-800 text-xs font-bold px-3 py-1 rounded transition shadow-sm"
           >
             Add New Lender
           </button>
@@ -81,7 +81,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                 <div className="font-bold text-gray-800 text-sm flex items-center gap-2">
                   {l.lenderName}
                   {inputs.lenderName === l.lenderName && (
-                    <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+                    <span className="text-[8px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
                       Active
                     </span>
                   )}
@@ -93,7 +93,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
               <div className="flex gap-2 items-center">
                 <button
                   onClick={() => onApplyLender(l)}
-                  className="bg-amber-600 text-white text-[10px] font-bold px-3 py-1 rounded shadow-sm hover:bg-amber-700 transition"
+                  className="bg-gray-700 text-white text-[10px] font-bold px-3 py-1 rounded shadow-sm hover:bg-gray-800 transition"
                 >
                   Use Numbers
                 </button>
@@ -112,7 +112,7 @@ export const LenderComparison: React.FC<LenderComparisonProps> = ({
                 </button>
                 <button
                   onClick={() => onDeleteLender(l.id)}
-                  className="text-amber-500 text-[10px] font-bold px-2 py-1 bg-amber-50 rounded hover:bg-amber-100"
+                  className="text-gray-700 text-[10px] font-bold px-2 py-1 bg-gray-50 rounded hover:bg-gray-100"
                 >
                   Del
                 </button>

@@ -19,7 +19,7 @@ export const ResultRow: React.FC<ResultRowProps> = ({
   subtext
 }) => {
   return (
-    <div className={`flex justify-between items-center py-2 border-b border-gray-100 last:border-0 ${highlight ? 'bg-amber-50 -mx-2 px-2 rounded' : ''} ${isTotal ? 'font-bold text-gray-900 bg-amber-50 -mx-2 px-2 mt-2 rounded' : 'text-gray-600'}`}>
+    <div className={`flex justify-between items-center py-2 border-b border-gray-100 last:border-0 ${highlight ? 'bg-gray-50 -mx-2 px-2 rounded' : ''} ${isTotal ? 'font-bold text-gray-900 bg-gray-50 -mx-2 px-2 mt-2 rounded' : 'text-gray-600'}`}>
       <div className="flex flex-col">
         <span>{label}</span>
         {subtext && <span className="text-xs text-gray-400 font-normal">{subtext}</span>}

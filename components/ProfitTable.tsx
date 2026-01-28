@@ -9,12 +9,12 @@ interface ProfitTableProps {
 
 export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => (
   <div className="bg-white rounded-xl shadow-lg border border-amber-200 overflow-hidden print:shadow-none print:border-gray-300 break-inside-avoid">
-    <div className="bg-amber-700 px-4 py-2 text-amber-50 font-bold text-lg uppercase flex justify-between print-color-adjust-exact print:py-1 print:text-base">
+    <div className="bg-gray-700 px-4 py-2 text-white font-bold text-lg uppercase flex justify-between print-color-adjust-exact print:py-1 print:text-base">
       <span>Profit For House</span>
       <span className="text-sm text-white font-normal opacity-80">{inputs.address}</span>
     </div>
     <div className="text-xs">
-      <div className="grid grid-cols-12 bg-amber-800 text-white font-bold py-1 px-2 print-color-adjust-exact">
+      <div className="grid grid-cols-12 bg-gray-800 text-white font-bold py-1 px-2 print-color-adjust-exact">
         <div className="col-span-4">Item</div>
         <div className="col-span-3 text-right">Cost</div>
         <div className="col-span-2 text-center">Months</div>
@@ -22,7 +22,7 @@ export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => 
       </div>
 
       {/* Revenue */}
-      <div className="grid grid-cols-12 bg-amber-50 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
+      <div className="grid grid-cols-12 bg-white border-b border-gray-200 py-1 px-2 items-center print-color-adjust-exact text-gray-900">
         <div className="col-span-4 font-bold">Sale Price</div>
         <div className="col-span-3 text-right">{formatCurrency(inputs.arv)}</div>
         <div className="col-span-2 text-center">1</div>
@@ -90,9 +90,9 @@ export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => 
       </div>
 
       {/* Net Profit */}
-      <div className="grid grid-cols-12 bg-amber-200 py-2 px-2 font-bold text-amber-900 border-t border-amber-300 print-color-adjust-exact items-center print:py-1">
+      <div className="grid grid-cols-12 bg-gray-100 py-2 px-2 font-bold text-gray-900 border-t border-gray-300 print-color-adjust-exact items-center print:py-1">
         <div className="col-span-6 text-right pr-4 text-lg print:text-sm">Net Profit</div>
-        <div className="col-span-3 text-right text-xs bg-amber-100 rounded px-1 py-0.5 text-amber-800 border border-amber-200 inline-block justify-self-end">
+        <div className="col-span-3 text-right text-xs bg-gray-100 rounded px-1 py-0.5 text-gray-800 border border-gray-200 inline-block justify-self-end">
           ROI {formatPercent(results.roi)}
         </div>
         <div className="col-span-3 text-right text-lg print:text-sm">{formatCurrency(results.netProfit)}</div>

@@ -15,7 +15,7 @@ export const ValidationAlert: React.FC<ValidationAlertProps> = ({ errors, warnin
     <div className="mb-4">
       {/* ERRORS - Show prominently */}
       {errors.length > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-500 rounded-lg p-3 mb-3">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-3 mb-3">
           <div className="flex items-start gap-2">
             <div className="text-2xl leading-none">❌</div>
             <div className="flex-1">
@@ -39,7 +39,7 @@ export const ValidationAlert: React.FC<ValidationAlertProps> = ({ errors, warnin
 
       {/* WARNINGS - Show but allow proceeding */}
       {warnings.length > 0 && (
-        <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-3">
+        <div className="bg-white border-2 border-gray-300 rounded-lg p-3">
           <div className="flex items-start gap-2">
             <div className="text-2xl leading-none">⚠️</div>
             <div className="flex-1">

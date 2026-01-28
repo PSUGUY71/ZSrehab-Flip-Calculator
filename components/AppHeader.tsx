@@ -44,7 +44,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="bg-gray-900 border-b border-amber-200 sticky top-0 z-30 shadow-lg no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
         <div className="flex items-center gap-3">
-          <div className="bg-amber-400 text-gray-900 p-2 rounded-lg font-bold tracking-tighter text-xl">ZS</div>
+          <div className="bg-gray-700 text-white p-2 rounded-lg font-bold tracking-tighter text-xl">ZS</div>
           <div>
             <h1 className="text-lg font-bold text-white leading-none">ZS Calculator</h1>
             <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <select
             value={appVersion}
             onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
-            className="border border-amber-400 rounded-lg px-2 py-1 text-sm font-medium text-gray-900 bg-amber-100 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="border border-gray-400 rounded-lg px-2 py-1 text-sm font-medium text-gray-900 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400"
             title="Switch between version modes"
           >
             <option value="NORMAL">NORMAL</option>
@@ -77,7 +77,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </button>
           <button
             onClick={onSaveDeal}
-            className="bg-amber-400 border border-amber-400 hover:bg-amber-500 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 relative"
+            className="bg-gray-700 border border-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 relative"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +117,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <button
             type="button"
             onClick={onReportMode}
-            className="bg-amber-500 hover:bg-amber-600 text-gray-900 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-md"
+            className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer shadow-md"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
