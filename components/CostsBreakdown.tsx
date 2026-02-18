@@ -14,7 +14,10 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
     transferTax: results.transferTaxCost || 0,
     titleInsurance: results.titleInsuranceCost || 0,
     closingCosts: (results.cplFeeCost || 0) + (results.endorsementCost || 0) + (results.legalSettlementCost || 0) + (results.recordingCost || 0),
-    thirdPartyFees: (results.inspectionCost || 0) + (results.appraisalCost || 0) + (results.insuranceCost || 0),
+    thirdPartyFees: (results.inspectionCost || 0) + (results.appraisalCost || 0) + (results.insuranceCost || 0) + (results.surveyFee || 0) + (results.pestInspectionCost || 0) + (results.creditReportFee || 0) + (results.floodDeterminationFee || 0) + (results.otherThirdPartyFees || 0),
+    walkerFees: results.totalWalkerFees || 0,
+    hideoutFees: (results.hideoutTransferCost || 0) + (results.hideoutProratedDues || 0),
+    prorations: (results.roamingwoodProrated || 0) + (results.schoolTaxProrated || 0) + (results.sewerWaterProrated || 0),
   };
   
   const totalAcquisitionCosts = Object.values(acquisitionCosts).reduce((a, b) => a + b, 0);
@@ -70,8 +73,26 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
           )}
           {acquisitionCosts.thirdPartyFees > 0 && (
             <div className="flex justify-between text-gray-600">
-              <span>Third-Party Fees (inspection, appraisal, insurance)</span>
+              <span>Third-Party Fees (inspection, appraisal, insurance, survey, pest, etc.)</span>
               <span className="font-mono">{formatCurrency(acquisitionCosts.thirdPartyFees)}</span>
+            </div>
+          )}
+          {acquisitionCosts.walkerFees > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Walker & Walker Fees</span>
+              <span className="font-mono">{formatCurrency(acquisitionCosts.walkerFees)}</span>
+            </div>
+          )}
+          {acquisitionCosts.hideoutFees > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Hideout Fees (transfer, dues)</span>
+              <span className="font-mono">{formatCurrency(acquisitionCosts.hideoutFees)}</span>
+            </div>
+          )}
+          {acquisitionCosts.prorations > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Prorations (city/town tax, school tax, sewer & water)</span>
+              <span className="font-mono">{formatCurrency(acquisitionCosts.prorations)}</span>
             </div>
           )}
         </div>

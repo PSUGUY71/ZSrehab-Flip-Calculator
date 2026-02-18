@@ -182,6 +182,11 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
+        <FeeBreakdownItem label="Survey" value={results.surveyFee} />
+        <FeeBreakdownItem label="Pest Inspection" value={results.pestInspectionCost} />
+        <FeeBreakdownItem label="Credit Report" value={results.creditReportFee} />
+        <FeeBreakdownItem label="Flood Determination" value={results.floodDeterminationFee} />
+        <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
         <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
         <FeeBreakdownItem 
@@ -227,6 +232,11 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Inspection" value={results.inspectionCost} />
           <FeeBreakdownItem label="Appraisal" value={results.appraisalCost} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
+          <FeeBreakdownItem label="Survey" value={results.surveyFee} />
+          <FeeBreakdownItem label="Pest Inspection" value={results.pestInspectionCost} />
+          <FeeBreakdownItem label="Credit Report" value={results.creditReportFee} />
+          <FeeBreakdownItem label="Flood Determination" value={results.floodDeterminationFee} />
+          <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
           <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
           <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
           <FeeBreakdownItem 

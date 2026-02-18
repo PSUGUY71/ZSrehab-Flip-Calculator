@@ -12465,5 +12465,9 @@ export const convertCountyCostsToFormData = (costs: CountyLevelCosts): Record<st
     recordingFees: costs.recordingFees,
     // titleInsuranceRate stays as percentage from form
     legalSettlementFees: costs.lawyerFee,
+    surveyFee: costs.surveyFee,
+    pestInspectionCost: costs.pestInspectionCost,
+    creditReportFee: costs.creditReportFee,
+    floodDeterminationFee: costs.floodDeterminationFee,
   };
 };

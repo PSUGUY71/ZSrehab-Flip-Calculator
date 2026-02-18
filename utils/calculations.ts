@@ -47,6 +47,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     inspectionCost,
     appraisalCost,
     insuranceCost,
+    surveyFee,
+    pestInspectionCost,
+    creditReportFee,
+    floodDeterminationFee,
+    otherThirdPartyFees,
     walkerDocPrep,
     walkerOvernight,
     walkerWire,
@@ -318,6 +323,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     titleCompanyChargesAmount + // Only non-zero in non-HIDEOUT versions
     (recordingFees || 0) + 
     (insuranceCost || 0) + // Insurance is due at closing
+    (surveyFee || 0) + // Property survey fee
+    (pestInspectionCost || 0) + // Termite/pest inspection
+    (creditReportFee || 0) + // Credit report fee
+    (floodDeterminationFee || 0) + // Flood zone determination
+    (otherThirdPartyFees || 0) + // Other 3rd party fees
     (calculatedHideoutTransferFee || 0) + // Only non-zero in HIDEOUT version (version checked)
     (finalHideoutProratedDues || 0) + // Only non-zero in HIDEOUT version (version checked)
     (roamingwoodProrated || 0) +
@@ -863,6 +873,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     inspectionCost: inspectionCost || 0,
     appraisalCost: appraisalCost || 0,
     insuranceCost: insuranceCost || 0,
+    surveyFee: surveyFee || 0,
+    pestInspectionCost: pestInspectionCost || 0,
+    creditReportFee: creditReportFee || 0,
+    floodDeterminationFee: floodDeterminationFee || 0,
+    otherThirdPartyFees: otherThirdPartyFees || 0,
     
     // Walker
     totalWalkerFees,
