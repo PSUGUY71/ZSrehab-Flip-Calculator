@@ -402,9 +402,9 @@ export const DEFAULT_INPUTS: LoanInputs = {
   numberOfEndorsements: 0, // Default 0 endorsements
   legalSettlementFees: 0,
   
-  walkerDocPrep: 0,
-  walkerOvernight: 0,
-  walkerWire: 0,
+  walkerDocPrep: 500,      // Walker & Walker standard doc prep fee
+  walkerOvernight: 200,    // Walker & Walker overnight delivery fee
+  walkerWire: 50,          // Walker & Walker wire fee
   
   recordingFees: 0,
   titleCompanyCharges: 0, // Title company charges (for non-Hideout versions)
@@ -415,12 +415,12 @@ export const DEFAULT_INPUTS: LoanInputs = {
   insuranceCost: 0,
   otherThirdPartyFees: 0,
 
-  hideoutTransferFee: 0,
-  hideoutAnnualFee: 0,
+  hideoutTransferFee: 0,   // 0 = auto-calculate from PA Title Insurance chart
+  hideoutAnnualFee: 3000,  // Hideout annual dues (~$3,000/yr typical)
 
-  roamingwoodAnnual: 0, // City/town taxes
-  schoolTaxAnnual: 0,
-  sewerWaterAnnual: 0, // Sewer and water (quarterly)
+  roamingwoodAnnual: 500,  // City/Town taxes annual (~$500/yr typical)
+  schoolTaxAnnual: 1100,   // School tax annual (~$1,100/yr typical)
+  sewerWaterAnnual: 0,
 
   exitStrategy: 'SELL',
   holdingPeriodMonths: 6,

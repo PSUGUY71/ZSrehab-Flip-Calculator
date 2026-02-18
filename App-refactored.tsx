@@ -60,6 +60,22 @@ const App: React.FC = () => {
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
+
+  // When switching to HIDEOUT, ensure Hideout-specific fields have values
+  const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
+    setAppVersion(version);
+    if (version === 'HIDEOUT') {
+      setInputs(prev => ({
+        ...prev,
+        walkerDocPrep: prev.walkerDocPrep || 500,
+        walkerOvernight: prev.walkerOvernight || 200,
+        walkerWire: prev.walkerWire || 50,
+        hideoutAnnualFee: prev.hideoutAnnualFee || 3000,
+        roamingwoodAnnual: prev.roamingwoodAnnual || 500,
+        schoolTaxAnnual: prev.schoolTaxAnnual || 1100,
+      }));
+    }
+  };
   
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
   const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75% (main ARV)
@@ -1073,7 +1089,7 @@ const App: React.FC = () => {
         savedDeals={savedDeals}
         saveNotification={saveNotification}
         appVersion={appVersion}
-        onVersionChange={setAppVersion}
+        onVersionChange={handleVersionChange}
         onNewDeal={handleNewDeal}
         onSaveDeal={handleSaveDeal}
         onOpenDealModal={() => setIsDealModalOpen(true)}
