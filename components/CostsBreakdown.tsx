@@ -14,7 +14,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
     transferTax: results.transferTaxCost || 0,
     titleInsurance: results.titleInsuranceCost || 0,
     closingCosts: (results.cplFeeCost || 0) + (results.endorsementCost || 0) + (results.legalSettlementCost || 0) + (results.recordingCost || 0),
-    thirdPartyFees: (results.inspectionCost || 0) + (results.appraisalCost || 0) + (results.insuranceCost || 0) + (results.surveyFee || 0) + (results.pestInspectionCost || 0) + (results.creditReportFee || 0) + (results.floodDeterminationFee || 0) + (results.otherThirdPartyFees || 0),
+    thirdPartyFees: (results.inspectionCost || 0) + (results.appraisalCost || 0) + (results.insuranceCost || 0) + (results.otherThirdPartyFees || 0),
     walkerFees: results.totalWalkerFees || 0,
     hideoutFees: (results.hideoutTransferCost || 0) + (results.hideoutProratedDues || 0),
     prorations: (results.roamingwoodProrated || 0) + (results.schoolTaxProrated || 0) + (results.sewerWaterProrated || 0),

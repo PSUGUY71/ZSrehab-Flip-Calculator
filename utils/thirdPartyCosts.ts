@@ -9,13 +9,9 @@ export interface CountyLevelCosts {
   // Standard closing costs
   inspectionCost: number; // Professional home inspection
   appraisalCost: number; // Appraisal fee
-  surveyFee: number; // Property survey (often optional but common)
-  pestInspectionCost: number; // Termite/pest inspection
   lawyerFee: number; // Attorney/closing agent fee (varies by state)
   titleInsuranceCost: number; // Title insurance as % of property value (e.g., 0.006 = 0.6%)
   recordingFees: number; // Recording deed and mortgage documents
-  creditReportFee: number; // Credit check/report fee
-  floodDeterminationFee: number; // Flood zone determination
 }
 
 type CountyMap = {
@@ -12442,13 +12438,9 @@ export const getCostLabel = (key: keyof CountyLevelCosts): string => {
   const labels: Record<keyof CountyLevelCosts, string> = {
     inspectionCost: 'Home Inspection',
     appraisalCost: 'Appraisal',
-    surveyFee: 'Survey',
-    pestInspectionCost: 'Pest Inspection',
     lawyerFee: 'Attorney/Closing',
     titleInsuranceCost: 'Title Insurance (%)',
     recordingFees: 'Recording Fees',
-    creditReportFee: 'Credit Report',
-    floodDeterminationFee: 'Flood Determination',
   };
   return labels[key];
 };
@@ -12465,9 +12457,5 @@ export const convertCountyCostsToFormData = (costs: CountyLevelCosts): Record<st
     recordingFees: costs.recordingFees,
     // titleInsuranceRate stays as percentage from form
     legalSettlementFees: costs.lawyerFee,
-    surveyFee: costs.surveyFee,
-    pestInspectionCost: costs.pestInspectionCost,
-    creditReportFee: costs.creditReportFee,
-    floodDeterminationFee: costs.floodDeterminationFee,
   };
 };

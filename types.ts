@@ -128,10 +128,6 @@ export interface LoanInputs {
   inspectionCost: number; // Property inspection cost
   appraisalCost: number; // Property appraisal cost
   insuranceCost: number; // Insurance cost
-  surveyFee: number; // Property survey fee
-  pestInspectionCost: number; // Termite/pest inspection
-  creditReportFee: number; // Credit check/report fee
-  floodDeterminationFee: number; // Flood zone determination
   otherThirdPartyFees: number; // Catch-all for other 3rd party fees
   
   // specific fees
@@ -263,10 +259,6 @@ export interface CalculatedResults {
   inspectionCost: number;
   appraisalCost: number;
   insuranceCost: number;
-  surveyFee: number;
-  pestInspectionCost: number;
-  creditReportFee: number;
-  floodDeterminationFee: number;
   otherThirdPartyFees: number;
   
   // Walker Specifics
@@ -421,10 +413,6 @@ export const DEFAULT_INPUTS: LoanInputs = {
   inspectionCost: 0,
   appraisalCost: 0,
   insuranceCost: 0,
-  surveyFee: 0,
-  pestInspectionCost: 0,
-  creditReportFee: 0,
-  floodDeterminationFee: 0,
   otherThirdPartyFees: 0,
 
   hideoutTransferFee: 0,

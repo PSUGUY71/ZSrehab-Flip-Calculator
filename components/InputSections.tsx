@@ -1015,42 +1015,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Transfer tax rate as a percentage of purchase price - auto-populated based on state. Adjust if your county has different rates."
             />
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <InputGroup 
-              label="Survey Fee" 
-              id="surveyFee" 
-              value={inputs.surveyFee} 
-              onChange={(v) => onInputChange('surveyFee', v)} 
-              prefix="$"
-              helpText="Property survey fee (often optional but common)"
-            />
-            <InputGroup 
-              label="Pest Inspection" 
-              id="pestInspectionCost" 
-              value={inputs.pestInspectionCost} 
-              onChange={(v) => onInputChange('pestInspectionCost', v)} 
-              prefix="$"
-              helpText="Termite/pest inspection fee"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <InputGroup 
-              label="Credit Report" 
-              id="creditReportFee" 
-              value={inputs.creditReportFee} 
-              onChange={(v) => onInputChange('creditReportFee', v)} 
-              prefix="$"
-              helpText="Credit check/report fee"
-            />
-            <InputGroup 
-              label="Flood Determination" 
-              id="floodDeterminationFee" 
-              value={inputs.floodDeterminationFee} 
-              onChange={(v) => onInputChange('floodDeterminationFee', v)} 
-              prefix="$"
-              helpText="Flood zone determination fee"
-            />
-          </div>
+
           <div className="grid grid-cols-2 gap-6">
             <InputGroup 
               label="Other 3rd Party Fees" 

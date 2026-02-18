@@ -47,10 +47,6 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     inspectionCost,
     appraisalCost,
     insuranceCost,
-    surveyFee,
-    pestInspectionCost,
-    creditReportFee,
-    floodDeterminationFee,
     otherThirdPartyFees,
     walkerDocPrep,
     walkerOvernight,
@@ -305,34 +301,34 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Endorsement fees are $100 per endorsement
   const endorsementCost = (numberOfEndorsements || 0) * 100;
   
-  const totalWalkerFees = (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
+  // Walker fees: HIDEOUT only
+  const totalWalkerFees = appVersion === 'NORMAL' ? 0 : (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
   
-  // Title company charges (for non-HIDEOUT versions)
-  const titleCompanyChargesAmount = titleCompanyCharges || 0;
+  // Title company charges: NORMAL only (non-HIDEOUT)
+  const titleCompanyChargesAmount = appVersion === 'HIDEOUT' ? 0 : (titleCompanyCharges || 0);
+
+  // Prorations: HIDEOUT only — zero in NORMAL mode
+  const finalRoamingwoodProrated = appVersion === 'NORMAL' ? 0 : (roamingwoodProrated || 0);
+  const finalSchoolTaxProrated = appVersion === 'NORMAL' ? 0 : (schoolTaxProrated || 0);
+  const finalSewerWaterProrated = appVersion === 'NORMAL' ? 0 : (sewerWaterProrated || 0);
 
   // Inspection and Appraisal are prepaid before closing, not included in closing costs
-  // Note: Walker fees, Hideout Transfer, Dues, and Sewer & Water are only used in HIDEOUT version
-  // They will be 0 for NORMAL version (enforced by version checks above)
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
     (cplFeeCost || 0) +
     (endorsementCost || 0) +
     (legalSettlementFees || 0) + 
-    totalWalkerFees + // Only non-zero in HIDEOUT version
-    titleCompanyChargesAmount + // Only non-zero in non-HIDEOUT versions
+    totalWalkerFees + // HIDEOUT only (zeroed above)
+    titleCompanyChargesAmount + // NORMAL only (zeroed above)
     (recordingFees || 0) + 
     (insuranceCost || 0) + // Insurance is due at closing
-    (surveyFee || 0) + // Property survey fee
-    (pestInspectionCost || 0) + // Termite/pest inspection
-    (creditReportFee || 0) + // Credit report fee
-    (floodDeterminationFee || 0) + // Flood zone determination
     (otherThirdPartyFees || 0) + // Other 3rd party fees
-    (calculatedHideoutTransferFee || 0) + // Only non-zero in HIDEOUT version (version checked)
-    (finalHideoutProratedDues || 0) + // Only non-zero in HIDEOUT version (version checked)
-    (roamingwoodProrated || 0) +
-    (schoolTaxProrated || 0) +
-    (sewerWaterProrated || 0); // Only non-zero in HIDEOUT version
+    (calculatedHideoutTransferFee || 0) + // HIDEOUT only (zeroed above)
+    (finalHideoutProratedDues || 0) + // HIDEOUT only (zeroed above)
+    finalRoamingwoodProrated + // HIDEOUT only (zeroed above)
+    finalSchoolTaxProrated + // HIDEOUT only (zeroed above)
+    finalSewerWaterProrated; // HIDEOUT only (zeroed above)
   
   // Prepaid costs (paid before closing)
   const prepaidCosts = (inspectionCost || 0) + (appraisalCost || 0) + (earnestMoneyDeposit || 0);
@@ -873,10 +869,6 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     inspectionCost: inspectionCost || 0,
     appraisalCost: appraisalCost || 0,
     insuranceCost: insuranceCost || 0,
-    surveyFee: surveyFee || 0,
-    pestInspectionCost: pestInspectionCost || 0,
-    creditReportFee: creditReportFee || 0,
-    floodDeterminationFee: floodDeterminationFee || 0,
     otherThirdPartyFees: otherThirdPartyFees || 0,
     
     // Walker
@@ -885,9 +877,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     hideoutTransferCost: calculatedHideoutTransferFee,
     hideoutProratedDues: finalHideoutProratedDues,
     
-    roamingwoodProrated,
-    schoolTaxProrated,
-    sewerWaterProrated,
+    roamingwoodProrated: finalRoamingwoodProrated,
+    schoolTaxProrated: finalSchoolTaxProrated,
+    sewerWaterProrated: finalSewerWaterProrated,
     daysRemainingInYear,
     totalThirdPartyFees,
 
