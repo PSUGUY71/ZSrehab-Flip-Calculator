@@ -103,3 +103,16 @@ Full mobile responsiveness for the app header and layout.
 
 ### Layout
 - Main content (`App-refactored.tsx`) already used `flex-col lg:flex-row` — inputs stack above results on mobile
+
+---
+
+## Fix: Duplicate AppHeader Declaration (February 20, 2026)
+
+### Problem
+`components/AppHeader.tsx` had the entire `AppHeader` component declared twice — the interface and exported component were copy-pasted at the bottom of the file (lines 194–363). This caused a Babel/Vite build error: `Identifier 'AppHeader' has already been declared`.
+
+### Fix
+Removed the duplicate declaration (interface + component) from lines 194–363, keeping only the original single definition.
+
+### File changed
+- `components/AppHeader.tsx` — removed duplicate `AppHeaderProps` interface and `AppHeader` component
