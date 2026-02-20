@@ -64,6 +64,8 @@ User requested removal of these 4 fields entirely across all layers.
 - `23197af` — Fixed Hideout fees not showing (zero defaults root cause fix)
 - `44314b6` — Updated claude.md
 - `a629bd1` — Add Change Password section to User Settings via Supabase updateUser
+- `2c70a2e` — Updated claude.md with change password feature
+- `da77f61` — Make app header responsive: hamburger menu on mobile, full nav on desktop
 
 ---
 
@@ -83,3 +85,21 @@ A **Change Password** section inside the User Settings modal (`components/UserSe
 
 ### File changed
 - `components/UserSettings.tsx` — added `supabase` import, password state vars, `handlePasswordChange()` function, and Change Password UI section between Account and Calculation Defaults
+
+---
+
+## Responsive Header & Layout (February 20, 2026)
+
+### What was added
+Full mobile responsiveness for the app header and layout.
+
+### Header changes (`components/AppHeader.tsx`)
+- **Desktop (≥768px):** All nav buttons remain inline in the header bar (unchanged look)
+- **Mobile (<768px):** All buttons except Version selector collapse into a hamburger (☰) menu
+  - Tapping ☰ opens a dropdown with: New Deal, Save Deal, My Deals, Report, Settings, Log Out
+  - Tapping any item runs the action and closes the menu
+  - X button closes the menu manually
+- Version selector always visible on both desktop and mobile
+
+### Layout
+- Main content (`App-refactored.tsx`) already used `flex-col lg:flex-row` — inputs stack above results on mobile
