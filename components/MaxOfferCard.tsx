@@ -18,14 +18,16 @@ export const MaxOfferCard: React.FC<MaxOfferCardProps> = ({ inputs, results, max
   ];
 
   const exceedsMax = inputs.purchasePrice > results.maxAllowableOffer;
+  const financingPct = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
   
   // Calculate required ARV for each percentage to make current purchase price work
+  // Loan = (financingPct% × purchasePrice) + (100% × rehabBudget)
+  // Constraint: Loan ≤ LTV% × ARV
+  // Required ARV = ((financingPct% × purchasePrice) + rehabBudget) / LTV%
   const calculateRequiredARV = (ltvPercent: number) => {
     if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
-    // Max Allowable Offer = (ARV * LTV%) - Rehab Budget
-    // Purchase Price = (ARV * LTV%) - Rehab Budget
-    // ARV = (Purchase Price + Rehab Budget) / LTV%
-    return (inputs.purchasePrice + (inputs.rehabBudget || 0)) / ltvPercent;
+    const loanAmount = (inputs.purchasePrice * (financingPct / 100)) + (inputs.rehabBudget || 0);
+    return loanAmount / ltvPercent;
   };
 
   return (

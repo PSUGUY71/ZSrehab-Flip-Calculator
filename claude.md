@@ -116,3 +116,22 @@ Removed the duplicate declaration (interface + component) from lines 194–363, 
 
 ### File changed
 - `components/AppHeader.tsx` — removed duplicate `AppHeaderProps` interface and `AppHeader` component
+
+---
+
+## Fix: ARV Calculation Accounts for Financing Percentage (February 20, 2026)
+
+### Problem
+Max Allowable Offer and Required ARV calculations assumed 100% financing of total cost, ignoring the actual financing percentage. If financing is at 90%, the loan only covers 90% of purchase price + 100% of rehab — the old formula overstated the required ARV and understated the max offer.
+
+### Fix
+Updated formulas across all three files to account for financing %:
+- **Old Max Offer:** `(LTV% × ARV) - Rehab`
+- **New Max Offer:** `(LTV% × ARV - Rehab) ÷ (Financing% ÷ 100)`
+- **Old Required ARV:** `(Purchase + Rehab) ÷ LTV%`
+- **New Required ARV:** `(Financing% × Purchase + Rehab) ÷ LTV%`
+
+### Files changed
+- `utils/calculations.ts` — updated `maxAllowableOffer` formula to divide by financing rate
+- `components/InputSections.tsx` — updated `calculateRequiredARV`, added financing rate to breakdown, added formula display with actual numbers, updated help tooltip
+- `components/MaxOfferCard.tsx` — updated `calculateRequiredARV` to use financing percentage

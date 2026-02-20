@@ -629,12 +629,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             <h2 className="text-sm font-bold text-gray-800 uppercase">Max Offer Analysis</h2>
             <HelpTooltip
               title="Max Offer Analysis"
-              description="This calculates the maximum purchase price you can offer while still getting 100% financing (no cash down). It's based on your selected ARV percentage and rehab budget."
-              formula="Max Offer = (ARV × LTV%) - Rehab Budget"
+              description="This calculates the maximum purchase price you can offer while staying within the ARV limit. It accounts for your financing percentage — the loan covers X% of purchase price + 100% of rehab."
+              formula="Max Offer = (ARV × LTV% - Rehab Budget) ÷ (Financing% ÷ 100)"
               examples={[
-                "ARV: $200,000, LTV: 75%, Rehab: $30,000 → Max Offer = $120,000",
-                "If you offer more than this, you'll need cash for the difference",
-                "Use the percentage buttons to see different scenarios"
+                "ARV: $200,000, LTV: 75%, Rehab: $30,000, Financing: 90%",
+                "Loan cap = $200,000 × 75% = $150,000",
+                "Max Offer = ($150,000 - $30,000) ÷ 0.90 = $133,333",
+                "Required ARV = (90% × Purchase + Rehab) ÷ LTV%",
+                "At 100% financing: Max Offer = $150,000 - $30,000 = $120,000"
               ]}
             />
           </div>
@@ -768,13 +770,15 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           
           {(() => {
             const exceedsMax = inputs.purchasePrice > maxOfferResults.maxAllowableOffer;
+            const financingPct = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
             // Calculate required ARV for each percentage to make current purchase price work
+            // Loan = (financingPct% × purchasePrice) + (100% × rehabBudget)
+            // Constraint: Loan ≤ LTV% × ARV
+            // Required ARV = ((financingPct% × purchasePrice) + rehabBudget) / LTV%
             const calculateRequiredARV = (ltvPercent: number) => {
               if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
-              // Max Allowable Offer = (ARV * LTV%) - Rehab Budget
-              // Purchase Price = (ARV * LTV%) - Rehab Budget
-              // ARV = (Purchase Price + Rehab Budget) / LTV%
-              return (inputs.purchasePrice + inputs.rehabBudget) / ltvPercent;
+              const loanAmount = (inputs.purchasePrice * (financingPct / 100)) + inputs.rehabBudget;
+              return loanAmount / ltvPercent;
             };
             
             return (
@@ -817,8 +821,12 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-600">
-                  <span>Less: Rehab Budget</span>
+                  <span>Less: Rehab Budget (100%)</span>
                   <span>-{formatCurrency(inputs.rehabBudget)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-gray-600">
+                  <span>÷ Financing Rate</span>
+                  <span>{(() => { const fp = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage; return `${fp}%`; })()}</span>
                 </div>
                 
                 {/* Always show current ARV and required ARV for each percentage */}
@@ -833,7 +841,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <div className="text-[10px] font-medium text-center border-b pb-1.5 mb-1.5">
                     <span className="font-bold">Current Est. ARV: {formatCurrency(inputs.arv || 0)}</span>
                   </div>
-                  <div className="text-[10px] font-medium mt-2">Required ARV for each percentage (Purchase Price: {formatCurrency(inputs.purchasePrice)}):</div>
+                  <div className="text-[10px] font-medium mt-2">Required ARV for each percentage (Purchase Price: {formatCurrency(inputs.purchasePrice)}, Financing: {financingPct}%):</div>
+                  <div className="text-[9px] text-gray-500 italic">Formula: ({financingPct}% × {formatCurrency(inputs.purchasePrice)} + {formatCurrency(inputs.rehabBudget)}) ÷ LTV% = ({formatCurrency(inputs.purchasePrice * financingPct / 100)} + {formatCurrency(inputs.rehabBudget)}) ÷ LTV%</div>
                   <div className="grid grid-cols-2 gap-1.5 mt-1">
                     {ltvOptions.map((option) => {
                       const requiredARV = calculateRequiredARV(option.value);

@@ -111,8 +111,14 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const loanAmountByFinancing = totalProjectCost * (financingPercent / 100);
   const qualifiedLoanAmount = Math.min(loanAmountByFinancing, maxLoanBasedOnARV);
   
-  // Calculate Max Allowable Offer to maintain 100% funding (stay under selected LTV)
-  const maxAllowableOffer = maxLoanBasedOnARV - rehabBudget;
+  // Calculate Max Allowable Offer to maintain full funding (stay under selected LTV)
+  // Loan covers: (financingPercent% of purchase) + (100% of rehab)
+  // Constraint: loan ≤ LTV% × ARV
+  // So: (fp/100 × maxPP) + rehab = LTV% × ARV
+  // maxPP = (LTV% × ARV - rehab) / (fp/100)
+  const maxAllowableOffer = financingPercent > 0
+    ? (maxLoanBasedOnARV - rehabBudget) / (financingPercent / 100)
+    : maxLoanBasedOnARV - rehabBudget;
   
   // 70% Rule: Maximum Purchase Price = (ARV × 0.70) - Rehab Budget
   // This is a common house flipping rule to ensure profitability
