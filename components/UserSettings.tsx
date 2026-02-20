@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface UserPreferences {
   displayName: string;
@@ -25,6 +26,13 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
   const [formData, setFormData] = useState<UserPreferences>(preferences);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Password change state
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     setFormData(preferences);
@@ -53,6 +61,38 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
     setFormData(preferences);
     setHasChanges(false);
     onClose();
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      setPasswordError('Password change requires Supabase. Not available in local mode.');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess('Password updated successfully!');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (err) {
+      setPasswordError('An unexpected error occurred.');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   return (
@@ -110,6 +150,56 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
               />
             </div>
           </div>
+
+          {/* Change Password Section */}
+          {isSupabaseConfigured && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase text-gray-700 border-b pb-2">Change Password</h3>
+
+              <div>
+                <label htmlFor="newPassword" className="block text-xs font-semibold text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                  placeholder="Enter new password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-semibold text-gray-700 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); setPasswordSuccess(''); }}
+                  placeholder="Confirm new password"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {passwordError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{passwordError}</p>
+              )}
+              {passwordSuccess && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-3 py-2">✓ {passwordSuccess}</p>
+              )}
+
+              <button
+                onClick={handlePasswordChange}
+                disabled={isChangingPassword || !newPassword || !confirmPassword}
+                className="w-full px-4 py-2 bg-gray-800 text-white rounded text-sm font-medium hover:bg-gray-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isChangingPassword ? 'Updating...' : 'Update Password'}
+              </button>
+            </div>
+          )}
 
           {/* Default Calculation Settings */}
           <div className="space-y-4">
