@@ -62,3 +62,24 @@ User requested removal of these 4 fields entirely across all layers.
 - `a9b9d33` — Added claude.md
 - `7cdbefb` — Removed survey/pest/credit/flood; enforced version separation
 - `23197af` — Fixed Hideout fees not showing (zero defaults root cause fix)
+- `44314b6` — Updated claude.md
+- `a629bd1` — Add Change Password section to User Settings via Supabase updateUser
+
+---
+
+## Change Password Feature (February 20, 2026)
+
+### What was added
+A **Change Password** section inside the User Settings modal (`components/UserSettings.tsx`).
+
+### How it works
+- Only shown when `isSupabaseConfigured` is true (hidden in local/fallback mode)
+- Two fields: **New Password** and **Confirm New Password**
+- Validates: minimum 6 characters, passwords must match
+- Calls `supabase.auth.updateUser({ password: newPassword })` on submit
+- Shows inline success (green) or error (red) message
+- Clears fields on success
+- Button disabled until both fields are filled
+
+### File changed
+- `components/UserSettings.tsx` — added `supabase` import, password state vars, `handlePasswordChange()` function, and Change Password UI section between Account and Calculation Defaults
