@@ -34,6 +34,14 @@ interface ReportModeProps {
   bestDownPayment?: number | null;
   bestCashToClose?: number | null;
   bestOverallLender?: string | null;
+  branding?: {
+    companyName?: string;
+    companyTagline?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    logoUrl?: string;
+    brandColor?: string;
+  };
   onClose: () => void;
 }
 
@@ -49,6 +57,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
   bestDownPayment = null,
   bestCashToClose = null,
   bestOverallLender = null,
+  branding,
   onClose 
 }) => {
   return (
@@ -72,15 +81,43 @@ export const ReportMode: React.FC<ReportModeProps> = ({
       {/* The Physical Sheet */}
       <div className="sheet shadow-2xl print:shadow-none print:pb-0" style={{ pageBreakBefore: 'auto' }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b-2 border-blue-900 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ pageBreakAfter: 'avoid' }}>
+        <div className="flex items-center justify-between border-b-2 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ borderColor: branding?.brandColor || '#1e3a8a', pageBreakAfter: 'avoid' }}>
           <div className="flex items-center gap-4">
-            <div className="bg-blue-900 text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg">ZS</div>
+            {branding?.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt="Company logo"
+                className="h-12 max-w-[120px] object-contain print:h-8"
+                onError={(e) => {
+                  // Fallback to ZS block if logo fails to load
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'text-white p-3 rounded font-bold text-2xl print:p-2 print:text-lg';
+                    fallback.style.backgroundColor = branding?.brandColor || '#1e3a8a';
+                    fallback.textContent = 'ZS';
+                    parent.prepend(fallback);
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className="text-white p-3 rounded font-bold text-2xl print-color-adjust-exact print:p-2 print:text-lg"
+                style={{ backgroundColor: branding?.brandColor || '#1e3a8a' }}
+              >
+                {branding?.companyName ? branding.companyName.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase() : 'ZS'}
+              </div>
+            )}
             <div>
               <h1 className="text-3xl font-bold text-gray-900 leading-none print:text-xl">
-                ZS Flip Calculator <span className="text-blue-900 ml-2">{appVersion === 'NORMAL' ? 'Normal' : 'Hideout'} Version</span>
+                {branding?.companyName || 'ZS Flip Calculator'}{' '}
+                <span style={{ color: branding?.brandColor || '#1e3a8a' }} className="ml-2">
+                  {branding?.companyName ? '' : (appVersion === 'NORMAL' ? 'Normal' : 'Hideout') + ' Version'}
+                </span>
               </h1>
               <span className="text-sm text-gray-500 font-medium tracking-wide block mt-1 print:text-xs">
-                INVESTMENT DEAL ANALYSIS • {new Date().toLocaleDateString()}
+                {branding?.companyTagline || 'INVESTMENT DEAL ANALYSIS'} • {new Date().toLocaleDateString()}
               </span>
             </div>
           </div>
@@ -88,6 +125,13 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             <div className="font-bold text-lg print:text-base">{inputs.address}</div>
             <div>{inputs.state} {inputs.zipCode}</div>
             <div className="text-gray-600 mt-1">{inputs.beds} Beds • {inputs.baths} Baths • {inputs.sqFt.toLocaleString()} SqFt</div>
+            {(branding?.contactPhone || branding?.contactEmail) && (
+              <div className="text-gray-500 mt-1 text-xs print:text-[9px]">
+                {branding.contactPhone && <span>{branding.contactPhone}</span>}
+                {branding.contactPhone && branding.contactEmail && <span> • </span>}
+                {branding.contactEmail && <span>{branding.contactEmail}</span>}
+              </div>
+            )}
           </div>
         </div>
 

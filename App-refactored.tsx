@@ -1094,6 +1094,14 @@ const App: React.FC = () => {
         bestDownPayment={bestDownPayment}
         bestCashToClose={bestCashToClose}
         bestOverallLender={bestOverallLender}
+        branding={{
+          companyName: userPreferences.companyName,
+          companyTagline: userPreferences.companyTagline,
+          contactPhone: userPreferences.contactPhone,
+          contactEmail: userPreferences.contactEmail,
+          logoUrl: userPreferences.logoUrl,
+          brandColor: userPreferences.brandColor,
+        }}
         onClose={() => setIsReportMode(false)} 
       />
     );

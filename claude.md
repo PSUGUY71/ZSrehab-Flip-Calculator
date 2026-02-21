@@ -62,7 +62,7 @@
 |---------|--------|----------|----------------|-------|
 | Finish-Grade Rehab Auto-Estimator | ✅ COMPLETE | P1 | 2026-02-20 | Modal with 4 finish grades; auto-populates rehab line items |
 | Plan B — Rental & STR Analysis | ✅ COMPLETE | P2 | 2026-02-20 | LTR + STR tabs with NOI, cap rate, cash flow, strategy comparison |
-| Branded Report Customization | ⏳ PENDING | P3 | — | Logo, company name, color theme, contact info on reports |
+| Branded Report Customization | ✅ COMPLETE | P3 | 2026-02-20 | Logo, company name, color theme, contact info on reports |
 | Multi-Deal Portfolio Dashboard | ⏳ PENDING | P4 | — | KPI cards, sortable table, charts, best deal highlight |
 | Deal Sharing (Read-Only Link) | ⏳ PENDING | P5 | — | UUID share token, read-only view, print capability |
 
@@ -222,6 +222,7 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 
 | Date | Feature | What Changed | Files Modified |
 |------|---------|-------------|----------------|
+| 2026-02-20 | Feature 3: Branded Reports | Added branding fields to UserSettings (company name, tagline, logo URL, brand color, contact info), applied to ReportMode header with dynamic logo/color | `components/UserSettings.tsx`, `utils/userPreferences.ts`, `ReportMode.tsx`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 2: Plan B Rental/STR | Added LTR + STR analysis modal with NOI, cap rate, cash-on-cash, DSCR, GRM, 1% rule, break-even, income statement, Flip vs Hold comparison | `components/PlanBRentalModal.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 1: Rehab Auto-Estimator | Added 4-grade estimator modal (Rental/Standard/Premium/Luxury) with per-sqft cost engine, contingency toggle, auto-populate rehab line items + budget | `components/RehabEstimatorModal.tsx` (new), `components/index.ts`, `components/InputSections.tsx`, `App-refactored.tsx` |
 | 2026-02-20 | CLAUDE.md Created | Comprehensive project document with all 7 sections | `CLAUDE.md` |

@@ -8,6 +8,13 @@ export interface UserPreferences {
   defaultCapitalGainsTaxRate: number;
   defaultHoldingPeriodMonths: number;
   defaultExitStrategy: 'SELL' | 'REFI' | 'RENT';
+  // Branding
+  companyName: string;
+  companyTagline: string;
+  contactPhone: string;
+  contactEmail: string;
+  logoUrl: string; // URL or data-URI for logo image
+  brandColor: string; // Hex color for report accent
 }
 
 interface UserSettingsProps {
@@ -200,6 +207,118 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
               </button>
             </div>
           )}
+
+          {/* Report Branding */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase text-gray-700 border-b pb-2">Report Branding</h3>
+            <p className="text-xs text-gray-500 -mt-2">Customize how your printed reports look. Your brand appears on the report header.</p>
+
+            <div>
+              <label htmlFor="companyName" className="block text-xs font-semibold text-gray-700 mb-1">
+                Company / Team Name
+              </label>
+              <input
+                id="companyName"
+                type="text"
+                value={formData.companyName || ''}
+                onChange={(e) => handleChange('companyName', e.target.value)}
+                placeholder="e.g. Zenith Capital Group"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="companyTagline" className="block text-xs font-semibold text-gray-700 mb-1">
+                Tagline
+              </label>
+              <input
+                id="companyTagline"
+                type="text"
+                value={formData.companyTagline || ''}
+                onChange={(e) => handleChange('companyTagline', e.target.value)}
+                placeholder="e.g. Real Estate Investment Analysis"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="contactPhone" className="block text-xs font-semibold text-gray-700 mb-1">
+                  Phone
+                </label>
+                <input
+                  id="contactPhone"
+                  type="tel"
+                  value={formData.contactPhone || ''}
+                  onChange={(e) => handleChange('contactPhone', e.target.value)}
+                  placeholder="(555) 123-4567"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="contactEmailBrand" className="block text-xs font-semibold text-gray-700 mb-1">
+                  Contact Email
+                </label>
+                <input
+                  id="contactEmailBrand"
+                  type="email"
+                  value={formData.contactEmail || ''}
+                  onChange={(e) => handleChange('contactEmail', e.target.value)}
+                  placeholder="deals@company.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="logoUrl" className="block text-xs font-semibold text-gray-700 mb-1">
+                Logo URL
+              </label>
+              <input
+                id="logoUrl"
+                type="url"
+                value={formData.logoUrl || ''}
+                onChange={(e) => handleChange('logoUrl', e.target.value)}
+                placeholder="https://example.com/logo.png"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Direct URL to your logo image (PNG, JPG, or SVG)</p>
+              {formData.logoUrl && (
+                <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded flex items-center gap-2">
+                  <img
+                    src={formData.logoUrl as string}
+                    alt="Logo preview"
+                    className="h-8 max-w-[120px] object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="text-[10px] text-gray-400">Preview</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="brandColor" className="block text-xs font-semibold text-gray-700 mb-1">
+                Brand Accent Color
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="brandColor"
+                  type="color"
+                  value={formData.brandColor || '#1e3a5f'}
+                  onChange={(e) => handleChange('brandColor', e.target.value)}
+                  className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={formData.brandColor || '#1e3a5f'}
+                  onChange={(e) => handleChange('brandColor', e.target.value)}
+                  placeholder="#1e3a5f"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Used for report header and accent elements</p>
+            </div>
+          </div>
 
           {/* Default Calculation Settings */}
           <div className="space-y-4">

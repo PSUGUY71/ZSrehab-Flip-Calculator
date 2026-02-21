@@ -9,6 +9,13 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   defaultCapitalGainsTaxRate: 20,
   defaultHoldingPeriodMonths: 6,
   defaultExitStrategy: 'SELL',
+  // Branding defaults
+  companyName: '',
+  companyTagline: '',
+  contactPhone: '',
+  contactEmail: '',
+  logoUrl: '',
+  brandColor: '#1e3a5f',
 };
 
 /**
