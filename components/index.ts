@@ -13,6 +13,7 @@ export { AppHeader } from './AppHeader';
 export { DealModal } from './DealModal';
 export { LenderModal } from './LenderModal';
 export { UserSettings } from './UserSettings';
+export { RehabEstimatorModal } from './RehabEstimatorModal';
 
 // Cards & Sections
 export { MaxOfferCard } from './MaxOfferCard';

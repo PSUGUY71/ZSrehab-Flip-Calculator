@@ -23,6 +23,7 @@ interface InputSectionsProps {
   onRehabLineItemAdd: () => void;
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
   onRehabLineItemDelete: (id: string) => void;
+  onOpenRehabEstimator?: () => void;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
@@ -38,6 +39,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemAdd,
   onRehabLineItemUpdate,
   onRehabLineItemDelete,
+  onOpenRehabEstimator,
   appVersion = 'HIDEOUT',
   hasUserInteracted = false,
 }) => {
@@ -521,18 +523,28 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           
           {/* Itemized Rehab Breakdown */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-semibold text-gray-600">Itemized Rehab Breakdown</span>
-              <HelpTooltip
-                title="Itemized Rehab Breakdown"
-                description="Break down your rehab budget into specific line items. This helps you track costs, ensures your budget is realistic, and provides detailed documentation for lenders. The total of all line items should match your Rehab Budget."
-                examples={[
-                  "Kitchen: New cabinets $5,000, Countertops $3,000, Appliances $4,000 = $12,000",
-                  "Bathroom: Tile $2,000, Fixtures $1,500, Vanity $800 = $4,300",
-                  "Paint: Interior $3,500, Exterior $2,000 = $5,500",
-                  "Total all items should equal your Rehab Budget amount"
-                ]}
-              />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-600">Itemized Rehab Breakdown</span>
+                <HelpTooltip
+                  title="Itemized Rehab Breakdown"
+                  description="Break down your rehab budget into specific line items. This helps you track costs, ensures your budget is realistic, and provides detailed documentation for lenders. The total of all line items should match your Rehab Budget."
+                  examples={[
+                    "Kitchen: New cabinets $5,000, Countertops $3,000, Appliances $4,000 = $12,000",
+                    "Bathroom: Tile $2,000, Fixtures $1,500, Vanity $800 = $4,300",
+                    "Paint: Interior $3,500, Exterior $2,000 = $5,500",
+                    "Total all items should equal your Rehab Budget amount"
+                  ]}
+                />
+              </div>
+              {onOpenRehabEstimator && (
+                <button
+                  onClick={onOpenRehabEstimator}
+                  className="px-3 py-1 text-[10px] font-bold uppercase text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  🔧 Auto-Estimate
+                </button>
+              )}
             </div>
             <RehabLineItems
               lineItems={inputs.rehabLineItems || []}

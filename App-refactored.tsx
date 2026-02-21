@@ -21,6 +21,7 @@ import {
   ResultsColumn,
   ValidationAlert,
   UserSettings,
+  RehabEstimatorModal,
 } from './components';
 
 const App: React.FC = () => {
@@ -57,6 +58,9 @@ const App: React.FC = () => {
   // User Settings State
   const [userPreferences, setUserPreferences] = useState(DEFAULT_PREFERENCES);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  
+  // Rehab Estimator State
+  const [isRehabEstimatorOpen, setIsRehabEstimatorOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -631,6 +635,16 @@ const App: React.FC = () => {
     }));
   };
 
+  // --- REHAB ESTIMATOR HANDLER ---
+  const handleApplyRehabEstimate = (lineItems: import('./types').RehabLineItem[], totalBudget: number) => {
+    setInputs((prev) => ({
+      ...prev,
+      rehabLineItems: lineItems,
+      rehabBudget: totalBudget,
+    }));
+    setIsRehabEstimatorOpen(false);
+  };
+
   // --- DEAL HANDLERS ---
   const handleSaveDeal = async () => {
     if (!currentUser) return;
@@ -1112,6 +1126,7 @@ const App: React.FC = () => {
             onRehabLineItemAdd={handleRehabLineItemAdd}
             onRehabLineItemUpdate={handleRehabLineItemUpdate}
             onRehabLineItemDelete={handleRehabLineItemDelete}
+            onOpenRehabEstimator={() => setIsRehabEstimatorOpen(true)}
             appVersion={appVersion}
             hasUserInteracted={hasUserInteracted}
           />
@@ -1171,6 +1186,17 @@ const App: React.FC = () => {
           preferences={userPreferences}
           onSave={handleSaveUserPreferences}
           onClose={() => setIsSettingsModalOpen(false)}
+        />
+      )}
+
+      {/* Rehab Estimator Modal */}
+      {isRehabEstimatorOpen && (
+        <RehabEstimatorModal
+          sqFt={inputs.sqFt}
+          baths={inputs.baths}
+          foundationType={inputs.foundationType}
+          onApplyEstimate={handleApplyRehabEstimate}
+          onClose={() => setIsRehabEstimatorOpen(false)}
         />
       )}
     </div>
