@@ -13,16 +13,16 @@ interface LoanEstimateCardProps {
 export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, results }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-      <div className="bg-gray-900 px-6 py-4 flex justify-between items-center text-white rounded-t-xl">
-        <h2 className="text-lg font-bold uppercase">{inputs.lenderName || 'BASELINE'} ESTIMATE</h2>
-        <div className="text-right">
+      <div className="bg-gray-900 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-white rounded-t-xl">
+        <h2 className="text-base sm:text-lg font-bold uppercase truncate">{inputs.lenderName || 'BASELINE'} ESTIMATE</h2>
+        <div className="sm:text-right">
           <div className="text-xs opacity-70">QUALIFIED LOAN</div>
-          <div className="text-2xl font-bold text-amber-400">
+          <div className="text-xl sm:text-2xl font-bold text-amber-400">
             {formatCurrency(results.qualifiedLoanAmount)}
           </div>
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <ResultRow 
           label="Total Loan Amount" 
           value={results.requestedLoanAmount} 
@@ -45,7 +45,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             />
           </div>
           <div className="space-y-1.5 text-xs text-gray-700">
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row sm:justify-between">
               <span>1. Maximum Loan Allowed:</span>
               <span className="font-medium">ARV × 75% = {formatCurrency(inputs.arv)} × 0.75 = {formatCurrency(inputs.arv * 0.75)}</span>
             </div>
@@ -88,7 +88,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <span className="text-[10px] text-gray-500">Interest + Insurance + Taxes</span>
               </div>
               <div className="text-right">
-                <span className="text-xl font-bold text-amber-600">
+                <span className="text-lg sm:text-xl font-bold text-amber-600">
                   {formatCurrency(
                     results.monthlyPayment + 
                     (inputs.includeMonthlyInsurance ? (inputs.monthlyInsurance || 0) : 0) + 

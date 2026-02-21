@@ -18,12 +18,12 @@ export const LenderModal: React.FC<LenderModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 no-print">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-        <div className="bg-gray-900 p-6">
-          <h3 className="text-white font-bold text-xl">Lender Configuration</h3>
+        <div className="bg-gray-900 p-4 sm:p-6">
+          <h3 className="text-white font-bold text-lg sm:text-xl">Lender Configuration</h3>
           <p className="text-amber-200 text-xs mt-1">Define financing terms to compare and apply to active deal</p>
         </div>
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputGroup
               label="Lender Name"
               id="lName"
@@ -49,7 +49,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <InputGroup
               label="Int. Rate (%)"
               id="lRate"
@@ -79,7 +79,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
           {/* Financing Terms */}
           <div className="pt-4 border-t border-gray-100">
             <h4 className="text-sm font-bold text-gray-700 mb-3">Financing Terms</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase">Funding %</label>
                 <div className="flex gap-2">
@@ -171,7 +171,7 @@ export const LenderModal: React.FC<LenderModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <InputGroup
               label="Underwriting Fee"
               id="lUw"

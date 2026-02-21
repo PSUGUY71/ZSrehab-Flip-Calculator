@@ -96,7 +96,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[500px]">
               <thead className="bg-gray-100 border-b border-gray-200">
                 <tr>
                   <th className="px-2 py-2 text-left font-semibold text-gray-700">Category</th>
@@ -160,7 +160,7 @@ export const RehabLineItems: React.FC<RehabLineItemsProps> = ({
                     <td className="px-2 py-2 text-center">
                       <button
                         onClick={() => onDeleteItem(item.id)}
-                        className="text-amber-600 hover:text-amber-800 text-sm font-bold"
+                        className="text-amber-600 hover:text-amber-800 text-sm font-bold w-8 h-8 flex items-center justify-center"
                         title="Delete item"
                       >
                         ×

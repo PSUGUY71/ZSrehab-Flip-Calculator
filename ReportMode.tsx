@@ -63,14 +63,14 @@ export const ReportMode: React.FC<ReportModeProps> = ({
   return (
     <div className="min-h-screen bg-gray-200 font-sans text-slate-800 py-8 print:bg-white print:py-0">
       {/* Toolbar - Hidden on Print */}
-      <div className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center z-50 shadow-md no-print">
-        <div className="flex items-center gap-4">
-          <button onClick={onClose} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm font-bold flex items-center gap-2">
-            ← Back to Editor
+      <div className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-3 sm:p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 z-50 shadow-md no-print">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button onClick={onClose} className="bg-gray-700 hover:bg-gray-600 px-3 sm:px-4 py-2 rounded text-sm font-bold flex items-center gap-2">
+            ← Back
           </button>
-          <span className="text-sm text-gray-300">Previewing Printable Report</span>
+          <span className="text-xs sm:text-sm text-gray-300 hidden sm:inline">Previewing Printable Report</span>
         </div>
-        <button onClick={() => window.print()} className="text-sm bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded font-bold border border-blue-500 shadow-lg flex items-center gap-2">
+        <button onClick={() => window.print()} className="text-sm bg-blue-600 hover:bg-blue-500 px-4 sm:px-6 py-2 rounded font-bold border border-blue-500 shadow-lg flex items-center justify-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -81,7 +81,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
       {/* The Physical Sheet */}
       <div className="sheet shadow-2xl print:shadow-none print:pb-0" style={{ pageBreakBefore: 'auto' }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b-2 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ borderColor: branding?.brandColor || '#1e3a8a', pageBreakAfter: 'avoid' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-2 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ borderColor: branding?.brandColor || '#1e3a8a', pageBreakAfter: 'avoid' }}>
           <div className="flex items-center gap-4">
             {branding?.logoUrl ? (
               <img

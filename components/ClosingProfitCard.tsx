@@ -10,7 +10,7 @@ interface ClosingProfitCardProps {
 
 export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, results }) => (
   <div className="bg-white border border-gray-300 rounded p-4 shadow-sm break-inside-avoid print-color-adjust-exact print:p-2">
-    <div className="flex justify-between items-center border-b border-teal-200 pb-2 mb-2 print:pb-1 print:mb-1">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-teal-200 pb-2 mb-2 gap-1 print:pb-1 print:mb-1">
       <div className="flex flex-col">
         <div className="text-teal-900 font-bold uppercase text-xs">Net Profit (Projected)</div>
         <div className="text-[9px] text-teal-600 mt-0.5">ARV - Loan - Costs - Exit - Holding</div>
@@ -19,10 +19,10 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         <span className="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full shadow-sm border border-gray-300">
           {formatPercent(results.roi)} ROI
         </span>
-        <span className="text-teal-900 font-bold text-xl print:text-base">{formatCurrency(results.netProfit)}</span>
+        <span className="text-teal-900 font-bold text-lg sm:text-xl print:text-base">{formatCurrency(results.netProfit)}</span>
       </div>
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4 text-xs text-teal-800 print:gap-y-1">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-3 sm:gap-x-4 text-xs text-teal-800 print:gap-y-1">
       <div className="flex justify-between">
         <span className="opacity-70">Revenue (Sale)</span>
         <span className="font-bold">{formatCurrency(inputs.arv)}</span>
@@ -143,9 +143,9 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
             <span className="opacity-70">Est. Capital Gains Tax ({inputs.capitalGainsTaxRate || 20}%):</span>
             <span className="font-bold text-red-600">-{formatCurrency(results.estimatedCapitalGainsTax)}</span>
           </div>
-          <div className="border-t border-teal-300 pt-1 mt-1 flex justify-between font-bold text-teal-900 text-base">
+          <div className="border-t border-teal-300 pt-1 mt-1 flex flex-col sm:flex-row sm:justify-between font-bold text-teal-900 text-sm sm:text-base gap-1">
             <span>💰 Net After Taxes:</span>
-            <span className="text-lg text-green-600">{formatCurrency(results.netProfitAfterTax)}</span>
+            <span className="text-base sm:text-lg text-green-600">{formatCurrency(results.netProfitAfterTax)}</span>
           </div>
         </div>
       </div>

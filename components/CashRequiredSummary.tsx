@@ -87,7 +87,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                 <div className="text-xs font-bold text-blue-900 uppercase">1. Earnest Money</div>
                 <div className="text-[10px] text-blue-700 mt-0.5">Pre-offer (before closing)</div>
               </div>
-              <span className="text-lg font-bold text-blue-900">{formatCurrency(earnestMoney)}</span>
+              <span className="text-base sm:text-lg font-bold text-blue-900">{formatCurrency(earnestMoney)}</span>
             </div>
             {earnestMoney === 0 && (
               <div className="text-[10px] text-blue-600 italic mt-1">No earnest money deposit entered</div>
@@ -101,7 +101,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                 <div className="text-xs font-bold text-green-900 uppercase">2. Down Payment</div>
                 <div className="text-[10px] text-green-700 mt-0.5">At closing (gap + closing costs)</div>
               </div>
-              <span className="text-lg font-bold text-green-900">{formatCurrency(downPaymentAtClosing)}</span>
+              <span className="text-base sm:text-lg font-bold text-green-900">{formatCurrency(downPaymentAtClosing)}</span>
             </div>
             <div className="mt-2 space-y-1 text-[10px] text-green-700">
               <div className="flex justify-between">
@@ -130,7 +130,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                   {holdingMonths > 0 ? `${holdingMonths} months × ${formatCurrency(monthlyPayment)}/mo` : 'No holding period'}
                 </div>
               </div>
-              <span className="text-lg font-bold text-purple-900">{formatCurrency(monthlyHoldingCosts)}</span>
+              <span className="text-base sm:text-lg font-bold text-purple-900">{formatCurrency(monthlyHoldingCosts)}</span>
             </div>
             {holdingMonths > 0 && (
               <div className="mt-2 space-y-1 text-[10px] text-purple-700">
@@ -161,7 +161,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                   Automatic: 15% of rehab budget (lender requirement)
                 </div>
               </div>
-              <span className="text-lg font-bold text-orange-900">{formatCurrency(contingencyReserves)}</span>
+              <span className="text-base sm:text-lg font-bold text-orange-900">{formatCurrency(contingencyReserves)}</span>
             </div>
             <div className="mt-2 space-y-1 text-[10px] text-orange-700">
               <div className="flex justify-between">
@@ -210,9 +210,9 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
         {/* Total Liquidity Needed */}
         <div className="border-t-2 border-amber-400 pt-4 mt-4">
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg p-4 text-white">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div className="flex flex-col">
-                <span className="text-lg font-bold uppercase mb-1">YOU NEED THIS MUCH:</span>
+                <span className="text-base sm:text-lg font-bold uppercase mb-1">YOU NEED THIS MUCH:</span>
                 <span className="text-xs text-gray-300 mt-0.5">
                   Minimum liquidity required by lender
                 </span>
@@ -221,7 +221,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-3xl font-bold">{formatCurrency(totalLiquidityNeeded)}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{formatCurrency(totalLiquidityNeeded)}</span>
                 <div className="text-xs text-gray-300 mt-1">
                   {inputs.liquidity > 0 && (
                     <span className={inputs.liquidity >= totalLiquidityNeeded ? 'text-green-400' : 'text-red-400'}>
@@ -236,12 +236,12 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           {/* Optional: With Emergency Buffer */}
           {totalDealCost > 0 && emergencyBuffer5Percent > 0 && (
             <div className="mt-3 bg-white border-2 border-gray-300 rounded-lg p-3">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
                 <div>
                   <span className="text-sm font-bold text-yellow-900">With 5% Emergency Buffer:</span>
                   <span className="text-xs text-yellow-700 block mt-0.5">Recommended total cash reserves</span>
                 </div>
-                <span className="text-xl font-bold text-yellow-900">
+                <span className="text-lg sm:text-xl font-bold text-yellow-900">
                   {formatCurrency(totalLiquidityNeeded + emergencyBuffer5Percent)}
                 </span>
               </div>

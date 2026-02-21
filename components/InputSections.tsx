@@ -175,13 +175,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Property Info */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Property Information</h2>
           <span className="text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded font-bold">
             Lender: {inputs.lenderName}
           </span>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           <InputGroup 
             label="Property Address" 
             id="address" 
@@ -190,9 +190,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             onChange={(v) => onInputChange('address', v)}
             helpText="Enter the full property address"
           />
-          <div className="grid grid-cols-4 gap-4">
-            <div className="col-span-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">State</label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <select 
                 className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
                 value={inputs.state} 
@@ -291,7 +289,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Number of units in the property"
             />
           </div>
-          <div className="grid grid-cols-4 gap-4 pt-2 border-t border-gray-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-2 border-t border-gray-100">
             <InputGroup 
               label="SqFt" 
               id="sqft" 
@@ -333,14 +331,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Economics */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Deal Economics</h2>
         </div>
-        <div className="p-6 grid grid-cols-1 gap-6">
+        <div className="p-4 sm:p-6 grid grid-cols-1 gap-6">
           {/* Financing Percentage Selector */}
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <label className="text-xs font-semibold text-gray-600 block mb-3">Financing Percentage:</label>
-            <div className="flex gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-3">
               {[100, 95, 90, 85, 80].map((percent) => (
                 <button
                   key={percent}
@@ -636,7 +634,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Max Offer Analysis */}
       <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-bold text-gray-800 uppercase">Max Offer Analysis</h2>
             <HelpTooltip
@@ -653,7 +651,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             />
           </div>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Work-Backward Mode Toggle */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -890,10 +888,10 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Seller Side Analysis */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-indigo-900 uppercase">Seller Side Analysis</h2>
         </div>
-        <div className="p-6 grid grid-cols-2 gap-6">
+        <div className="p-4 sm:p-6 grid grid-cols-2 gap-4 sm:gap-6">
           <InputGroup 
             label="Seller Original Purchase" 
             id="sop" 
@@ -947,7 +945,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Detailed HUD */}
       <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Detailed HUD Charges</h2>
           {inputs.state && (
             <div className="text-[10px] text-gray-600 mt-1">
@@ -955,7 +953,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </div>
           )}
         </div>
-        <div className="p-6 grid gap-6">
+        <div className="p-4 sm:p-6 grid gap-4 sm:gap-6">
           <div className="grid grid-cols-2 gap-6">
             <InputGroup 
               label="Title Ins. Rate" 
@@ -1272,10 +1270,10 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Exit Strategy */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Exit Strategy</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="grid grid-cols-2 gap-4">
             <InputGroup 
               label="Holding Months" 
@@ -1869,13 +1867,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Borrower */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Borrower & Active Loan</h2>
           <button onClick={onCaptureBaseline} className="text-[10px] text-blue-600 hover:text-blue-500 font-bold transition">
             Snapshot to Comparison
           </button>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           <InputGroup 
             label="Lender Profile Name" 
             id="lenderName" 
@@ -2250,10 +2248,10 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Notes */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Notes</h2>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <textarea
             className="w-full rounded-md border-gray-300 shadow-sm border p-3 min-h-[100px]"
             value={inputs.notes}

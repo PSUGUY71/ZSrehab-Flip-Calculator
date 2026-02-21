@@ -14,7 +14,7 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-amber-200">
-      <div className="bg-gray-900 px-6 py-3 flex justify-between items-center text-white rounded-t-xl">
+      <div className="bg-gray-900 px-4 sm:px-6 py-3 flex justify-between items-center text-white rounded-t-xl">
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-bold uppercase">70% Rule Analysis</h2>
           <HelpTooltip
@@ -39,7 +39,7 @@ export const SeventyPercentRuleCard: React.FC<SeventyPercentRuleCardProps> = ({ 
       <div className="p-4 space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-sm font-semibold text-gray-700">70% Rule Max Purchase Price</span>
-          <span className={`text-lg font-bold ${results.passes70Rule ? 'text-amber-700' : 'text-gray-700'}`}>
+          <span className={`text-base sm:text-lg font-bold ${results.passes70Rule ? 'text-amber-700' : 'text-gray-700'}`}>
             {formatCurrency(results.maxPurchasePrice70Rule)}
           </span>
         </div>

@@ -179,7 +179,7 @@ export const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-gray-50 rounded-xl shadow-2xl max-w-6xl w-full max-h-[94vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 text-white px-6 py-4 rounded-t-xl flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-gray-900 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-t-xl flex items-center justify-between z-10">
           <div>
             <h2 className="text-lg font-bold">📊 Portfolio Dashboard</h2>
             <p className="text-xs text-gray-300 mt-0.5">{savedDeals.length} deal{savedDeals.length !== 1 ? 's' : ''} analyzed</p>
@@ -385,7 +385,7 @@ export const PortfolioDashboard: React.FC<PortfolioDashboardProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 rounded-b-xl flex justify-between items-center">
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-xl flex flex-col sm:flex-row justify-between items-center gap-2">
           <p className="text-[10px] text-gray-400">
             Results recalculated from saved deal data. Click any deal to open it in the editor.
           </p>

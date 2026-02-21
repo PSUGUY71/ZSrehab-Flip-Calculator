@@ -18,8 +18,8 @@ export const DealModal: React.FC<DealModalProps> = ({
   onClose,
 }) => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 no-print">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-2xl border border-amber-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 no-print p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md shadow-2xl border border-amber-200">
         <h3 className="font-bold mb-4 text-gray-900">Saved Deals</h3>
         <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
           {savedDeals.map((d) => (

@@ -65,7 +65,7 @@ export const ValuationReturns: React.FC<ValuationReturnsProps> = ({ inputs, resu
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {/* IRR - MOST IMPORTANT METRIC FOR INVESTORS */}
         <div className="bg-white rounded-lg p-2 text-center border-2 border-amber-400">
           <div className="text-[10px] text-amber-700 font-bold uppercase tracking-wide">

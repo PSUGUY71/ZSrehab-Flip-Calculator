@@ -18,6 +18,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
           <div className="bg-amber-50 p-2 text-[10px] text-amber-800 text-center border-b border-amber-200">
             Overpaying by 10% = $15K loss. Purchase mistakes are MORE CRITICAL than ARV misses.
           </div>
+          <div className="overflow-x-auto">
+          <div className="min-w-[420px]">
           <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
             <div className="p-2">Scenario</div>
             <div className="p-2">Purchase Price</div>
@@ -50,6 +52,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               </div>
             </div>
           ))}
+          </div>
+          </div>
         </div>
       )}
 
@@ -62,6 +66,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
           <div className="bg-amber-50 p-2 text-[10px] text-amber-800 text-center border-b border-amber-200">
             Rehab overrun 20% = $8K loss (manageable with contingency)
           </div>
+          <div className="overflow-x-auto">
+          <div className="min-w-[420px]">
           <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
             <div className="p-2">Scenario</div>
             <div className="p-2">Rehab Cost</div>
@@ -94,6 +100,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               </div>
             </div>
           ))}
+          </div>
+          </div>
         </div>
       )}
 
@@ -102,6 +110,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
         <div className="bg-gray-100 p-2 text-xs font-bold uppercase text-center text-gray-900 border-b border-gray-200">
           ARV Sensitivity Analysis
         </div>
+        <div className="overflow-x-auto">
+        <div className="min-w-[420px]">
         <div className="grid grid-cols-5 text-[10px] font-bold bg-white text-center border-b border-gray-200">
           <div className="p-2">Scenario</div>
           <div className="p-2">ARV</div>
@@ -127,6 +137,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
             <div>{formatCurrency(s.netProfit)}</div>
           </div>
         ))}
+        </div>
+        </div>
       </div>
     </div>
   );

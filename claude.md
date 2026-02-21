@@ -66,6 +66,7 @@
 | Multi-Deal Portfolio Dashboard | ✅ COMPLETE | P4 | 2026-02-20 | KPI cards, sortable table, charts, best deal highlight |
 | Deal Sharing (Read-Only Link) | ✅ COMPLETE | P5 | 2026-02-20 | URL-encoded share links, read-only view, print support |
 | AI Chat Assistant | ✅ COMPLETE | P6 | 2026-02-21 | OpenAI GPT-4o-mini streaming chat with deal context awareness, floating 🤖 bubble |
+| Full Mobile Responsiveness | ✅ COMPLETE | P7 | 2026-02-21 | All components responsive 320px+; scrollable tables, stacking grids, touch targets |
 
 ---
 
@@ -227,6 +228,7 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 
 | Date | Feature | What Changed | Files Modified |
 |------|---------|-------------|----------------|
+| 2026-02-21 | Full Mobile Responsiveness | Made entire site responsive for 320px+ screens: overflow-x-hidden on root, lg-only sticky ResultsColumn, grid-cols-2/sm:grid-cols-4 inputs, overflow-x-auto scrollable tables (ProfitTable/SensitivityAnalysis/RehabLineItems/LenderComparison), flex-col stacking headers (LoanEstimateCard/CashRequired/CostsBreakdown/ClosingProfitCard), responsive text sizes (text-sm→lg), reduced padding (px-4 sm:px-6), improved touch targets, responsive modals (DealModal/LenderModal), responsive AI bubble, responsive ReportMode toolbar | `App-refactored.tsx`, `ReportMode.tsx`, `components/ResultsColumn.tsx`, `components/InputSections.tsx`, `components/ProfitTable.tsx`, `components/SensitivityAnalysis.tsx`, `components/LoanEstimateCard.tsx`, `components/CashRequiredSummary.tsx`, `components/ValuationReturns.tsx`, `components/ClosingProfitCard.tsx`, `components/CostsBreakdown.tsx`, `components/SeventyPercentRuleCard.tsx`, `components/LenderComparison.tsx`, `components/RehabLineItems.tsx`, `components/DealModal.tsx`, `components/LenderModal.tsx`, `components/PortfolioDashboard.tsx` |
 | 2026-02-21 | AI Chat Assistant | Added floating AI chat widget with OpenAI GPT-4o-mini streaming, deal context injection, system prompt with full app knowledge, quick action buttons, minimizable UI, API key in UserSettings | `components/AIChatAssistant.tsx` (new), `components/UserSettings.tsx`, `utils/userPreferences.ts`, `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 5: Deal Sharing | Added URL-encoded share links (no server needed), read-only SharedDealView with print, ShareDealModal with current/saved deal toggle, auto-detect share hash on load | `components/ShareDealModal.tsx` (new), `components/SharedDealView.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 4: Portfolio Dashboard | Added multi-deal dashboard with KPI cards (total profit, avg ROI, best deal), sortable comparison table, profit distribution chart, click-to-open deal | `components/PortfolioDashboard.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |

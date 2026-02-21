@@ -40,9 +40,9 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
 
       {/* Acquisition Costs */}
       <div className="border-l-4 border-orange-500 pl-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
           <h4 className="text-sm font-bold text-gray-800">🏠 Acquisition Costs (At Purchase Closing)</h4>
-          <span className="text-lg font-bold text-orange-700">
+          <span className="text-base sm:text-lg font-bold text-orange-700">
             {formatCurrency(totalAcquisitionCosts)}
           </span>
         </div>
@@ -72,8 +72,8 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
             </div>
           )}
           {acquisitionCosts.thirdPartyFees > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Third-Party Fees (inspection, appraisal, insurance, survey, pest, etc.)</span>
+            <div className="flex justify-between text-gray-600 gap-2">
+              <span className="min-w-0">Third-Party Fees (inspection, appraisal, etc.)</span>
               <span className="font-mono">{formatCurrency(acquisitionCosts.thirdPartyFees)}</span>
             </div>
           )}
@@ -100,9 +100,9 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
 
       {/* Holding Costs */}
       <div className="border-l-4 border-amber-500 pl-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
           <h4 className="text-sm font-bold text-gray-800">📅 Holding Costs (Monthly Carrying)</h4>
-          <span className="text-lg font-bold text-blue-700">
+          <span className="text-base sm:text-lg font-bold text-blue-700">
             {formatCurrency(totalHoldingCosts)}
           </span>
         </div>
@@ -124,9 +124,9 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
 
       {/* Disposition Costs */}
       <div className="border-l-4 border-red-500 pl-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
           <h4 className="text-sm font-bold text-gray-800">🏡 Disposition Costs (At Sale/Exit)</h4>
-          <span className="text-lg font-bold text-red-700">
+          <span className="text-base sm:text-lg font-bold text-red-700">
             {formatCurrency(totalDispositionCosts)}
           </span>
         </div>
@@ -166,7 +166,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
           </div>
           <div className="flex justify-between font-bold text-gray-900 text-sm mt-2 pt-2 border-t border-gray-300">
             <span>Total Project Costs</span>
-            <span className="text-lg">{formatCurrency(totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts)}</span>
+            <span className="text-base sm:text-lg">{formatCurrency(totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts)}</span>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       {/* Formula Display */}
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
         <div className="font-bold text-blue-900 mb-2">Profit Calculation:</div>
-        <div className="space-y-1 text-blue-800 font-mono text-[11px]">
+        <div className="space-y-1 text-blue-800 font-mono text-[11px] break-all">
           <div>Profit = ARV - Purchase Price - Rehab Budget - Total Costs</div>
           <div>Profit = {formatCurrency(results.arv)} - {formatCurrency(0)} - {formatCurrency(0)} - {formatCurrency(totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts)}</div>
         </div>

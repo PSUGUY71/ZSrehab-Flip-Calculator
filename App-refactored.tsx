@@ -1158,7 +1158,7 @@ const App: React.FC = () => {
 
   // --- RENDER: MAIN EDITOR ---
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800 overflow-x-hidden">
       <AppHeader
         currentUser={currentUser}
         savedDeals={savedDeals}
@@ -1309,7 +1309,7 @@ const App: React.FC = () => {
       {!isAIChatOpen && (
         <button
           onClick={() => setIsAIChatOpen(true)}
-          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 no-print group"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 no-print group"
           title="Open AI Assistant"
         >
           <span className="text-2xl group-hover:animate-bounce">🤖</span>
