@@ -65,7 +65,7 @@
 | Branded Report Customization | ✅ COMPLETE | P3 | 2026-02-20 | Logo, company name, color theme, contact info on reports |
 | Multi-Deal Portfolio Dashboard | ✅ COMPLETE | P4 | 2026-02-20 | KPI cards, sortable table, charts, best deal highlight |
 | Deal Sharing (Read-Only Link) | ✅ COMPLETE | P5 | 2026-02-20 | URL-encoded share links, read-only view, print support |
-| AI Chat Assistant | ✅ COMPLETE | P6 | 2026-02-21 | OpenAI GPT-4o-mini streaming chat with deal context awareness |
+| AI Chat Assistant | ✅ COMPLETE | P6 | 2026-02-21 | OpenAI GPT-4o-mini streaming chat with deal context awareness, floating 🤖 bubble |
 
 ---
 

@@ -1304,6 +1304,18 @@ const App: React.FC = () => {
           onOpenSettings={() => { setIsAIChatOpen(false); setIsSettingsModalOpen(true); }}
         />
       )}
+
+      {/* Floating AI Bubble (always visible when chat is closed) */}
+      {!isAIChatOpen && (
+        <button
+          onClick={() => setIsAIChatOpen(true)}
+          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95 no-print group"
+          title="Open AI Assistant"
+        >
+          <span className="text-2xl group-hover:animate-bounce">🤖</span>
+          <span className="absolute -top-1 -left-1 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-white" />
+        </button>
+      )}
     </div>
   );
 };
