@@ -14,6 +14,7 @@ export { DealModal } from './DealModal';
 export { LenderModal } from './LenderModal';
 export { UserSettings } from './UserSettings';
 export { RehabEstimatorModal } from './RehabEstimatorModal';
+export { PlanBRentalModal } from './PlanBRentalModal';
 
 // Cards & Sections
 export { MaxOfferCard } from './MaxOfferCard';

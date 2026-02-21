@@ -22,6 +22,7 @@ import {
   ValidationAlert,
   UserSettings,
   RehabEstimatorModal,
+  PlanBRentalModal,
 } from './components';
 
 const App: React.FC = () => {
@@ -61,6 +62,9 @@ const App: React.FC = () => {
   
   // Rehab Estimator State
   const [isRehabEstimatorOpen, setIsRehabEstimatorOpen] = useState(false);
+  
+  // Plan B Rental Analysis State
+  const [isPlanBRentalOpen, setIsPlanBRentalOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -1109,6 +1113,7 @@ const App: React.FC = () => {
         onOpenDealModal={() => setIsDealModalOpen(true)}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onReportMode={() => setIsReportMode(true)}
+        onPlanBRental={() => setIsPlanBRentalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1197,6 +1202,15 @@ const App: React.FC = () => {
           foundationType={inputs.foundationType}
           onApplyEstimate={handleApplyRehabEstimate}
           onClose={() => setIsRehabEstimatorOpen(false)}
+        />
+      )}
+
+      {/* Plan B Rental Analysis Modal */}
+      {isPlanBRentalOpen && (
+        <PlanBRentalModal
+          dealInputs={inputs}
+          dealResults={results}
+          onClose={() => setIsPlanBRentalOpen(false)}
         />
       )}
     </div>
