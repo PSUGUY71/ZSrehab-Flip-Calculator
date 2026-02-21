@@ -23,6 +23,7 @@ import {
   UserSettings,
   RehabEstimatorModal,
   PlanBRentalModal,
+  PortfolioDashboard,
 } from './components';
 
 const App: React.FC = () => {
@@ -65,6 +66,9 @@ const App: React.FC = () => {
   
   // Plan B Rental Analysis State
   const [isPlanBRentalOpen, setIsPlanBRentalOpen] = useState(false);
+  
+  // Portfolio Dashboard State
+  const [isPortfolioDashboardOpen, setIsPortfolioDashboardOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -1122,6 +1126,7 @@ const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onReportMode={() => setIsReportMode(true)}
         onPlanBRental={() => setIsPlanBRentalOpen(true)}
+        onPortfolioDashboard={() => setIsPortfolioDashboardOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1219,6 +1224,15 @@ const App: React.FC = () => {
           dealInputs={inputs}
           dealResults={results}
           onClose={() => setIsPlanBRentalOpen(false)}
+        />
+      )}
+
+      {/* Portfolio Dashboard */}
+      {isPortfolioDashboardOpen && (
+        <PortfolioDashboard
+          savedDeals={savedDeals}
+          onLoadDeal={handleLoadDeal}
+          onClose={() => setIsPortfolioDashboardOpen(false)}
         />
       )}
     </div>
