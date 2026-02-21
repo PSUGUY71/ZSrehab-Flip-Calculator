@@ -16,6 +16,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   contactEmail: '',
   logoUrl: '',
   brandColor: '#1e3a5f',
+  // AI Assistant
+  openaiApiKey: '',
 };
 
 /**

@@ -64,7 +64,8 @@
 | Plan B — Rental & STR Analysis | ✅ COMPLETE | P2 | 2026-02-20 | LTR + STR tabs with NOI, cap rate, cash flow, strategy comparison |
 | Branded Report Customization | ✅ COMPLETE | P3 | 2026-02-20 | Logo, company name, color theme, contact info on reports |
 | Multi-Deal Portfolio Dashboard | ✅ COMPLETE | P4 | 2026-02-20 | KPI cards, sortable table, charts, best deal highlight |
-| Deal Sharing (Read-Only Link) | ⏳ PENDING | P5 | — | UUID share token, read-only view, print capability |
+| Deal Sharing (Read-Only Link) | ✅ COMPLETE | P5 | 2026-02-20 | URL-encoded share links, read-only view, print support |
+| AI Chat Assistant | ✅ COMPLETE | P6 | 2026-02-21 | OpenAI GPT-4o-mini streaming chat with deal context awareness |
 
 ---
 
@@ -100,8 +101,7 @@
 | `components/PortfolioDashboard.tsx` (280 lines) | Multi-deal portfolio dashboard with KPI cards, sortable table, profit chart |
 | `components/ShareDealModal.tsx` (270 lines) | Share deal modal with URL generation, copy link, saved deal selector |
 | `components/SharedDealView.tsx` (195 lines) | Read-only shared deal view with key metrics, print support, viability indicator |
-| `components/ShareDealModal.tsx` (270 lines) | Share deal modal with URL generation, copy link, saved deal selector |
-| `components/SharedDealView.tsx` (195 lines) | Read-only shared deal view with key metrics, print support, viability indicator |
+| `components/AIChatAssistant.tsx` (370 lines) | Floating AI chat widget with OpenAI streaming, deal context, quick actions |
 
 ### Result Cards
 | File | Purpose |
@@ -227,7 +227,7 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 
 | Date | Feature | What Changed | Files Modified |
 |------|---------|-------------|----------------|
-| 2026-02-20 | Feature 5: Deal Sharing | Added URL-encoded share links (no server needed), read-only SharedDealView with print, ShareDealModal with current/saved deal toggle, auto-detect share hash on load | `components/ShareDealModal.tsx` (new), `components/SharedDealView.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
+| 2026-02-21 | AI Chat Assistant | Added floating AI chat widget with OpenAI GPT-4o-mini streaming, deal context injection, system prompt with full app knowledge, quick action buttons, minimizable UI, API key in UserSettings | `components/AIChatAssistant.tsx` (new), `components/UserSettings.tsx`, `utils/userPreferences.ts`, `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 5: Deal Sharing | Added URL-encoded share links (no server needed), read-only SharedDealView with print, ShareDealModal with current/saved deal toggle, auto-detect share hash on load | `components/ShareDealModal.tsx` (new), `components/SharedDealView.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 4: Portfolio Dashboard | Added multi-deal dashboard with KPI cards (total profit, avg ROI, best deal), sortable comparison table, profit distribution chart, click-to-open deal | `components/PortfolioDashboard.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 3: Branded Reports | Added branding fields to UserSettings (company name, tagline, logo URL, brand color, contact info), applied to ReportMode header with dynamic logo/color | `components/UserSettings.tsx`, `utils/userPreferences.ts`, `ReportMode.tsx`, `App-refactored.tsx` |

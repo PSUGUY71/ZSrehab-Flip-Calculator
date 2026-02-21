@@ -26,6 +26,7 @@ import {
   PortfolioDashboard,
   ShareDealModal,
   SharedDealView,
+  AIChatAssistant,
 } from './components';
 import { decodeDealData } from './components/ShareDealModal';
 
@@ -76,6 +77,9 @@ const App: React.FC = () => {
   // Share Deal State
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharedDealData, setSharedDealData] = useState<any>(null);
+  
+  // AI Chat State
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -1169,6 +1173,7 @@ const App: React.FC = () => {
         onPlanBRental={() => setIsPlanBRentalOpen(true)}
         onPortfolioDashboard={() => setIsPortfolioDashboardOpen(true)}
         onShareDeal={() => setIsShareModalOpen(true)}
+        onAIChat={() => setIsAIChatOpen(prev => !prev)}
         onLogout={handleLogout}
       />
 
@@ -1286,6 +1291,17 @@ const App: React.FC = () => {
           currentUser={currentUser}
           savedDeals={savedDeals}
           onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
+
+      {/* AI Chat Assistant */}
+      {isAIChatOpen && (
+        <AIChatAssistant
+          apiKey={userPreferences.openaiApiKey || ''}
+          dealInputs={inputs}
+          dealResults={results}
+          onClose={() => setIsAIChatOpen(false)}
+          onOpenSettings={() => { setIsAIChatOpen(false); setIsSettingsModalOpen(true); }}
         />
       )}
     </div>
