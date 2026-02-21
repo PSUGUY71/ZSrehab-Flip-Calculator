@@ -24,7 +24,10 @@ import {
   RehabEstimatorModal,
   PlanBRentalModal,
   PortfolioDashboard,
+  ShareDealModal,
+  SharedDealView,
 } from './components';
+import { decodeDealData } from './components/ShareDealModal';
 
 const App: React.FC = () => {
   // --- AUTHENTICATION STATE ---
@@ -69,6 +72,10 @@ const App: React.FC = () => {
   
   // Portfolio Dashboard State
   const [isPortfolioDashboardOpen, setIsPortfolioDashboardOpen] = useState(false);
+  
+  // Share Deal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [sharedDealData, setSharedDealData] = useState<any>(null);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -121,6 +128,27 @@ const App: React.FC = () => {
       }
       setIsLoading(false);
     }
+  }, []);
+
+  // Check for shared deal in URL hash
+  useEffect(() => {
+    const checkShareHash = () => {
+      const hash = window.location.hash;
+      if (hash.startsWith('#share=')) {
+        try {
+          const encoded = hash.substring(7); // Remove '#share='
+          const data = decodeDealData(encoded);
+          if (data && data.data && data.name) {
+            setSharedDealData(data);
+          }
+        } catch (e) {
+          console.error('Failed to decode shared deal:', e);
+        }
+      }
+    };
+    checkShareHash();
+    window.addEventListener('hashchange', checkShareHash);
+    return () => window.removeEventListener('hashchange', checkShareHash);
   }, []);
 
   // Clear inputs whenever user changes (login/logout)
@@ -1053,6 +1081,19 @@ const App: React.FC = () => {
     setEditingLender(null);
   };
 
+  // --- RENDER: SHARED DEAL VIEW (no auth required) ---
+  if (sharedDealData) {
+    return (
+      <SharedDealView
+        dealData={sharedDealData}
+        onClose={() => {
+          setSharedDealData(null);
+          window.history.replaceState(null, '', window.location.pathname);
+        }}
+      />
+    );
+  }
+
   // --- RENDER: LOADING ---
   if (isLoading) {
     return (
@@ -1127,6 +1168,7 @@ const App: React.FC = () => {
         onReportMode={() => setIsReportMode(true)}
         onPlanBRental={() => setIsPlanBRentalOpen(true)}
         onPortfolioDashboard={() => setIsPortfolioDashboardOpen(true)}
+        onShareDeal={() => setIsShareModalOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -1233,6 +1275,17 @@ const App: React.FC = () => {
           savedDeals={savedDeals}
           onLoadDeal={handleLoadDeal}
           onClose={() => setIsPortfolioDashboardOpen(false)}
+        />
+      )}
+
+      {/* Share Deal Modal */}
+      {isShareModalOpen && (
+        <ShareDealModal
+          dealName={inputs.address || `Deal ${new Date().toLocaleDateString()}`}
+          dealInputs={inputs}
+          currentUser={currentUser}
+          savedDeals={savedDeals}
+          onClose={() => setIsShareModalOpen(false)}
         />
       )}
     </div>

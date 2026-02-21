@@ -17,6 +17,7 @@ interface AppHeaderProps {
   onReportMode: () => void;
   onPlanBRental?: () => void;
   onPortfolioDashboard?: () => void;
+  onShareDeal?: () => void;
   onLogout: () => void;
 }
 
@@ -33,6 +34,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onReportMode,
   onPlanBRental,
   onPortfolioDashboard,
+  onShareDeal,
   onLogout,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -119,6 +121,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
           )}
 
+          {onShareDeal && (
+            <button onClick={onShareDeal} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
+              🔗 Share
+            </button>
+          )}
+
           <button onClick={onReportMode} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.198-.54-1.214-1.201l.228-2.267m7.144 0h-7.144" />
@@ -198,6 +206,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {onPortfolioDashboard && (
             <button onClick={() => { onPortfolioDashboard(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
               📈 Portfolio
+            </button>
+          )}
+          {onShareDeal && (
+            <button onClick={() => { onShareDeal(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
+              🔗 Share Deal
             </button>
           )}
           <button onClick={() => { onReportMode(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">

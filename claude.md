@@ -98,6 +98,10 @@
 | `components/RehabEstimatorModal.tsx` (330 lines) | 4-grade rehab auto-estimator (Rental/Standard/Premium/Luxury) |
 | `components/PlanBRentalModal.tsx` (420 lines) | Plan B rental/STR analysis with LTR/STR tabs, income statement, KPI metrics |
 | `components/PortfolioDashboard.tsx` (280 lines) | Multi-deal portfolio dashboard with KPI cards, sortable table, profit chart |
+| `components/ShareDealModal.tsx` (270 lines) | Share deal modal with URL generation, copy link, saved deal selector |
+| `components/SharedDealView.tsx` (195 lines) | Read-only shared deal view with key metrics, print support, viability indicator |
+| `components/ShareDealModal.tsx` (270 lines) | Share deal modal with URL generation, copy link, saved deal selector |
+| `components/SharedDealView.tsx` (195 lines) | Read-only shared deal view with key metrics, print support, viability indicator |
 
 ### Result Cards
 | File | Purpose |
@@ -223,6 +227,8 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 
 | Date | Feature | What Changed | Files Modified |
 |------|---------|-------------|----------------|
+| 2026-02-20 | Feature 5: Deal Sharing | Added URL-encoded share links (no server needed), read-only SharedDealView with print, ShareDealModal with current/saved deal toggle, auto-detect share hash on load | `components/ShareDealModal.tsx` (new), `components/SharedDealView.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
+| 2026-02-20 | Feature 5: Deal Sharing | Added URL-encoded share links (no server needed), read-only SharedDealView with print, ShareDealModal with current/saved deal toggle, auto-detect share hash on load | `components/ShareDealModal.tsx` (new), `components/SharedDealView.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 4: Portfolio Dashboard | Added multi-deal dashboard with KPI cards (total profit, avg ROI, best deal), sortable comparison table, profit distribution chart, click-to-open deal | `components/PortfolioDashboard.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 3: Branded Reports | Added branding fields to UserSettings (company name, tagline, logo URL, brand color, contact info), applied to ReportMode header with dynamic logo/color | `components/UserSettings.tsx`, `utils/userPreferences.ts`, `ReportMode.tsx`, `App-refactored.tsx` |
 | 2026-02-20 | Feature 2: Plan B Rental/STR | Added LTR + STR analysis modal with NOI, cap rate, cash-on-cash, DSCR, GRM, 1% rule, break-even, income statement, Flip vs Hold comparison | `components/PlanBRentalModal.tsx` (new), `components/AppHeader.tsx`, `components/index.ts`, `App-refactored.tsx` |

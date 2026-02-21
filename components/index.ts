@@ -16,6 +16,8 @@ export { UserSettings } from './UserSettings';
 export { RehabEstimatorModal } from './RehabEstimatorModal';
 export { PlanBRentalModal } from './PlanBRentalModal';
 export { PortfolioDashboard } from './PortfolioDashboard';
+export { ShareDealModal } from './ShareDealModal';
+export { SharedDealView } from './SharedDealView';
 
 // Cards & Sections
 export { MaxOfferCard } from './MaxOfferCard';
