@@ -120,44 +120,44 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="h-6 w-px bg-amber-300 mx-1" />
 
           {onPlanBRental && (
-            <button onClick={onPlanBRental} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              📊 Plan B
+            <button onClick={onPlanBRental} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Plan B
             </button>
           )}
 
           {onPortfolioDashboard && (
-            <button onClick={onPortfolioDashboard} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              📈 Portfolio
+            <button onClick={onPortfolioDashboard} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Portfolio
             </button>
           )}
 
           {onShareDeal && (
-            <button onClick={onShareDeal} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              🔗 Share
+            <button onClick={onShareDeal} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Share
             </button>
           )}
 
           {onExpenseTracker && (
-            <button onClick={onExpenseTracker} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              📊 Expenses
+            <button onClick={onExpenseTracker} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Expenses
             </button>
           )}
 
           {onScenarioComparison && (
-            <button onClick={onScenarioComparison} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              ⚖️ Compare
+            <button onClick={onScenarioComparison} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Compare
             </button>
           )}
 
           {onTeamManagement && (
-            <button onClick={onTeamManagement} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              👥 Team
+            <button onClick={onTeamManagement} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Team
             </button>
           )}
 
           {onExportIntegration && (
-            <button onClick={onExportIntegration} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
-              🔌 Export
+            <button onClick={onExportIntegration} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
+              Export
             </button>
           )}
 
@@ -240,37 +240,37 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div className="border-t border-gray-600 my-1" />
           {onPlanBRental && (
             <button onClick={() => { onPlanBRental(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              📊 Plan B Rental
+              Plan B Rental
             </button>
           )}
           {onPortfolioDashboard && (
             <button onClick={() => { onPortfolioDashboard(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              📈 Portfolio
+              Portfolio
             </button>
           )}
           {onShareDeal && (
             <button onClick={() => { onShareDeal(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              🔗 Share Deal
+              Share Deal
             </button>
           )}
           {onExpenseTracker && (
             <button onClick={() => { onExpenseTracker(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              📊 Expense Tracker
+              Expense Tracker
             </button>
           )}
           {onScenarioComparison && (
             <button onClick={() => { onScenarioComparison(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              ⚖️ Compare Strategies
+              Compare Strategies
             </button>
           )}
           {onTeamManagement && (
             <button onClick={() => { onTeamManagement(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              👥 Team
+              Team
             </button>
           )}
           {onExportIntegration && (
             <button onClick={() => { onExportIntegration(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
-              🔌 Export & API
+              Export & API
             </button>
           )}
           {onAIChat && (
