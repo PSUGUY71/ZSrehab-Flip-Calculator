@@ -48,6 +48,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onLogout,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [featuresOpen, setFeaturesOpen] = useState(false);
+  const featuresRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (featuresRef.current && !featuresRef.current.contains(e.target as Node)) {
+        setFeaturesOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   React.useEffect(() => {
     console.log('📊 AppHeader: savedDeals count =', savedDeals.length);
@@ -119,47 +131,58 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           <div className="h-6 w-px bg-amber-300 mx-1" />
 
-          {onPlanBRental && (
-            <button onClick={onPlanBRental} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Plan B
+          {/* Features Dropdown */}
+          <div className="relative" ref={featuresRef}>
+            <button
+              onClick={() => setFeaturesOpen((o) => !o)}
+              className="bg-gray-700 hover:bg-gray-600 border border-amber-400/50 text-amber-200 px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1.5"
+            >
+              Features
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={`w-4 h-4 transition-transform duration-200 ${featuresOpen ? 'rotate-180' : ''}`}>
+                <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clipRule="evenodd" />
+              </svg>
             </button>
-          )}
-
-          {onPortfolioDashboard && (
-            <button onClick={onPortfolioDashboard} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Portfolio
-            </button>
-          )}
-
-          {onShareDeal && (
-            <button onClick={onShareDeal} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Share
-            </button>
-          )}
-
-          {onExpenseTracker && (
-            <button onClick={onExpenseTracker} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Expenses
-            </button>
-          )}
-
-          {onScenarioComparison && (
-            <button onClick={onScenarioComparison} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Compare
-            </button>
-          )}
-
-          {onTeamManagement && (
-            <button onClick={onTeamManagement} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Team
-            </button>
-          )}
-
-          {onExportIntegration && (
-            <button onClick={onExportIntegration} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
-              Export
-            </button>
-          )}
+            {featuresOpen && (
+              <div className="absolute left-0 top-full mt-1 bg-gray-800 border border-amber-400/30 rounded-lg shadow-2xl min-w-[180px] z-50 py-1 overflow-hidden">
+                {onPlanBRental && (
+                  <button onClick={() => { onPlanBRental(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Plan B Rental
+                  </button>
+                )}
+                {onPortfolioDashboard && (
+                  <button onClick={() => { onPortfolioDashboard(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Portfolio
+                  </button>
+                )}
+                {onShareDeal && (
+                  <button onClick={() => { onShareDeal(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Share Deal
+                  </button>
+                )}
+                <div className="border-t border-gray-600 my-1" />
+                {onExpenseTracker && (
+                  <button onClick={() => { onExpenseTracker(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Expense Tracker
+                  </button>
+                )}
+                {onScenarioComparison && (
+                  <button onClick={() => { onScenarioComparison(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Compare Strategies
+                  </button>
+                )}
+                {onTeamManagement && (
+                  <button onClick={() => { onTeamManagement(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Team
+                  </button>
+                )}
+                {onExportIntegration && (
+                  <button onClick={() => { onExportIntegration(); setFeaturesOpen(false); }} className="w-full text-left text-white hover:bg-gray-700 hover:text-amber-200 px-4 py-2 text-sm font-medium transition">
+                    Export & API
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {onAIChat && (
             <button onClick={onAIChat} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
@@ -238,6 +261,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             My Deals ({savedDeals.length})
           </button>
           <div className="border-t border-gray-600 my-1" />
+          <p className="px-3 pt-1 pb-0.5 text-xs font-bold text-amber-400 uppercase tracking-wider">Features</p>
           {onPlanBRental && (
             <button onClick={() => { onPlanBRental(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
               Plan B Rental
