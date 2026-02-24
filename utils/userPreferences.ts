@@ -18,6 +18,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   brandColor: '#1e3a5f',
   // AI Assistant
   openaiApiKey: '',
+  // App Mode
+  hideoutModeEnabled: false,
 };
 
 /**

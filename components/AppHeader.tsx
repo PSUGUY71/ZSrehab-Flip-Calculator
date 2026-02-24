@@ -10,6 +10,7 @@ interface AppHeaderProps {
   saveNotification: string | null;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   onVersionChange?: (version: 'NORMAL' | 'HIDEOUT') => void;
+  showVersionSelector?: boolean;
   onNewDeal: () => void;
   onSaveDeal: () => void;
   onOpenDealModal: () => void;
@@ -32,6 +33,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   saveNotification,
   appVersion = 'HIDEOUT',
   onVersionChange,
+  showVersionSelector = false,
   onNewDeal,
   onSaveDeal,
   onOpenDealModal,
@@ -86,18 +88,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-1.5">
-          {/* Version Selector */}
-          <select
-            value={appVersion}
-            onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
-            className="border border-gray-600 rounded-lg px-2 py-1 text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-400"
-            title="Switch between version modes"
-          >
-            <option value="NORMAL">NORMAL</option>
-            <option value="HIDEOUT">HIDEOUT</option>
-          </select>
-
-          <div className="h-6 w-px bg-gray-600 mx-1" />
+          {/* Version Selector — only shown when Hideout Mode is enabled in Settings */}
+          {showVersionSelector && (
+            <>
+              <select
+                value={appVersion}
+                onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
+                className="border border-gray-600 rounded-lg px-2 py-1 text-sm font-medium text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                title="Switch between version modes"
+              >
+                <option value="NORMAL">NORMAL</option>
+                <option value="HIDEOUT">HIDEOUT</option>
+              </select>
+              <div className="h-6 w-px bg-gray-600 mx-1" />
+            </>
+          )}
 
           {/* Shared button style: bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm font-medium */}
           <button onClick={onNewDeal} className="bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition relative">
@@ -196,14 +201,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Mobile: Version selector + Hamburger */}
         <div className="flex md:hidden items-center gap-2">
-          <select
-            value={appVersion}
-            onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
-            className="border border-gray-400 rounded px-2 py-1 text-xs font-medium text-gray-900 bg-gray-100"
-          >
-            <option value="NORMAL">NORMAL</option>
-            <option value="HIDEOUT">HIDEOUT</option>
-          </select>
+          {showVersionSelector && (
+            <select
+              value={appVersion}
+              onChange={(e) => onVersionChange?.(e.target.value as 'NORMAL' | 'HIDEOUT')}
+              className="border border-gray-400 rounded px-2 py-1 text-xs font-medium text-gray-900 bg-gray-100"
+            >
+              <option value="NORMAL">NORMAL</option>
+              <option value="HIDEOUT">HIDEOUT</option>
+            </select>
+          )}
           <button
             onClick={() => setMenuOpen((o) => !o)}
             className="text-white p-2 rounded-lg hover:bg-gray-700 transition"

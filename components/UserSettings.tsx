@@ -17,6 +17,8 @@ export interface UserPreferences {
   brandColor: string; // Hex color for report accent
   // AI Assistant
   openaiApiKey: string; // OpenAI API key for AI chat
+  // App Mode
+  hideoutModeEnabled: boolean; // Show Hideout version selector in nav
 }
 
 interface UserSettingsProps {
@@ -48,7 +50,7 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
     setHasChanges(false);
   }, [preferences]);
 
-  const handleChange = (field: keyof UserPreferences, value: string | number) => {
+  const handleChange = (field: keyof UserPreferences, value: string | number | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -157,6 +159,27 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                 placeholder="Your name"
                 className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+          </div>
+
+          {/* App Mode */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-bold uppercase text-gray-700 border-b pb-2">App Mode</h3>
+            <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Hideout Version</p>
+                <p className="text-xs text-gray-500 mt-0.5">Enables Hideout-specific fees and the version switcher in the nav bar.</p>
+              </div>
+              <button
+                onClick={() => { handleChange('hideoutModeEnabled', !formData.hideoutModeEnabled); }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                  formData.hideoutModeEnabled ? 'bg-amber-500' : 'bg-gray-300'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  formData.hideoutModeEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
             </div>
           </div>
 

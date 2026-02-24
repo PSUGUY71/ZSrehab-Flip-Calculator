@@ -102,8 +102,8 @@ const App: React.FC = () => {
   // Export Integration State
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
-  // Version State
-  const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
+  // Version State — default NORMAL; HIDEOUT only available when hideoutModeEnabled in settings
+  const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('NORMAL');
 
   // When switching to HIDEOUT, ensure Hideout-specific fields have values
   const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
@@ -223,6 +223,10 @@ const App: React.FC = () => {
     if (currentUser?.email) {
       const prefs = loadUserPreferences(currentUser.email);
       setUserPreferences(prefs);
+      // Always start on NORMAL; only allow HIDEOUT if hideout mode is enabled
+      if (!prefs.hideoutModeEnabled) {
+        setAppVersion('NORMAL');
+      }
     }
   }, [currentUser?.email]);
 
@@ -1196,6 +1200,7 @@ const App: React.FC = () => {
         saveNotification={saveNotification}
         appVersion={appVersion}
         onVersionChange={handleVersionChange}
+        showVersionSelector={userPreferences.hideoutModeEnabled}
         onNewDeal={handleNewDeal}
         onSaveDeal={handleSaveDeal}
         onOpenDealModal={() => setIsDealModalOpen(true)}
