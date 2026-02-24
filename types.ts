@@ -341,7 +341,7 @@ export interface CalculatedResults {
 }
 
 export const DEFAULT_INPUTS: LoanInputs = {
-  appVersion: 'HIDEOUT',
+  appVersion: 'NORMAL',
   lenderName: '',
   address: '',
   state: '',

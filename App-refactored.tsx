@@ -105,20 +105,21 @@ const App: React.FC = () => {
   // Version State — default NORMAL; HIDEOUT only available when hideoutModeEnabled in settings
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('NORMAL');
 
-  // When switching to HIDEOUT, ensure Hideout-specific fields have values
+  // When switching versions, update both the appVersion state AND inputs.appVersion (used by calculateLoan)
   const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
     setAppVersion(version);
-    if (version === 'HIDEOUT') {
-      setInputs(prev => ({
-        ...prev,
+    setInputs(prev => ({
+      ...prev,
+      appVersion: version,
+      ...(version === 'HIDEOUT' ? {
         walkerDocPrep: prev.walkerDocPrep || 500,
         walkerOvernight: prev.walkerOvernight || 200,
         walkerWire: prev.walkerWire || 50,
         hideoutAnnualFee: prev.hideoutAnnualFee || 3000,
         roamingwoodAnnual: prev.roamingwoodAnnual || 500,
         schoolTaxAnnual: prev.schoolTaxAnnual || 1100,
-      }));
-    }
+      } : {})
+    }));
   };
   
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
@@ -226,6 +227,7 @@ const App: React.FC = () => {
       // Always start on NORMAL; only allow HIDEOUT if hideout mode is enabled
       if (!prefs.hideoutModeEnabled) {
         setAppVersion('NORMAL');
+        setInputs(prev => ({ ...prev, appVersion: 'NORMAL' }));
       }
     }
   }, [currentUser?.email]);
