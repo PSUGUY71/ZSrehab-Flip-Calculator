@@ -240,6 +240,7 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 
 | Date | Feature | What Changed | Files Modified |
 |------|---------|-------------|----------------|
+| 2026-02-24 | Nav: Uniform button style + AI placement | Standardized all desktop nav buttons to identical style: `bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm font-medium`. Removed SVG icons from Save/Report/Settings. Moved AI button to immediately after Report. Log Out gets subtle red hover. Version selector updated to match dark theme. | `components/AppHeader.tsx` |
 | 2026-02-24 | Nav: Remove emoji icons from menu buttons | Removed all emoji icons (📁📊⚙️🚪📈🔗⚖️👥🔌) from every desktop and mobile menu button. 🤖 on AI button kept intentionally. All buttons now text-only for a cleaner, consistent look. | `components/AppHeader.tsx` |
 | 2026-02-24 | Nav: Standardize button sizing | Applied uniform sizing `px-3 py-1 text-sm` across all nav buttons. Removed `flex items-center gap-1` from buttons that no longer have icons. | `components/AppHeader.tsx` |
 | 2026-02-24 | Nav: Features dropdown | Consolidated 7 individual feature buttons (Plan B / Portfolio / Share / Expenses / Compare / Team / Export) into a single "Features ▾" dropdown button. Desktop: amber-bordered dropdown panel with two groups separated by a divider. Mobile: same list with bold amber "FEATURES" section label. Added `featuresOpen` state + outside-click handler via `useRef`. | `components/AppHeader.tsx` |
