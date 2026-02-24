@@ -77,11 +77,13 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         <span className="font-bold text-red-600">-{formatCurrency(results.qualifiedLoanAmount)}</span>
       </div>
 
-      {/* Walker Fees */}
-      <div className="flex justify-between">
-        <span className="opacity-70">Walker Fees</span>
-        <span className="font-bold text-red-600">-{formatCurrency(results.totalWalkerFees)}</span>
-      </div>
+      {/* Walker Fees — only show in Hideout mode */}
+      {results.totalWalkerFees > 0 && (
+        <div className="flex justify-between">
+          <span className="opacity-70">Walker Fees</span>
+          <span className="font-bold text-red-600">-{formatCurrency(results.totalWalkerFees)}</span>
+        </div>
+      )}
 
       {/* Other Buying Costs */}
       <div className="flex justify-between">

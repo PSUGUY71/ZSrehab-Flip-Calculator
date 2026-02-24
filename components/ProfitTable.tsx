@@ -74,13 +74,15 @@ export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => 
         <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate / 100))}</div>
       </div>
 
-      {/* Walker Fees Row */}
-      <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-        <div className="col-span-4">Walker & Walker Fees</div>
-        <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
-        <div className="col-span-2 text-center">1</div>
-        <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
-      </div>
+      {/* Walker Fees Row — only show in Hideout mode */}
+      {results.totalWalkerFees > 0 && (
+        <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
+          <div className="col-span-4">Walker & Walker Fees</div>
+          <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
+          <div className="col-span-2 text-center">1</div>
+          <div className="col-span-3 text-right">{formatCurrency(results.totalWalkerFees)}</div>
+        </div>
+      )}
 
       {/* Closing Fees Row */}
       <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">

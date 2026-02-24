@@ -54,7 +54,7 @@ interface ReportModeProps {
 export const ReportMode: React.FC<ReportModeProps> = ({ 
   inputs, 
   results, 
-  appVersion = 'HIDEOUT', 
+  appVersion = 'NORMAL', 
   lenders = [],
   comparisonData = [],
   bestLenderFees = null,
