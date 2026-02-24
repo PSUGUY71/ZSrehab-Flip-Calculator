@@ -18,6 +18,10 @@ interface AppHeaderProps {
   onPlanBRental?: () => void;
   onPortfolioDashboard?: () => void;
   onShareDeal?: () => void;
+  onExpenseTracker?: () => void;
+  onScenarioComparison?: () => void;
+  onTeamManagement?: () => void;
+  onExportIntegration?: () => void;
   onAIChat?: () => void;
   onLogout: () => void;
 }
@@ -36,6 +40,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onPlanBRental,
   onPortfolioDashboard,
   onShareDeal,
+  onExpenseTracker,
+  onScenarioComparison,
+  onTeamManagement,
+  onExportIntegration,
   onAIChat,
   onLogout,
 }) => {
@@ -129,6 +137,30 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </button>
           )}
 
+          {onExpenseTracker && (
+            <button onClick={onExpenseTracker} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
+              📊 Expenses
+            </button>
+          )}
+
+          {onScenarioComparison && (
+            <button onClick={onScenarioComparison} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
+              ⚖️ Compare
+            </button>
+          )}
+
+          {onTeamManagement && (
+            <button onClick={onTeamManagement} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
+              👥 Team
+            </button>
+          )}
+
+          {onExportIntegration && (
+            <button onClick={onExportIntegration} className="bg-gray-700 hover:bg-gray-800 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
+              🔌 Export
+            </button>
+          )}
+
           {onAIChat && (
             <button onClick={onAIChat} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition flex items-center gap-1">
               🤖 AI
@@ -219,6 +251,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {onShareDeal && (
             <button onClick={() => { onShareDeal(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
               🔗 Share Deal
+            </button>
+          )}
+          {onExpenseTracker && (
+            <button onClick={() => { onExpenseTracker(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
+              📊 Expense Tracker
+            </button>
+          )}
+          {onScenarioComparison && (
+            <button onClick={() => { onScenarioComparison(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
+              ⚖️ Compare Strategies
+            </button>
+          )}
+          {onTeamManagement && (
+            <button onClick={() => { onTeamManagement(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
+              👥 Team
+            </button>
+          )}
+          {onExportIntegration && (
+            <button onClick={() => { onExportIntegration(); closeMenu(); }} className="text-left text-white hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
+              🔌 Export & API
             </button>
           )}
           {onAIChat && (

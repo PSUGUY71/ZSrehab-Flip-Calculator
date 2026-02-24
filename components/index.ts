@@ -19,6 +19,12 @@ export { PortfolioDashboard } from './PortfolioDashboard';
 export { ShareDealModal } from './ShareDealModal';
 export { SharedDealView } from './SharedDealView';
 export { AIChatAssistant } from './AIChatAssistant';
+export { BrandingModal } from './BrandingModal';
+export { PropertyImportModal } from './PropertyImportModal';
+export { ExpenseTrackerModal } from './ExpenseTrackerModal';
+export { ScenarioComparisonModal } from './ScenarioComparisonModal';
+export { TeamManagementModal } from './TeamManagementModal';
+export { ExportIntegrationModal } from './ExportIntegrationModal';
 
 // Cards & Sections
 export { MaxOfferCard } from './MaxOfferCard';

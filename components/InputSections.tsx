@@ -24,6 +24,7 @@ interface InputSectionsProps {
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
   onRehabLineItemDelete: (id: string) => void;
   onOpenRehabEstimator?: () => void;
+  onOpenPropertyImport?: () => void;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
@@ -40,6 +41,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemUpdate,
   onRehabLineItemDelete,
   onOpenRehabEstimator,
+  onOpenPropertyImport,
   appVersion = 'HIDEOUT',
   hasUserInteracted = false,
 }) => {
@@ -190,6 +192,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             onChange={(v) => onInputChange('address', v)}
             helpText="Enter the full property address"
           />
+          {onOpenPropertyImport && (
+            <button
+              onClick={onOpenPropertyImport}
+              className="w-full sm:w-auto text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-3 py-1.5 transition flex items-center gap-1.5 -mt-2"
+            >
+              🔍 Auto-Fill Property Data
+            </button>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="col-span-1">
               <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">State</label>

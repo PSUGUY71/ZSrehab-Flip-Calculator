@@ -6,6 +6,7 @@ import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator'
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
 import { getCountyThirdPartyCosts } from './utils/thirdPartyCosts';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
+import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { getDeals, saveDeal, deleteDeal } from './lib/database';
 import { ReportMode } from './ReportMode';
@@ -27,6 +28,11 @@ import {
   ShareDealModal,
   SharedDealView,
   AIChatAssistant,
+  PropertyImportModal,
+  ExpenseTrackerModal,
+  ScenarioComparisonModal,
+  TeamManagementModal,
+  ExportIntegrationModal,
 } from './components';
 import { decodeDealData } from './components/ShareDealModal';
 
@@ -80,6 +86,21 @@ const App: React.FC = () => {
   
   // AI Chat State
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  
+  // Property Import State
+  const [isPropertyImportOpen, setIsPropertyImportOpen] = useState(false);
+  
+  // Expense Tracker State
+  const [isExpenseTrackerOpen, setIsExpenseTrackerOpen] = useState(false);
+  
+  // Scenario Comparison State
+  const [isScenarioComparisonOpen, setIsScenarioComparisonOpen] = useState(false);
+  
+  // Team Management State
+  const [isTeamManagementOpen, setIsTeamManagementOpen] = useState(false);
+  
+  // Export Integration State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   
   // Version State
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('HIDEOUT');
@@ -1150,6 +1171,16 @@ const App: React.FC = () => {
           contactEmail: userPreferences.contactEmail,
           logoUrl: userPreferences.logoUrl,
           brandColor: userPreferences.brandColor,
+          ...(() => {
+            const b = loadBrandingSettings();
+            return {
+              agentName: b.agentName,
+              website: b.website,
+              reportSubtitle: b.reportSubtitle,
+              disclaimerText: b.disclaimerText,
+              logoBase64: b.logoBase64,
+            };
+          })(),
         }}
         onClose={() => setIsReportMode(false)} 
       />
@@ -1173,6 +1204,10 @@ const App: React.FC = () => {
         onPlanBRental={() => setIsPlanBRentalOpen(true)}
         onPortfolioDashboard={() => setIsPortfolioDashboardOpen(true)}
         onShareDeal={() => setIsShareModalOpen(true)}
+        onExpenseTracker={() => setIsExpenseTrackerOpen(true)}
+        onScenarioComparison={() => setIsScenarioComparisonOpen(true)}
+        onTeamManagement={() => setIsTeamManagementOpen(true)}
+        onExportIntegration={() => setIsExportModalOpen(true)}
         onAIChat={() => setIsAIChatOpen(prev => !prev)}
         onLogout={handleLogout}
       />
@@ -1192,6 +1227,7 @@ const App: React.FC = () => {
             onRehabLineItemUpdate={handleRehabLineItemUpdate}
             onRehabLineItemDelete={handleRehabLineItemDelete}
             onOpenRehabEstimator={() => setIsRehabEstimatorOpen(true)}
+            onOpenPropertyImport={() => setIsPropertyImportOpen(true)}
             appVersion={appVersion}
             hasUserInteracted={hasUserInteracted}
           />
@@ -1291,6 +1327,56 @@ const App: React.FC = () => {
           currentUser={currentUser}
           savedDeals={savedDeals}
           onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
+
+      {/* Expense Tracker Modal */}
+      {isExpenseTrackerOpen && (
+        <ExpenseTrackerModal
+          rehabLineItems={inputs.rehabLineItems}
+          totalRehabBudget={inputs.rehabBudget}
+          closingCostsBuy={results.totalClosingCosts}
+          closingCostsSell={results.totalExitCosts}
+          holdingCosts={results.totalHoldingCosts}
+          onClose={() => setIsExpenseTrackerOpen(false)}
+        />
+      )}
+
+      {/* Scenario Comparison Modal */}
+      {isScenarioComparisonOpen && (
+        <ScenarioComparisonModal
+          dealInputs={inputs}
+          dealResults={results}
+          onClose={() => setIsScenarioComparisonOpen(false)}
+        />
+      )}
+
+      {/* Team Management Modal */}
+      {isTeamManagementOpen && (
+        <TeamManagementModal
+          currentUser={currentUser}
+          onClose={() => setIsTeamManagementOpen(false)}
+        />
+      )}
+
+      {/* Export & Integration Modal */}
+      {isExportModalOpen && (
+        <ExportIntegrationModal
+          dealInputs={inputs}
+          dealResults={results}
+          onClose={() => setIsExportModalOpen(false)}
+        />
+      )}
+
+      {/* Property Import Modal */}
+      {isPropertyImportOpen && (
+        <PropertyImportModal
+          currentAddress={inputs.address || ''}
+          onApplyData={(data) => {
+            setInputs(prev => ({ ...prev, ...data }));
+            setHasUserInteracted(true);
+          }}
+          onClose={() => setIsPropertyImportOpen(false)}
         />
       )}
 

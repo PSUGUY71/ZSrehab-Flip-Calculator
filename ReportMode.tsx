@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LoanInputs, CalculatedResults, LenderOption } from './types';
 import { formatCurrency, formatPercent } from './utils/calculations';
 import { ResultRow } from './components/ResultRow';
@@ -7,6 +7,7 @@ import { ClosingProfitCard } from './components/ClosingProfitCard';
 import { EligibilityAlert } from './components/EligibilityAlert';
 import { ValuationReturns } from './components/ValuationReturns';
 import { AssumptionsSummary } from './components/AssumptionsSummary';
+import { BrandingModal, BrandingSettings, loadBrandingSettings } from './components/BrandingModal';
 
 interface LenderComparisonResult {
   lenderUpfrontFeesAdjusted: number;
@@ -41,6 +42,11 @@ interface ReportModeProps {
     contactEmail?: string;
     logoUrl?: string;
     brandColor?: string;
+    agentName?: string;
+    website?: string;
+    reportSubtitle?: string;
+    disclaimerText?: string;
+    logoBase64?: string;
   };
   onClose: () => void;
 }
@@ -57,9 +63,35 @@ export const ReportMode: React.FC<ReportModeProps> = ({
   bestDownPayment = null,
   bestCashToClose = null,
   bestOverallLender = null,
-  branding,
+  branding: brandingProp,
   onClose 
 }) => {
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
+  const [localBranding, setLocalBranding] = useState<BrandingSettings | null>(() => {
+    const saved = loadBrandingSettings();
+    if (saved.companyName || saved.agentName || saved.logoBase64 || saved.phone || saved.email) return saved;
+    return null;
+  });
+
+  // Merge: localStorage branding takes priority, then prop branding, then defaults
+  const branding = {
+    companyName: localBranding?.companyName || brandingProp?.companyName || '',
+    companyTagline: localBranding?.reportSubtitle || brandingProp?.companyTagline || '',
+    contactPhone: localBranding?.phone || brandingProp?.contactPhone || '',
+    contactEmail: localBranding?.email || brandingProp?.contactEmail || '',
+    logoUrl: brandingProp?.logoUrl || '',
+    brandColor: localBranding?.colorTheme || brandingProp?.brandColor || '#1e3a8a',
+    agentName: localBranding?.agentName || brandingProp?.agentName || '',
+    website: localBranding?.website || brandingProp?.website || '',
+    reportSubtitle: localBranding?.reportSubtitle || brandingProp?.reportSubtitle || '',
+    disclaimerText: localBranding?.disclaimerText || brandingProp?.disclaimerText || '',
+    logoBase64: localBranding?.logoBase64 || brandingProp?.logoBase64 || '',
+  };
+
+  const handleBrandingSave = (settings: BrandingSettings) => {
+    setLocalBranding(settings);
+  };
+
   return (
     <div className="min-h-screen bg-gray-200 font-sans text-slate-800 py-8 print:bg-white print:py-0">
       {/* Toolbar - Hidden on Print */}
@@ -70,12 +102,17 @@ export const ReportMode: React.FC<ReportModeProps> = ({
           </button>
           <span className="text-xs sm:text-sm text-gray-300 hidden sm:inline">Previewing Printable Report</span>
         </div>
-        <button onClick={() => window.print()} className="text-sm bg-blue-600 hover:bg-blue-500 px-4 sm:px-6 py-2 rounded font-bold border border-blue-500 shadow-lg flex items-center justify-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Print Report
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsBrandingModalOpen(true)} className="text-sm bg-amber-600 hover:bg-amber-500 px-4 py-2 rounded font-bold border border-amber-500 shadow-lg flex items-center justify-center gap-2">
+            🎨 Customize Report
+          </button>
+          <button onClick={() => window.print()} className="text-sm bg-blue-600 hover:bg-blue-500 px-4 sm:px-6 py-2 rounded font-bold border border-blue-500 shadow-lg flex items-center justify-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Report
+          </button>
+        </div>
       </div>
 
       {/* The Physical Sheet */}
@@ -83,9 +120,9 @@ export const ReportMode: React.FC<ReportModeProps> = ({
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-2 pb-2 mb-2 print:pb-0.5 print:mb-0.5" style={{ borderColor: branding?.brandColor || '#1e3a8a', pageBreakAfter: 'avoid' }}>
           <div className="flex items-center gap-4">
-            {branding?.logoUrl ? (
+            {(branding?.logoBase64 || branding?.logoUrl) ? (
               <img
-                src={branding.logoUrl}
+                src={branding.logoBase64 || branding.logoUrl}
                 alt="Company logo"
                 className="h-12 max-w-[120px] object-contain print:h-8"
                 onError={(e) => {
@@ -125,11 +162,16 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             <div className="font-bold text-lg print:text-base">{inputs.address}</div>
             <div>{inputs.state} {inputs.zipCode}</div>
             <div className="text-gray-600 mt-1">{inputs.beds} Beds • {inputs.baths} Baths • {inputs.sqFt.toLocaleString()} SqFt</div>
-            {(branding?.contactPhone || branding?.contactEmail) && (
+            {branding?.agentName && (
+              <div className="text-gray-600 text-xs print:text-[9px] font-medium">{branding.agentName}</div>
+            )}
+            {(branding?.contactPhone || branding?.contactEmail || branding?.website) && (
               <div className="text-gray-500 mt-1 text-xs print:text-[9px]">
                 {branding.contactPhone && <span>{branding.contactPhone}</span>}
                 {branding.contactPhone && branding.contactEmail && <span> • </span>}
                 {branding.contactEmail && <span>{branding.contactEmail}</span>}
+                {(branding.contactPhone || branding.contactEmail) && branding.website && <span> • </span>}
+                {branding.website && <span>{branding.website}</span>}
               </div>
             )}
           </div>
@@ -908,7 +950,34 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Report Footer — Disclaimer & Contact */}
+        <div className="mt-6 pt-3 border-t-2 print:mt-2 print:pt-1" style={{ borderColor: branding?.brandColor || '#1e3a8a' }}>
+          {(branding?.contactPhone || branding?.contactEmail || branding?.website) && (
+            <div className="text-center text-xs text-gray-500 mb-2 print:text-[9px] print:mb-1">
+              {branding.contactPhone && <span>{branding.contactPhone}</span>}
+              {branding.contactPhone && branding.contactEmail && <span> • </span>}
+              {branding.contactEmail && <span>{branding.contactEmail}</span>}
+              {(branding.contactPhone || branding.contactEmail) && branding.website && <span> • </span>}
+              {branding.website && <span>{branding.website}</span>}
+            </div>
+          )}
+          <div className="text-center text-[10px] text-gray-400 italic print:text-[8px]">
+            {branding?.disclaimerText || 'This analysis is for informational purposes only and does not constitute professional advice. Not a professional opinion.'}
+          </div>
+          <div className="text-center text-[9px] text-gray-300 mt-1 print:text-[7px]">
+            Generated by {branding?.companyName || 'ZS Flip Calculator'} • {new Date().toLocaleDateString()}
+          </div>
+        </div>
       </div>
+
+      {/* Branding Customization Modal */}
+      {isBrandingModalOpen && (
+        <BrandingModal
+          onClose={() => setIsBrandingModalOpen(false)}
+          onSave={handleBrandingSave}
+        />
+      )}
     </div>
   );
 };
