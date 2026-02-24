@@ -42,7 +42,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemDelete,
   onOpenRehabEstimator,
   onOpenPropertyImport,
-  appVersion = 'HIDEOUT',
+  appVersion = 'NORMAL',
   hasUserInteracted = false,
 }) => {
   const ltvOptions = [
@@ -1155,6 +1155,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             </div>
           )}
           
+          {/* City/Town Taxes + School Tax + Sewer & Water - Only show in HIDEOUT version */}
+          {appVersion === 'HIDEOUT' && (
           <div className="grid grid-cols-2 gap-6">
             <div>
               <div className="mb-1">
@@ -1277,6 +1279,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </div>
             )}
           </div>
+          )} {/* end appVersion === 'HIDEOUT' */}
         </div>
       </section>
 
