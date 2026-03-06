@@ -130,6 +130,9 @@ export interface LoanInputs {
   insuranceCost: number; // Insurance cost
   otherThirdPartyFees: number; // Catch-all for other 3rd party fees
 
+  // Third-Party Cost Range Estimator
+  thirdPartyClosingCostRange: 'LOW' | 'MID' | 'HIGH'; // Range selector for quick estimate
+
   // Additional Closing Fees (from PA Buyer's Estimated Cost Sheet)
   mechanicsLienInsurance: number;   // 1D - Mechanics Lien Insurance
   surveyFee: number;                // 1H - Survey
@@ -454,6 +457,8 @@ export const DEFAULT_INPUTS: LoanInputs = {
   appraisalCost: 0,
   insuranceCost: 0,
   otherThirdPartyFees: 0,
+
+  thirdPartyClosingCostRange: 'MID',
 
   mechanicsLienInsurance: 0,
   surveyFee: 0,

@@ -1482,6 +1482,89 @@ export const InputSections: React.FC<InputSectionsProps> = ({
         </div>
       </section>
 
+      {/* Third-Party Closing Cost Estimator */}
+      <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
+        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
+          <h2 className="text-sm font-bold text-gray-800 uppercase">Third-Party Closing Cost Estimator</h2>
+          <p className="text-[10px] text-gray-500 mt-0.5">Quick estimate based on purchase price — select a cost range typical for your market</p>
+        </div>
+        <div className="p-4 sm:p-6 space-y-4">
+          {/* Range Selector */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Cost Range</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['LOW', 'MID', 'HIGH'] as const).map((range) => {
+                const rangeLabels = { LOW: '0.5% – 1.0%', MID: '1.0% – 2.0%', HIGH: '2.0% – 4.0%' };
+                const rangeDesc = { LOW: 'Low-cost markets', MID: 'Typical markets', HIGH: 'High-cost markets' };
+                const isSelected = (inputs.thirdPartyClosingCostRange || 'MID') === range;
+                return (
+                  <button
+                    key={range}
+                    type="button"
+                    onClick={() => onInputChange('thirdPartyClosingCostRange', range)}
+                    className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                      isSelected
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-md'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-800'}`}>{range}</div>
+                    <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-blue-100' : 'text-blue-600'}`}>{rangeLabels[range]}</div>
+                    <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>{rangeDesc[range]}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Results */}
+          {(() => {
+            const price = inputs.purchasePrice || 0;
+            const range = inputs.thirdPartyClosingCostRange || 'MID';
+            const ranges = {
+              LOW: { lo: 0.005, hi: 0.01 },
+              MID: { lo: 0.01,  hi: 0.02 },
+              HIGH: { lo: 0.02, hi: 0.04 },
+            };
+            const { lo, hi } = ranges[range];
+            const minCost  = price * lo;
+            const maxCost  = price * hi;
+            const avgCost  = price * ((lo + hi) / 2);
+            const fmtCurrency = (n: number) =>
+              n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+            return (
+              <div className="space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
+                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Minimum</div>
+                    <div className="text-lg font-bold text-gray-800">{price > 0 ? fmtCurrency(minCost) : '—'}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{(lo * 100).toFixed(1)}% of price</div>
+                  </div>
+                  <div className="bg-blue-500 rounded-lg border border-blue-400 p-3 text-center shadow-md">
+                    <div className="text-[10px] font-semibold text-blue-100 uppercase tracking-wide mb-1">Average</div>
+                    <div className="text-lg font-bold text-white">{price > 0 ? fmtCurrency(avgCost) : '—'}</div>
+                    <div className="text-[10px] text-blue-200 mt-0.5">{(((lo + hi) / 2) * 100).toFixed(2)}% of price</div>
+                  </div>
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
+                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Maximum</div>
+                    <div className="text-lg font-bold text-gray-800">{price > 0 ? fmtCurrency(maxCost) : '—'}</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">{(hi * 100).toFixed(1)}% of price</div>
+                  </div>
+                </div>
+                {price === 0 && (
+                  <p className="text-[10px] text-amber-600 text-center">Enter a purchase price above to see estimates</p>
+                )}
+                {price > 0 && (
+                  <div className="text-[10px] text-gray-500 text-center pt-1">
+                    Based on purchase price of {fmtCurrency(price)} · Range: {fmtCurrency(minCost)} – {fmtCurrency(maxCost)}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      </section>
+
       {/* Exit Strategy */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
