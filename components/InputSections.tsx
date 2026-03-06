@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
 import { formatCurrency } from '../utils/calculations';
@@ -1483,87 +1483,186 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       </section>
 
       {/* Third-Party Closing Cost Estimator */}
-      <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
-        <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
-          <h2 className="text-sm font-bold text-gray-800 uppercase">Third-Party Closing Cost Estimator</h2>
-          <p className="text-[10px] text-gray-500 mt-0.5">Quick estimate based on purchase price — select a cost range typical for your market</p>
-        </div>
-        <div className="p-4 sm:p-6 space-y-4">
-          {/* Range Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Cost Range</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['LOW', 'MID', 'HIGH'] as const).map((range) => {
-                const rangeLabels = { LOW: '0.5% – 1.0%', MID: '1.0% – 2.0%', HIGH: '2.0% – 4.0%' };
-                const rangeDesc = { LOW: 'Low-cost markets', MID: 'Typical markets', HIGH: 'High-cost markets' };
-                const isSelected = (inputs.thirdPartyClosingCostRange || 'MID') === range;
-                return (
-                  <button
-                    key={range}
-                    type="button"
-                    onClick={() => onInputChange('thirdPartyClosingCostRange', range)}
-                    className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500 text-white shadow-md'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                    }`}
-                  >
-                    <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-800'}`}>{range}</div>
-                    <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-blue-100' : 'text-blue-600'}`}>{rangeLabels[range]}</div>
-                    <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>{rangeDesc[range]}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {(() => {
+        const [lastApplied, setLastApplied] = useState<'MIN' | 'AVG' | 'MAX' | null>(null);
 
-          {/* Results */}
-          {(() => {
-            const price = inputs.purchasePrice || 0;
-            const range = inputs.thirdPartyClosingCostRange || 'MID';
-            const ranges = {
-              LOW: { lo: 0.005, hi: 0.01 },
-              MID: { lo: 0.01,  hi: 0.02 },
-              HIGH: { lo: 0.02, hi: 0.04 },
-            };
-            const { lo, hi } = ranges[range];
-            const minCost  = price * lo;
-            const maxCost  = price * hi;
-            const avgCost  = price * ((lo + hi) / 2);
-            const fmtCurrency = (n: number) =>
-              n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-            return (
+        const price = inputs.purchasePrice || 0;
+        const range = inputs.thirdPartyClosingCostRange || 'MID';
+        const ranges = {
+          LOW:  { lo: 0.005, hi: 0.010 },
+          MID:  { lo: 0.010, hi: 0.020 },
+          HIGH: { lo: 0.020, hi: 0.040 },
+        };
+        const { lo, hi } = ranges[range];
+        const minCost = price * lo;
+        const maxCost = price * hi;
+        const avgCost = price * ((lo + hi) / 2);
+
+        const fmtCurrency = (n: number) =>
+          n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+        // Distribution weights — realistic breakdown of typical 3rd-party closing costs
+        // These cover the dollar-amount fields; title ins. & transfer tax are already % fields.
+        const dist: Record<string, number> = {
+          legalSettlementFees:      0.20,  // Attorney / settlement agent
+          recordingFees:            0.08,  // Govt recording
+          surveyFee:                0.10,  // Property survey
+          domesticLienSearch:       0.04,  // Municipal lien search
+          patriotActSearch:         0.02,  // OFAC search
+          insuranceCost:            0.15,  // First year homeowner's insurance
+          prepaidInterestAtClosing: 0.12,  // Prepaid interest to end of month
+          homeWarranty:             0.08,  // Home warranty
+          otherThirdPartyFees:      0.21,  // Misc / catch-all
+        };
+
+        const applyTotal = (total: number, label: 'MIN' | 'AVG' | 'MAX') => {
+          Object.entries(dist).forEach(([field, weight]) => {
+            onInputChange(field as keyof typeof inputs, Math.round(total * weight));
+          });
+          setLastApplied(label);
+        };
+
+        const cards: { label: 'MIN' | 'AVG' | 'MAX'; value: number; pct: string; highlight: boolean }[] = [
+          { label: 'MIN', value: minCost, pct: `${(lo * 100).toFixed(1)}%`, highlight: false },
+          { label: 'AVG', value: avgCost, pct: `${(((lo + hi) / 2) * 100).toFixed(2)}%`, highlight: true },
+          { label: 'MAX', value: maxCost, pct: `${(hi * 100).toFixed(1)}%`, highlight: false },
+        ];
+
+        return (
+          <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
+            <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
+              <h2 className="text-sm font-bold text-gray-800 uppercase">Third-Party Closing Cost Estimator</h2>
+              <p className="text-[10px] text-gray-500 mt-0.5">Select a range, then click a card to distribute that estimate across the closing cost fields above</p>
+            </div>
+            <div className="p-4 sm:p-6 space-y-4">
+
+              {/* Range Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Cost Range</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['LOW', 'MID', 'HIGH'] as const).map((r) => {
+                    const rangeLabels = { LOW: '0.5% – 1.0%', MID: '1.0% – 2.0%', HIGH: '2.0% – 4.0%' };
+                    const rangeDesc   = { LOW: 'Low-cost markets', MID: 'Typical markets', HIGH: 'High-cost markets' };
+                    const isSelected  = range === r;
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => { onInputChange('thirdPartyClosingCostRange', r); setLastApplied(null); }}
+                        className={`px-3 py-2.5 rounded-lg border-2 text-left transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-500 text-white shadow-md'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
+                        <div className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-800'}`}>{r}</div>
+                        <div className={`text-[10px] font-semibold mt-0.5 ${isSelected ? 'text-blue-100' : 'text-blue-600'}`}>{rangeLabels[r]}</div>
+                        <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-blue-100' : 'text-gray-400'}`}>{rangeDesc[r]}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Result Cards with Apply buttons */}
               <div className="space-y-2">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
-                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Minimum</div>
-                    <div className="text-lg font-bold text-gray-800">{price > 0 ? fmtCurrency(minCost) : '—'}</div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">{(lo * 100).toFixed(1)}% of price</div>
-                  </div>
-                  <div className="bg-blue-500 rounded-lg border border-blue-400 p-3 text-center shadow-md">
-                    <div className="text-[10px] font-semibold text-blue-100 uppercase tracking-wide mb-1">Average</div>
-                    <div className="text-lg font-bold text-white">{price > 0 ? fmtCurrency(avgCost) : '—'}</div>
-                    <div className="text-[10px] text-blue-200 mt-0.5">{(((lo + hi) / 2) * 100).toFixed(2)}% of price</div>
-                  </div>
-                  <div className="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
-                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Maximum</div>
-                    <div className="text-lg font-bold text-gray-800">{price > 0 ? fmtCurrency(maxCost) : '—'}</div>
-                    <div className="text-[10px] text-gray-400 mt-0.5">{(hi * 100).toFixed(1)}% of price</div>
-                  </div>
+                  {cards.map(({ label, value, pct, highlight }) => {
+                    const isApplied = lastApplied === label;
+                    return (
+                      <div
+                        key={label}
+                        className={`rounded-lg border-2 p-3 flex flex-col items-center shadow-sm transition-all ${
+                          isApplied
+                            ? 'border-green-400 bg-green-50'
+                            : highlight
+                            ? 'border-blue-400 bg-blue-500'
+                            : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        <div className={`text-[10px] font-semibold uppercase tracking-wide mb-1 ${
+                          isApplied ? 'text-green-600' : highlight ? 'text-blue-100' : 'text-gray-400'
+                        }`}>
+                          {label === 'MIN' ? 'Minimum' : label === 'AVG' ? 'Average' : 'Maximum'}
+                        </div>
+                        <div className={`text-lg font-bold ${
+                          isApplied ? 'text-green-700' : highlight ? 'text-white' : 'text-gray-800'
+                        }`}>
+                          {price > 0 ? fmtCurrency(value) : '—'}
+                        </div>
+                        <div className={`text-[10px] mt-0.5 ${
+                          isApplied ? 'text-green-500' : highlight ? 'text-blue-200' : 'text-gray-400'
+                        }`}>
+                          {pct} of price
+                        </div>
+                        {price > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => applyTotal(value, label)}
+                            className={`mt-2 w-full text-[10px] font-bold py-1 px-2 rounded transition-all ${
+                              isApplied
+                                ? 'bg-green-500 text-white cursor-default'
+                                : highlight
+                                ? 'bg-white text-blue-600 hover:bg-blue-50'
+                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                            }`}
+                          >
+                            {isApplied ? '✓ Applied' : 'Apply'}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+
                 {price === 0 && (
                   <p className="text-[10px] text-amber-600 text-center">Enter a purchase price above to see estimates</p>
                 )}
-                {price > 0 && (
+
+                {/* Distribution preview */}
+                {price > 0 && lastApplied && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                    <div className="text-[10px] font-bold text-green-700 uppercase mb-2">✓ Applied {lastApplied} — Fields Updated</div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                      {Object.entries(dist).map(([field, weight]) => {
+                        const appliedValue = { MIN: minCost, AVG: avgCost, MAX: maxCost }[lastApplied!];
+                        const fieldLabels: Record<string, string> = {
+                          legalSettlementFees:      'Legal & Settlement',
+                          recordingFees:            'Recording Fees',
+                          surveyFee:                'Survey Fee',
+                          domesticLienSearch:       'Domestic Lien Search',
+                          patriotActSearch:         'Patriot Act Search',
+                          insuranceCost:            'Insurance Cost',
+                          prepaidInterestAtClosing: 'Prepaid Interest',
+                          homeWarranty:             'Home Warranty',
+                          otherThirdPartyFees:      'Other 3rd Party',
+                        };
+                        return (
+                          <div key={field} className="flex justify-between text-[10px] text-gray-600">
+                            <span>{fieldLabels[field]}</span>
+                            <span className="font-semibold text-green-700">{fmtCurrency(Math.round(appliedValue * weight))}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="border-t border-green-200 mt-2 pt-1 flex justify-between text-[10px] font-bold text-green-800">
+                      <span>Total Distributed</span>
+                      <span>{fmtCurrency(Math.round({ MIN: minCost, AVG: avgCost, MAX: maxCost }[lastApplied!]))}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">Note: title insurance & transfer tax are already handled as % fields above.</p>
+                  </div>
+                )}
+
+                {price > 0 && !lastApplied && (
                   <div className="text-[10px] text-gray-500 text-center pt-1">
                     Based on purchase price of {fmtCurrency(price)} · Range: {fmtCurrency(minCost)} – {fmtCurrency(maxCost)}
                   </div>
                 )}
               </div>
-            );
-          })()}
-        </div>
-      </section>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Exit Strategy */}
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
