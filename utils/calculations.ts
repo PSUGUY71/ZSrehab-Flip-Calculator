@@ -48,6 +48,24 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     appraisalCost,
     insuranceCost,
     otherThirdPartyFees,
+    mechanicsLienInsurance,
+    surveyFee,
+    domesticLienSearch,
+    patriotActSearch,
+    lenderEscrowInsurance,
+    countyTaxProration,
+    municipalTaxProration,
+    schoolTaxAtClosing,
+    lenderEscrowTaxes,
+    hoaProration,
+    hoaCapitalContribution,
+    lienableUtilities,
+    pestInspectionCost,
+    radonInspection,
+    waterInspection,
+    sewerInspection,
+    homeWarranty,
+    prepaidInterestAtClosing,
     walkerDocPrep,
     walkerOvernight,
     walkerWire,
@@ -334,10 +352,29 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     (finalHideoutProratedDues || 0) + // HIDEOUT only (zeroed above)
     finalRoamingwoodProrated + // HIDEOUT only (zeroed above)
     finalSchoolTaxProrated + // HIDEOUT only (zeroed above)
-    finalSewerWaterProrated; // HIDEOUT only (zeroed above)
+    finalSewerWaterProrated + // HIDEOUT only (zeroed above)
+    // Additional closing fees (PA Buyer's Estimated Cost Sheet)
+    (mechanicsLienInsurance || 0) +    // 1D
+    (surveyFee || 0) +                  // 1H
+    (domesticLienSearch || 0) +         // 1I
+    (patriotActSearch || 0) +           // 1J
+    (lenderEscrowInsurance || 0) +      // 3B
+    (countyTaxProration || 0) +         // 4B
+    (municipalTaxProration || 0) +      // 4C
+    (schoolTaxAtClosing || 0) +         // 4A (NORMAL mode school tax proration)
+    (lenderEscrowTaxes || 0) +          // 4D
+    (hoaProration || 0) +               // 4E
+    (hoaCapitalContribution || 0) +     // 4F
+    (lienableUtilities || 0) +          // 4G
+    (homeWarranty || 0) +               // 7
+    (prepaidInterestAtClosing || 0);    // 6G
   
   // Prepaid costs (paid before closing)
-  const prepaidCosts = (inspectionCost || 0) + (appraisalCost || 0) + (earnestMoneyDeposit || 0);
+  const prepaidCosts = (inspectionCost || 0) + (appraisalCost || 0) + (earnestMoneyDeposit || 0) +
+    (pestInspectionCost || 0) +   // 5B
+    (radonInspection || 0) +      // 5C
+    (waterInspection || 0) +      // 5D
+    (sewerInspection || 0);       // 5E
 
   // 7. Credits
   const sellerConcessionAmount = purchasePrice * (sellerConcessionRate / 100);
@@ -876,6 +913,26 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     appraisalCost: appraisalCost || 0,
     insuranceCost: insuranceCost || 0,
     otherThirdPartyFees: otherThirdPartyFees || 0,
+    
+    // Additional Closing Fees (PA BEC form)
+    mechanicsLienInsurance: mechanicsLienInsurance || 0,
+    surveyFee: surveyFee || 0,
+    domesticLienSearch: domesticLienSearch || 0,
+    patriotActSearch: patriotActSearch || 0,
+    lenderEscrowInsurance: lenderEscrowInsurance || 0,
+    countyTaxProration: countyTaxProration || 0,
+    municipalTaxProration: municipalTaxProration || 0,
+    schoolTaxAtClosing: schoolTaxAtClosing || 0,
+    lenderEscrowTaxes: lenderEscrowTaxes || 0,
+    hoaProration: hoaProration || 0,
+    hoaCapitalContribution: hoaCapitalContribution || 0,
+    lienableUtilities: lienableUtilities || 0,
+    pestInspectionCost: pestInspectionCost || 0,
+    radonInspection: radonInspection || 0,
+    waterInspection: waterInspection || 0,
+    sewerInspection: sewerInspection || 0,
+    homeWarranty: homeWarranty || 0,
+    prepaidInterestAtClosing: prepaidInterestAtClosing || 0,
     
     // Walker
     totalWalkerFees,

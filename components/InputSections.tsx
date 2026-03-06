@@ -1057,6 +1057,205 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               helpText="Any other 3rd party fees not listed above"
             />
           </div>
+
+          {/* Additional Title Fees - NORMAL mode (PA BEC Section 1) */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="space-y-3 border-t border-purple-200 pt-3">
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Additional Title Fees</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Mechanics Lien Ins."
+                  id="mechanicsLienInsurance"
+                  value={inputs.mechanicsLienInsurance || 0}
+                  onChange={(v) => onInputChange('mechanicsLienInsurance', v)}
+                  prefix="$"
+                  helpText="Mechanics lien insurance — protects against lien claims from contractors/suppliers. Especially relevant for flip/rehab properties. (PA BEC 1D)"
+                />
+                <InputGroup
+                  label="Survey Fee"
+                  id="surveyFee"
+                  value={inputs.surveyFee || 0}
+                  onChange={(v) => onInputChange('surveyFee', v)}
+                  prefix="$"
+                  helpText="Property survey fee — verifies boundary lines, easements, and encroachments. (PA BEC 1H)"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Domestic Lien Search"
+                  id="domesticLienSearch"
+                  value={inputs.domesticLienSearch || 0}
+                  onChange={(v) => onInputChange('domesticLienSearch', v)}
+                  prefix="$"
+                  helpText="Domestic/municipal lien search fee — searches for outstanding municipal liens on the property. (PA BEC 1I)"
+                />
+                <InputGroup
+                  label="Patriot Act Search"
+                  id="patriotActSearch"
+                  value={inputs.patriotActSearch || 0}
+                  onChange={(v) => onInputChange('patriotActSearch', v)}
+                  prefix="$"
+                  helpText="Patriot Act / OFAC name search fee — verifies parties are not on government watch lists. (PA BEC 1J)"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Additional Inspections (Prepaid) - NORMAL mode (PA BEC Section 5) */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="space-y-3 border-t border-purple-200 pt-3">
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Additional Inspections (Prepaid Before Closing)</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Wood Infestation/Pest"
+                  id="pestInspectionCost"
+                  value={inputs.pestInspectionCost || 0}
+                  onChange={(v) => onInputChange('pestInspectionCost', v)}
+                  prefix="$"
+                  helpText="Wood infestation / termite inspection fee — typically required by lenders. (PA BEC 5B)"
+                />
+                <InputGroup
+                  label="Radon Inspection"
+                  id="radonInspection"
+                  value={inputs.radonInspection || 0}
+                  onChange={(v) => onInputChange('radonInspection', v)}
+                  prefix="$"
+                  helpText="Radon inspection fee — common in PA; required in many counties. (PA BEC 5C)"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Water Test"
+                  id="waterInspection"
+                  value={inputs.waterInspection || 0}
+                  onChange={(v) => onInputChange('waterInspection', v)}
+                  prefix="$"
+                  helpText="Well / water quality test fee — required if property has a private well. (PA BEC 5D)"
+                />
+                <InputGroup
+                  label="Sewer Inspection"
+                  id="sewerInspection"
+                  value={inputs.sewerInspection || 0}
+                  onChange={(v) => onInputChange('sewerInspection', v)}
+                  prefix="$"
+                  helpText="Sewer / septic inspection fee — required if property has a private septic system. (PA BEC 5E)"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tax Prorations at Closing - NORMAL mode (PA BEC Section 4) */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="space-y-3 border-t border-purple-200 pt-3">
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Tax Prorations at Closing</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="County Tax Proration"
+                  id="countyTaxProration"
+                  value={inputs.countyTaxProration || 0}
+                  onChange={(v) => onInputChange('countyTaxProration', v)}
+                  prefix="$"
+                  helpText="County property tax proration — portion of county tax owed from closing date through end of tax period. (PA BEC 4B)"
+                />
+                <InputGroup
+                  label="Municipal Tax Proration"
+                  id="municipalTaxProration"
+                  value={inputs.municipalTaxProration || 0}
+                  onChange={(v) => onInputChange('municipalTaxProration', v)}
+                  prefix="$"
+                  helpText="Municipal / township / borough tax proration at closing. (PA BEC 4C)"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="School Tax Proration"
+                  id="schoolTaxAtClosing"
+                  value={inputs.schoolTaxAtClosing || 0}
+                  onChange={(v) => onInputChange('schoolTaxAtClosing', v)}
+                  prefix="$"
+                  helpText="School district tax proration — portion of school tax from closing date through end of school tax year (July–June). (PA BEC 4A)"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Lender Escrows & Prepaid Interest - NORMAL mode (PA BEC Sections 3B, 4D, 6G) */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="space-y-3 border-t border-purple-200 pt-3">
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Lender Escrows & Prepaid Interest</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Insurance Escrow"
+                  id="lenderEscrowInsurance"
+                  value={inputs.lenderEscrowInsurance || 0}
+                  onChange={(v) => onInputChange('lenderEscrowInsurance', v)}
+                  prefix="$"
+                  helpText="Lender insurance escrow reserve — typically 2–3 months of homeowner's insurance premium deposited at closing. (PA BEC 3B)"
+                />
+                <InputGroup
+                  label="Tax Escrow"
+                  id="lenderEscrowTaxes"
+                  value={inputs.lenderEscrowTaxes || 0}
+                  onChange={(v) => onInputChange('lenderEscrowTaxes', v)}
+                  prefix="$"
+                  helpText="Lender tax escrow reserve — typically 2–6 months of property taxes deposited at closing to fund the escrow account. (PA BEC 4D)"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Prepaid Interest (6G)"
+                  id="prepaidInterestAtClosing"
+                  value={inputs.prepaidInterestAtClosing || 0}
+                  onChange={(v) => onInputChange('prepaidInterestAtClosing', v)}
+                  prefix="$"
+                  helpText={`Prepaid interest from settlement date through end of month. Formula: (Loan × Rate / 360) × days remaining in month. Estimated daily rate: ${inputs.interestRate > 0 && inputs.purchasePrice > 0 ? '$' + ((inputs.purchasePrice * (inputs.interestRate / 100)) / 360).toFixed(2) + '/day' : 'enter purchase price & rate'}. (PA BEC 6G)`}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* HOA & Adjustments - NORMAL mode (PA BEC Section 4E-4G) */}
+          {appVersion !== 'HIDEOUT' && (
+            <div className="space-y-3 border-t border-purple-200 pt-3">
+              <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">HOA & Other Adjustments</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="HOA Proration"
+                  id="hoaProration"
+                  value={inputs.hoaProration || 0}
+                  onChange={(v) => onInputChange('hoaProration', v)}
+                  prefix="$"
+                  helpText="HOA / Association dues proration — portion of HOA fees owed from closing date through end of dues period. (PA BEC 4E)"
+                />
+                <InputGroup
+                  label="HOA Capital Contribution"
+                  id="hoaCapitalContribution"
+                  value={inputs.hoaCapitalContribution || 0}
+                  onChange={(v) => onInputChange('hoaCapitalContribution', v)}
+                  prefix="$"
+                  helpText="HOA capital contribution / working capital fee — one-time fee paid by new owners to fund the association's reserve fund. (PA BEC 4F)"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup
+                  label="Lienable Utilities"
+                  id="lienableUtilities"
+                  value={inputs.lienableUtilities || 0}
+                  onChange={(v) => onInputChange('lienableUtilities', v)}
+                  prefix="$"
+                  helpText="Lienable utilities balance — outstanding municipal utility charges (water/sewer/electric) that become a lien if unpaid. Paid at closing. (PA BEC 4G)"
+                />
+                <InputGroup
+                  label="Home Warranty"
+                  id="homeWarranty"
+                  value={inputs.homeWarranty || 0}
+                  onChange={(v) => onInputChange('homeWarranty', v)}
+                  prefix="$"
+                  helpText="Home warranty policy premium — typically $300–$600/year, sometimes negotiated as a seller concession. (PA BEC Section 7)"
+                />
+              </div>
+            </div>
+          )}
           
           {/* Walker Charges - Only show in HIDEOUT version */}
           {appVersion === 'HIDEOUT' && (

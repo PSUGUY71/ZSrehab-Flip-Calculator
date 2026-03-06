@@ -183,6 +183,20 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
         <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
+        <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
+        <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} />
+        <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} />
+        <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} />
+        <FeeBreakdownItem label="Lender Insurance Escrow" value={results.lenderEscrowInsurance} />
+        <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} />
+        <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} />
+        <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} />
+        <FeeBreakdownItem label="Lender Tax Escrow" value={results.lenderEscrowTaxes} />
+        <FeeBreakdownItem label="HOA Proration" value={results.hoaProration} />
+        <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
+        <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
+        <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
+        <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
         <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
         <FeeBreakdownItem 
@@ -227,6 +241,20 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Recording" value={results.recordingCost} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
           <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
+          <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
+          <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} />
+          <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} />
+          <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} />
+          <FeeBreakdownItem label="Lender Insurance Escrow" value={results.lenderEscrowInsurance} />
+          <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} />
+          <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} />
+          <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} />
+          <FeeBreakdownItem label="Lender Tax Escrow" value={results.lenderEscrowTaxes} />
+          <FeeBreakdownItem label="HOA Proration" value={results.hoaProration} />
+          <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
+          <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
+          <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
+          <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
           <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
           <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
           <FeeBreakdownItem 
@@ -302,6 +330,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Prepaid Before Closing</div>
             <FeeBreakdownItem label="Inspection" value={results.inspectionCost} />
             <FeeBreakdownItem label="Appraisal" value={results.appraisalCost} />
+            <FeeBreakdownItem label="Wood Infestation/Pest" value={results.pestInspectionCost} />
+            <FeeBreakdownItem label="Radon Inspection" value={results.radonInspection} />
+            <FeeBreakdownItem label="Water Test" value={results.waterInspection} />
+            <FeeBreakdownItem label="Sewer Inspection" value={results.sewerInspection} />
             <FeeBreakdownItem label="Earnest Money Deposit" value={inputs.earnestMoneyDeposit} />
             <div className="flex justify-between font-bold text-base pt-2 mt-2 border-t border-yellow-200 text-gray-800">
               <span>Total Prepaid</span>

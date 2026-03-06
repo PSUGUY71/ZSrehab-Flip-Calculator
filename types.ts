@@ -129,7 +129,27 @@ export interface LoanInputs {
   appraisalCost: number; // Property appraisal cost
   insuranceCost: number; // Insurance cost
   otherThirdPartyFees: number; // Catch-all for other 3rd party fees
-  
+
+  // Additional Closing Fees (from PA Buyer's Estimated Cost Sheet)
+  mechanicsLienInsurance: number;   // 1D - Mechanics Lien Insurance
+  surveyFee: number;                // 1H - Survey
+  domesticLienSearch: number;       // 1I - Domestic Lien Search
+  patriotActSearch: number;         // 1J - Patriot Act Search
+  lenderEscrowInsurance: number;    // 3B - Lender Insurance Escrow (amt due at closing)
+  countyTaxProration: number;       // 4B - County Tax Proration at closing
+  municipalTaxProration: number;    // 4C - Municipal/Township Tax Proration
+  schoolTaxAtClosing: number;       // 4A - School Tax Proration (NORMAL mode)
+  lenderEscrowTaxes: number;        // 4D - Lender Tax Escrow
+  hoaProration: number;             // 4E - HOA Dues Proration at closing
+  hoaCapitalContribution: number;   // 4F - HOA Capital Contribution
+  lienableUtilities: number;        // 4G - Lienable Utilities at closing
+  pestInspectionCost: number;       // 5B - Wood Infestation/Pest (prepaid)
+  radonInspection: number;          // 5C - Radon Inspection (prepaid)
+  waterInspection: number;          // 5D - Water Test (prepaid)
+  sewerInspection: number;          // 5E - Sewer Inspection (prepaid)
+  homeWarranty: number;             // 7  - Home Warranty
+  prepaidInterestAtClosing: number; // 6G - Prepaid interest from settlement to end of month
+
   // specific fees
   walkerDocPrep: number;
   walkerOvernight: number;
@@ -260,6 +280,26 @@ export interface CalculatedResults {
   appraisalCost: number;
   insuranceCost: number;
   otherThirdPartyFees: number;
+  
+  // Additional Closing Fees (PA BEC form)
+  mechanicsLienInsurance: number;
+  surveyFee: number;
+  domesticLienSearch: number;
+  patriotActSearch: number;
+  lenderEscrowInsurance: number;
+  countyTaxProration: number;
+  municipalTaxProration: number;
+  schoolTaxAtClosing: number;
+  lenderEscrowTaxes: number;
+  hoaProration: number;
+  hoaCapitalContribution: number;
+  lienableUtilities: number;
+  pestInspectionCost: number;
+  radonInspection: number;
+  waterInspection: number;
+  sewerInspection: number;
+  homeWarranty: number;
+  prepaidInterestAtClosing: number;
   
   // Walker Specifics
   totalWalkerFees: number;
@@ -414,6 +454,25 @@ export const DEFAULT_INPUTS: LoanInputs = {
   appraisalCost: 0,
   insuranceCost: 0,
   otherThirdPartyFees: 0,
+
+  mechanicsLienInsurance: 0,
+  surveyFee: 0,
+  domesticLienSearch: 0,
+  patriotActSearch: 0,
+  lenderEscrowInsurance: 0,
+  countyTaxProration: 0,
+  municipalTaxProration: 0,
+  schoolTaxAtClosing: 0,
+  lenderEscrowTaxes: 0,
+  hoaProration: 0,
+  hoaCapitalContribution: 0,
+  lienableUtilities: 0,
+  pestInspectionCost: 0,
+  radonInspection: 0,
+  waterInspection: 0,
+  sewerInspection: 0,
+  homeWarranty: 0,
+  prepaidInterestAtClosing: 0,
 
   hideoutTransferFee: 0,   // 0 = auto-calculate from PA Title Insurance chart
   hideoutAnnualFee: 3000,  // Hideout annual dues (~$3,000/yr typical)
