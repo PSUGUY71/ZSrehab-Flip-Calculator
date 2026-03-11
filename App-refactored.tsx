@@ -118,6 +118,7 @@ const App: React.FC = () => {
         walkerAttorneyFee: prev.walkerAttorneyFee || 0,
         walkerNotaryFee: prev.walkerNotaryFee || 0,
         walkerSettlementFee: prev.walkerSettlementFee || 0,
+        lendersTitleInsurance: prev.lendersTitleInsurance || 0,
         hideoutAnnualFee: prev.hideoutAnnualFee || 3000,
         roamingwoodAnnual: prev.roamingwoodAnnual || 500,
         schoolTaxAnnual: prev.schoolTaxAnnual || 1100,

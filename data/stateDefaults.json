@@ -383,7 +383,7 @@
     "name": "Pennsylvania",
     "cplFee": 125,
     "titleInsuranceRate": 0,
-    "transferTaxRate": 0.5,
+    "transferTaxRate": 1.0,
     "typicalClosingCostPercent": 2.0,
     "propertyTaxRate": 1.5,
     "insurancePerMonthPer100k": 8,

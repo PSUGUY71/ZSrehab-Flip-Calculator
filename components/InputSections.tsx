@@ -1262,6 +1262,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             <>
             <div className="grid grid-cols-3 gap-4">
               <InputGroup 
+                label="Lender's Title Policy" 
+                id="lendersTitleIns" 
+                value={inputs.lendersTitleInsurance} 
+                onChange={(v) => onInputChange('lendersTitleInsurance', v)} 
+                prefix="$"
+                helpText="Lender's title insurance — enter the exact dollar amount from your HUD (Line 1104). The PA rate table uses sale/owner rates which are much higher. Enter the actual lender's policy cost here to override."
+              />
+              <InputGroup 
                 label="Walker Attorney" 
                 id="wa" 
                 value={inputs.walkerAttorneyFee} 

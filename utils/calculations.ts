@@ -40,6 +40,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     otherLenderFees,
     transferTaxRate,
     titleInsuranceRate,
+    lendersTitleInsurance,
     cplFee,
     numberOfEndorsements,
     legalSettlementFees,
@@ -296,12 +297,16 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 6. Third Party Fees Calculation
   const transferTaxCost = purchasePrice * (transferTaxRate / 100);
   
-  // Title Insurance: Use PA Title Insurance Rate Table based on PURCHASE PRICE (lender's/mortgage policy)
-  // Per HUD comparison: lender's title policy is based on purchase price, not total project cost
-  // If titleInsuranceRate is provided (non-zero), use manual calculation instead of chart
+  // Title Insurance: Use lender's title insurance dollar override if set (HIDEOUT mode),
+  // otherwise use PA Title Insurance Rate Table based on PURCHASE PRICE
+  // Per HUD comparison: the PA rate table has SALE/OWNER rates ($1,213 for $130k),
+  // but lender's title policy is much lower ($365 for $226k loan). Use dollar override.
   const totalLoanAmount = purchasePrice + rehabBudget;
   let titleInsuranceCost = 0;
-  if (titleInsuranceRate && titleInsuranceRate > 0) {
+  if (lendersTitleInsurance && lendersTitleInsurance > 0) {
+    // Dollar override: use exact amount from HUD (e.g., lender's title policy)
+    titleInsuranceCost = lendersTitleInsurance;
+  } else if (titleInsuranceRate && titleInsuranceRate > 0) {
     // Manual override: use percentage rate on purchase price
     titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
   } else {

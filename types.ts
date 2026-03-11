@@ -117,6 +117,7 @@ export interface LoanInputs {
   
   // Specific HUD Line Items
   titleInsuranceRate: number; // Percentage (0.7%)
+  lendersTitleInsurance: number; // Dollar override for lender's title policy (HIDEOUT — enter exact $ from HUD Line 1104)
   cplFee: number; // CPL (Certificate of Property Location) fee - always $125 payable to Penn Attorneys
   numberOfEndorsements: number; // Number of title endorsements at $50 each
   
@@ -285,7 +286,7 @@ export interface CalculatedResults {
   transferTaxCost: number;
   titleInsuranceCost: number;
   cplFeeCost: number; // CPL fee (always $125 to Penn Attorneys)
-  endorsementCost: number; // Endorsement fees ($100 per endorsement)
+  endorsementCost: number; // Endorsement fees ($50 per endorsement)
   legalSettlementCost: number;
   recordingCost: number;
   inspectionCost: number;
@@ -459,6 +460,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   
   transferTaxRate: 0, 
   titleInsuranceRate: 0,
+  lendersTitleInsurance: 0, // Dollar override for lender's title policy (HIDEOUT)
   cplFee: 125, // Default $125 for CPL fee
   numberOfEndorsements: 0, // Default 0 endorsements
   legalSettlementFees: 0,
