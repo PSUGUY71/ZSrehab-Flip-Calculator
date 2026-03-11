@@ -69,6 +69,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     walkerDocPrep,
     walkerOvernight,
     walkerWire,
+    walkerAttorneyFee,
+    walkerNotaryFee,
+    walkerSettlementFee,
+    titleSearchFee,
+    ownersTitlePolicy,
+    capitalImprovementFee,
+    resaleCertificateFee,
     hideoutTransferFee,
     hideoutAnnualFee,
     titleCompanyCharges,
@@ -289,31 +296,26 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 6. Third Party Fees Calculation
   const transferTaxCost = purchasePrice * (transferTaxRate / 100);
   
-  // Title Insurance: Use PA Title Insurance Rate Table based on total loan amount (purchase + rehab)
-  // Source: https://www.alphaadv.net/patitle/parate25.html
+  // Title Insurance: Use PA Title Insurance Rate Table based on PURCHASE PRICE (lender's/mortgage policy)
+  // Per HUD comparison: lender's title policy is based on purchase price, not total project cost
   // If titleInsuranceRate is provided (non-zero), use manual calculation instead of chart
   const totalLoanAmount = purchasePrice + rehabBudget;
   let titleInsuranceCost = 0;
   if (titleInsuranceRate && titleInsuranceRate > 0) {
-    // Manual override: use percentage rate
-    titleInsuranceCost = totalLoanAmount * (titleInsuranceRate / 100);
+    // Manual override: use percentage rate on purchase price
+    titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
   } else {
-    // Default: use PA Title Insurance Rate Table chart
-    titleInsuranceCost = calculatePATitleInsurance(totalLoanAmount);
+    // Default: use PA Title Insurance Rate Table chart based on purchase price
+    titleInsuranceCost = calculatePATitleInsurance(purchasePrice);
   }
   
-  // Hideout Transfer Fee: Use PA Title Insurance Rate Table chart based on purchase price
-  // This uses the same chart as title insurance
+  // Hideout Transfer Fee: Manual dollar entry ONLY
+  // Per HUD comparison: Hideout POA transfer fee is NOT related to PA title insurance rates.
+  // It's the community's own transfer assessment. Must be entered manually.
   // NOTE: Hideout Transfer is ONLY for HIDEOUT version, not NORMAL
   let calculatedHideoutTransferFee = 0;
   if (appVersion !== 'NORMAL') {
-    if (hideoutTransferFee && hideoutTransferFee > 0) {
-      // Manual override: use provided value
-      calculatedHideoutTransferFee = hideoutTransferFee;
-    } else {
-      // Default: use PA Title Insurance Rate Table chart based on purchase price
-      calculatedHideoutTransferFee = calculatePATitleInsurance(purchasePrice);
-    }
+    calculatedHideoutTransferFee = hideoutTransferFee || 0;
   }
   
   // For NORMAL version, also zero out hideout prorated dues
@@ -322,11 +324,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // CPL fee is always $125 payable to Penn Attorneys (default if not specified)
   const cplFeeCost = cplFee || 125;
   
-  // Endorsement fees are $100 per endorsement
-  const endorsementCost = (numberOfEndorsements || 0) * 100;
+  // Endorsement fees are $50 per endorsement (per HUD: 4 endorsements = $200)
+  const endorsementCost = (numberOfEndorsements || 0) * 50;
   
-  // Walker fees: HIDEOUT only
-  const totalWalkerFees = appVersion === 'NORMAL' ? 0 : (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0);
+  // Walker fees: HIDEOUT only — includes all Walker & Walker line items
+  const totalWalkerFees = appVersion === 'NORMAL' ? 0 : 
+    (walkerDocPrep || 0) + (walkerOvernight || 0) + (walkerWire || 0) +
+    (walkerAttorneyFee || 0) + (walkerNotaryFee || 0) + (walkerSettlementFee || 0);
   
   // Title company charges: NORMAL only (non-HIDEOUT)
   const titleCompanyChargesAmount = appVersion === 'HIDEOUT' ? 0 : (titleCompanyCharges || 0);
@@ -353,6 +357,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     finalRoamingwoodProrated + // HIDEOUT only (zeroed above)
     finalSchoolTaxProrated + // HIDEOUT only (zeroed above)
     finalSewerWaterProrated + // HIDEOUT only (zeroed above)
+    // Additional HUD line items
+    (titleSearchFee || 0) +              // HUD 1103
+    (ownersTitlePolicy || 0) +           // HUD 1301
+    (capitalImprovementFee || 0) +       // HUD 1305
+    (resaleCertificateFee || 0) +        // HUD 1308
     // Additional closing fees (PA Buyer's Estimated Cost Sheet)
     (mechanicsLienInsurance || 0) +    // 1D
     (surveyFee || 0) +                  // 1H
@@ -935,7 +944,16 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     prepaidInterestAtClosing: prepaidInterestAtClosing || 0,
     
     // Walker
+    walkerAttorneyFee: walkerAttorneyFee || 0,
+    walkerNotaryFee: walkerNotaryFee || 0,
+    walkerSettlementFee: walkerSettlementFee || 0,
     totalWalkerFees,
+
+    // Additional HUD line items
+    titleSearchFee: titleSearchFee || 0,
+    ownersTitlePolicy: ownersTitlePolicy || 0,
+    capitalImprovementFee: capitalImprovementFee || 0,
+    resaleCertificateFee: resaleCertificateFee || 0,
 
     hideoutTransferCost: calculatedHideoutTransferFee,
     hideoutProratedDues: finalHideoutProratedDues,

@@ -1259,6 +1259,33 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           
           {/* Walker Charges - Only show in HIDEOUT version */}
           {appVersion === 'HIDEOUT' && (
+            <>
+            <div className="grid grid-cols-3 gap-4">
+              <InputGroup 
+                label="Walker Attorney" 
+                id="wa" 
+                value={inputs.walkerAttorneyFee} 
+                onChange={(v) => onInputChange('walkerAttorneyFee', v)} 
+                prefix="$"
+                helpText="Walker & Walker attorney fee (HUD Line 1101)"
+              />
+              <InputGroup 
+                label="Walker Notary" 
+                id="wn" 
+                value={inputs.walkerNotaryFee} 
+                onChange={(v) => onInputChange('walkerNotaryFee', v)} 
+                prefix="$"
+                helpText="Walker & Walker notary, download, incoming wire & overnight fees (HUD Line 1102)"
+              />
+              <InputGroup 
+                label="Walker Settlement" 
+                id="ws" 
+                value={inputs.walkerSettlementFee} 
+                onChange={(v) => onInputChange('walkerSettlementFee', v)} 
+                prefix="$"
+                helpText="Walker & Walker title settlement fee (HUD Line 1107)"
+              />
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <InputGroup 
                 label="Walker Doc" 
@@ -1266,7 +1293,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 value={inputs.walkerDocPrep} 
                 onChange={(v) => onInputChange('walkerDocPrep', v)} 
                 prefix="$"
-                helpText="Walker & Walker document preparation fee"
+                helpText="Walker & Walker document preparation fee (HUD Line 1310 — doc prep portion)"
               />
               <InputGroup 
                 label="Walker Overnight" 
@@ -1274,7 +1301,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 value={inputs.walkerOvernight} 
                 onChange={(v) => onInputChange('walkerOvernight', v)} 
                 prefix="$"
-                helpText="Walker & Walker overnight delivery fee"
+                helpText="Walker & Walker overnight delivery fee (HUD Line 1310 — overnight portion)"
               />
               <InputGroup 
                 label="Walker Wire" 
@@ -1282,9 +1309,48 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 value={inputs.walkerWire} 
                 onChange={(v) => onInputChange('walkerWire', v)} 
                 prefix="$"
-                helpText="Walker & Walker wire transfer fee"
+                helpText="Walker & Walker outgoing wire transfer fee (HUD Line 1310 — wire portion)"
               />
             </div>
+
+            {/* Additional HUD line items — HIDEOUT only */}
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup 
+                label="Title Search" 
+                id="titleSearch" 
+                value={inputs.titleSearchFee} 
+                onChange={(v) => onInputChange('titleSearchFee', v)} 
+                prefix="$"
+                helpText="Title search fee (HUD Line 1103)"
+              />
+              <InputGroup 
+                label="Owner's Title Policy" 
+                id="ownersTitlePolicy" 
+                value={inputs.ownersTitlePolicy} 
+                onChange={(v) => onInputChange('ownersTitlePolicy', v)} 
+                prefix="$"
+                helpText="Owner's title policy and simultaneous issuance fees (HUD Line 1301)"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup 
+                label="Capital Improvement" 
+                id="capitalImprovement" 
+                value={inputs.capitalImprovementFee} 
+                onChange={(v) => onInputChange('capitalImprovementFee', v)} 
+                prefix="$"
+                helpText="Capital improvement fee e.g. Roamingwood Sewer & Water (HUD Line 1305)"
+              />
+              <InputGroup 
+                label="Resale Certificate" 
+                id="resaleCert" 
+                value={inputs.resaleCertificateFee} 
+                onChange={(v) => onInputChange('resaleCertificateFee', v)} 
+                prefix="$"
+                helpText="Resale certificate fee (HUD Line 1308)"
+              />
+            </div>
+            </>
           )}
           
           {/* Title Company Charges - Only show in non-HIDEOUT versions */}
@@ -1310,7 +1376,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 value={inputs.hideoutTransferFee} 
                 onChange={(v) => onInputChange('hideoutTransferFee', v)} 
                 prefix="$"
-                helpText="Leave blank (0) to use PA Title Insurance Rate Table chart automatically based on purchase price. Enter a dollar amount to manually override."
+                helpText="Hideout POA transfer fee — enter the exact dollar amount from your HUD (Line 1304). This is the community's own transfer assessment, NOT related to PA title insurance rates."
               />
               <div>
                 <div className="mb-1">

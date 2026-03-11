@@ -178,7 +178,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
         <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
         <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
-        <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
+        <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} />
         <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
@@ -197,6 +197,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
         <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
         <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
+        <FeeBreakdownItem label="Title Search" value={results.titleSearchFee} />
+        <FeeBreakdownItem label="Owner's Title Policy" value={results.ownersTitlePolicy} />
+        <FeeBreakdownItem label="Capital Improvement" value={results.capitalImprovementFee} />
+        <FeeBreakdownItem label="Resale Certificate" value={results.resaleCertificateFee} />
         <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
         <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
         <FeeBreakdownItem 
@@ -236,7 +240,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
           <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
           <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
-          <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} />
+          <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} />
           <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
           <FeeBreakdownItem label="Recording" value={results.recordingCost} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
@@ -255,6 +259,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
           <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
           <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
+          <FeeBreakdownItem label="Title Search" value={results.titleSearchFee} />
+          <FeeBreakdownItem label="Owner's Title Policy" value={results.ownersTitlePolicy} />
+          <FeeBreakdownItem label="Capital Improvement" value={results.capitalImprovementFee} />
+          <FeeBreakdownItem label="Resale Certificate" value={results.resaleCertificateFee} />
           <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
           <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
           <FeeBreakdownItem 

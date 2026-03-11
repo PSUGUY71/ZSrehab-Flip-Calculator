@@ -118,7 +118,7 @@ export interface LoanInputs {
   // Specific HUD Line Items
   titleInsuranceRate: number; // Percentage (0.7%)
   cplFee: number; // CPL (Certificate of Property Location) fee - always $125 payable to Penn Attorneys
-  numberOfEndorsements: number; // Number of title endorsements at $100 each
+  numberOfEndorsements: number; // Number of title endorsements at $50 each
   
   legalSettlementFees: number; // General Legal
   recordingFees: number; // Line 1201
@@ -153,13 +153,22 @@ export interface LoanInputs {
   homeWarranty: number;             // 7  - Home Warranty
   prepaidInterestAtClosing: number; // 6G - Prepaid interest from settlement to end of month
 
-  // specific fees
+  // Walker & Walker fees (HIDEOUT)
   walkerDocPrep: number;
   walkerOvernight: number;
   walkerWire: number;
+  walkerAttorneyFee: number;     // HUD Line 1101 — attorney fee
+  walkerNotaryFee: number;       // HUD Line 1102 — notary/download/incoming wire/overnight
+  walkerSettlementFee: number;   // HUD Line 1107 — title settlement fee
+  
+  // Additional HUD line items
+  titleSearchFee: number;         // HUD Line 1103 — title search
+  ownersTitlePolicy: number;      // HUD Line 1301 — owner's title policy + simultaneous issuance
+  capitalImprovementFee: number;  // HUD Line 1305 — capital improvement fee (Roamingwood)
+  resaleCertificateFee: number;   // HUD Line 1308 — resale certificate fee
   
   // Specific Entity Fees
-  hideoutTransferFee: number; 
+  hideoutTransferFee: number;     // HUD Line 1304 — transfer fee to The Hideout (manual $)
   hideoutAnnualFee: number; 
   
   roamingwoodAnnual: number; // City/town taxes
@@ -305,7 +314,16 @@ export interface CalculatedResults {
   prepaidInterestAtClosing: number;
   
   // Walker Specifics
+  walkerAttorneyFee: number;
+  walkerNotaryFee: number;
+  walkerSettlementFee: number;
   totalWalkerFees: number;
+  
+  // Additional HUD line items
+  titleSearchFee: number;
+  ownersTitlePolicy: number;
+  capitalImprovementFee: number;
+  resaleCertificateFee: number;
   
   hideoutTransferCost: number;
     hideoutProratedDues: number;
@@ -445,9 +463,12 @@ export const DEFAULT_INPUTS: LoanInputs = {
   numberOfEndorsements: 0, // Default 0 endorsements
   legalSettlementFees: 0,
   
-  walkerDocPrep: 500,      // Walker & Walker standard doc prep fee
-  walkerOvernight: 200,    // Walker & Walker overnight delivery fee
-  walkerWire: 50,          // Walker & Walker wire fee
+  walkerDocPrep: 0,        // Walker & Walker doc prep fee
+  walkerOvernight: 0,      // Walker & Walker overnight delivery fee
+  walkerWire: 0,           // Walker & Walker wire fee
+  walkerAttorneyFee: 0,    // Walker & Walker attorney fee (HUD 1101)
+  walkerNotaryFee: 0,      // Walker & Walker notary/download/incoming wire (HUD 1102)
+  walkerSettlementFee: 0,  // Walker & Walker title settlement fee (HUD 1107)
   
   recordingFees: 0,
   titleCompanyCharges: 0, // Title company charges (for non-Hideout versions)
@@ -479,7 +500,13 @@ export const DEFAULT_INPUTS: LoanInputs = {
   homeWarranty: 0,
   prepaidInterestAtClosing: 0,
 
-  hideoutTransferFee: 0,   // 0 = auto-calculate from PA Title Insurance chart
+  // Additional HUD line items
+  titleSearchFee: 0,         // Title search fee (HUD 1103)
+  ownersTitlePolicy: 0,      // Owner's title policy + simult. issuance (HUD 1301)
+  capitalImprovementFee: 0,  // Capital improvement fee e.g. Roamingwood (HUD 1305)
+  resaleCertificateFee: 0,   // Resale certificate fee (HUD 1308)
+
+  hideoutTransferFee: 0,   // Manual entry — Hideout POA transfer fee (HUD 1304)
   hideoutAnnualFee: 3000,  // Hideout annual dues (~$3,000/yr typical)
 
   roamingwoodAnnual: 500,  // City/Town taxes annual (~$500/yr typical)

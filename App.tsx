@@ -1027,9 +1027,22 @@ const App: React.FC = () => {
                             <InputGroup label="Transfer Tax Rate" id="tt" value={inputs.transferTaxRate} onChange={v => handleInputChange('transferTaxRate', v)} suffix="%" />
                         </div>
                         <div className="grid grid-cols-3 gap-4">
+                             <InputGroup label="Walker Attorney" id="wa" value={inputs.walkerAttorneyFee} onChange={v => handleInputChange('walkerAttorneyFee', v)} prefix="$" />
+                             <InputGroup label="Walker Notary" id="wn" value={inputs.walkerNotaryFee} onChange={v => handleInputChange('walkerNotaryFee', v)} prefix="$" />
+                             <InputGroup label="Walker Settlement" id="ws" value={inputs.walkerSettlementFee} onChange={v => handleInputChange('walkerSettlementFee', v)} prefix="$" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
                              <InputGroup label="Walker Doc" id="wd" value={inputs.walkerDocPrep} onChange={v => handleInputChange('walkerDocPrep', v)} prefix="$" />
                              <InputGroup label="Walker Overnight" id="wo" value={inputs.walkerOvernight} onChange={v => handleInputChange('walkerOvernight', v)} prefix="$" />
                              <InputGroup label="Walker Wire" id="ww" value={inputs.walkerWire} onChange={v => handleInputChange('walkerWire', v)} prefix="$" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <InputGroup label="Title Search" id="titleSearch" value={inputs.titleSearchFee} onChange={v => handleInputChange('titleSearchFee', v)} prefix="$" />
+                            <InputGroup label="Owner's Title Policy" id="ownersTitlePolicy" value={inputs.ownersTitlePolicy} onChange={v => handleInputChange('ownersTitlePolicy', v)} prefix="$" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                            <InputGroup label="Capital Improvement" id="capImprove" value={inputs.capitalImprovementFee} onChange={v => handleInputChange('capitalImprovementFee', v)} prefix="$" />
+                            <InputGroup label="Resale Certificate" id="resaleCert" value={inputs.resaleCertificateFee} onChange={v => handleInputChange('resaleCertificateFee', v)} prefix="$" />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                             <InputGroup label="Hideout Transfer" id="ht" value={inputs.hideoutTransferFee} onChange={v => handleInputChange('hideoutTransferFee', v)} prefix="$" />
@@ -1692,5 +1705,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
 export default App;
