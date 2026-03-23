@@ -59,3 +59,41 @@ CREATE TRIGGER update_deals_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- ============================================================
+-- Drafts table — one auto-save draft per user
+-- ============================================================
+CREATE TABLE IF NOT EXISTS drafts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  data JSONB NOT NULL,
+  lenders JSONB DEFAULT '[]'::jsonb,
+  app_version TEXT DEFAULT 'HIDEOUT',
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_drafts_user_id ON drafts(user_id);
+
+ALTER TABLE drafts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own draft"
+  ON drafts FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own draft"
+  ON drafts FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own draft"
+  ON drafts FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own draft"
+  ON drafts FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE TRIGGER update_drafts_updated_at
+  BEFORE UPDATE ON drafts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+

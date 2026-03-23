@@ -6,7 +6,7 @@ import { calculateLoanForLender } from './utils/lenderComparison';
 import { InputGroup } from './components/InputGroup';
 import { ResultRow } from './components/ResultRow';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import { getDeals, saveDeal, deleteDeal } from './lib/database';
+import { getDeals, saveDeal, deleteDeal, saveDraft, loadDraft, deleteDraft } from './lib/database';
 import { AuthScreen } from './components/AuthScreen';
 import { StateSelectionScreen } from './components/StateSelectionScreen';
 import { getStateDefaults, applyStateDefaults, getStateName, getAllStateCodes } from './utils/stateDefaults';
@@ -50,38 +50,60 @@ const App: React.FC = () => {
   // --- AUTO-SAVE ---
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRestoringDraftRef = useRef(false);
-  const AUTO_SAVE_KEY = currentUser ? `zsrehab_draft_${currentUser.email}` : 'zsrehab_draft_guest';
 
   // Restore draft on mount / user change
   useEffect(() => {
-    try {
-      const draft = localStorage.getItem(AUTO_SAVE_KEY);
-      if (draft) {
-        const parsed = JSON.parse(draft);
-        if (parsed.inputs) {
-          isRestoringDraftRef.current = true;
-          setInputs(prev => ({ ...prev, ...parsed.inputs }));
-          if (parsed.lenders) setLenders(parsed.lenders);
-          if (parsed.appVersion) setAppVersion(parsed.appVersion);
-          setSaveNotification('Draft restored');
-          setTimeout(() => setSaveNotification(null), 2000);
-          // Defer clearing the flag so the save effect doesn't fire during restore
-          setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
+    const restoreDraft = async () => {
+      try {
+        if (isSupabaseConfigured && supabase && currentUser && currentUser.id !== 'local') {
+          // Load from Supabase
+          const draft = await loadDraft();
+          if (draft) {
+            isRestoringDraftRef.current = true;
+            setInputs(prev => ({ ...prev, ...draft.inputs }));
+            if (draft.lenders) setLenders(draft.lenders);
+            if (draft.appVersion) setAppVersion(draft.appVersion as 'NORMAL' | 'HIDEOUT' | 'CUSTOM');
+            setSaveNotification('Draft restored');
+            setTimeout(() => setSaveNotification(null), 2000);
+            setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
+          }
+        } else if (currentUser) {
+          // Fallback to localStorage for local users
+          const key = `zsrehab_draft_${currentUser.email}`;
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.inputs) {
+              isRestoringDraftRef.current = true;
+              setInputs(prev => ({ ...prev, ...parsed.inputs }));
+              if (parsed.lenders) setLenders(parsed.lenders);
+              if (parsed.appVersion) setAppVersion(parsed.appVersion);
+              setSaveNotification('Draft restored');
+              setTimeout(() => setSaveNotification(null), 2000);
+              setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
+            }
+          }
         }
+      } catch (e) {
+        console.error('Failed to restore draft:', e);
       }
-    } catch (e) {
-      console.error('Failed to restore draft:', e);
-    }
+    };
+    restoreDraft();
   }, [currentUser?.email]);
 
   // Debounced auto-save whenever inputs, lenders, or appVersion change
   useEffect(() => {
     if (isRestoringDraftRef.current) return;
+    if (!currentUser) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
+    autoSaveTimerRef.current = setTimeout(async () => {
       try {
-        const draft = JSON.stringify({ inputs, lenders, appVersion, savedAt: new Date().toISOString() });
-        localStorage.setItem(AUTO_SAVE_KEY, draft);
+        if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+          await saveDraft(currentUser.id, inputs, lenders, appVersion);
+        } else {
+          const key = `zsrehab_draft_${currentUser.email}`;
+          localStorage.setItem(key, JSON.stringify({ inputs, lenders, appVersion, savedAt: new Date().toISOString() }));
+        }
       } catch (e) {
         console.error('Auto-save failed:', e);
       }
@@ -89,7 +111,7 @@ const App: React.FC = () => {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [inputs, lenders, appVersion, AUTO_SAVE_KEY]);
+  }, [inputs, lenders, appVersion, currentUser]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -374,7 +396,8 @@ const App: React.FC = () => {
     if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
       try {
         await saveDeal(newDeal, currentUser.id);
-        localStorage.removeItem(AUTO_SAVE_KEY);
+        // Clear draft from database
+        deleteDraft(currentUser.id).catch(e => console.error('Draft cleanup failed:', e));
         setSaveNotification("Property Saved!");
         setTimeout(() => setSaveNotification(null), 2000);
         // Reload deals
@@ -396,7 +419,7 @@ const App: React.FC = () => {
       }
       setSavedDeals(updatedDeals);
       localStorage.setItem(`zsrehab_deals_${currentUser.email}`, JSON.stringify(updatedDeals));
-      localStorage.removeItem(AUTO_SAVE_KEY);
+      localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
       setSaveNotification("Property Saved!");
       setTimeout(() => setSaveNotification(null), 2000);
     }
@@ -433,7 +456,12 @@ const App: React.FC = () => {
 
   const handleNewDeal = () => {
       if (window.confirm("Start a new deal? Unsaved changes will be lost.")) {
-          localStorage.removeItem(AUTO_SAVE_KEY);
+          // Clear draft
+          if (currentUser && isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+            deleteDraft(currentUser.id).catch(e => console.error('Draft cleanup failed:', e));
+          } else if (currentUser) {
+            localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
+          }
           const savedState = localStorage.getItem('zsrehab_selected_state');
           const newInputs = { ...DEFAULT_INPUTS };
           if (savedState) {

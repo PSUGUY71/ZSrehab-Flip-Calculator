@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { SavedDeal, LenderOption } from '../types';
+import { SavedDeal, LenderOption, LoanInputs } from '../types';
 
 export interface DealRow {
   id: string;
@@ -173,5 +173,81 @@ export const findDealByName = async (name: string): Promise<SavedDeal | null> =>
   }
 
   return rowToSavedDeal(data);
+};
+
+// --- DRAFT AUTO-SAVE ---
+
+export interface DraftRow {
+  id: string;
+  user_id: string;
+  data: any;
+  lenders: LenderOption[];
+  app_version: string;
+  updated_at: string;
+}
+
+// Save or update draft for current user (upsert — one draft per user)
+export const saveDraft = async (
+  userId: string,
+  inputs: LoanInputs,
+  lenders: LenderOption[],
+  appVersion: string
+): Promise<void> => {
+  const { error } = await supabase
+    .from('drafts')
+    .upsert(
+      {
+        user_id: userId,
+        data: inputs,
+        lenders: lenders || [],
+        app_version: appVersion,
+      },
+      { onConflict: 'user_id' }
+    );
+
+  if (error) {
+    console.error('Draft save failed:', error);
+    throw error;
+  }
+};
+
+// Load draft for current user
+export const loadDraft = async (): Promise<{
+  inputs: LoanInputs;
+  lenders: LenderOption[];
+  appVersion: string;
+} | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
+
+  const { data, error } = await supabase
+    .from('drafts')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') return null; // no rows
+    console.error('Draft load failed:', error);
+    return null;
+  }
+
+  return {
+    inputs: data.data as LoanInputs,
+    lenders: (data.lenders || []) as LenderOption[],
+    appVersion: (data.app_version || 'HIDEOUT') as string,
+  };
+};
+
+// Delete draft for current user
+export const deleteDraft = async (userId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('drafts')
+    .delete()
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Draft delete failed:', error);
+  }
 };
 
