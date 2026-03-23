@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './types';
 import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
@@ -8,7 +8,7 @@ import { getCountyThirdPartyCosts } from './utils/thirdPartyCosts';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
-import { getDeals, saveDeal, deleteDeal } from './lib/database';
+import { getDeals, saveDeal, deleteDeal, saveDraft, loadDraft, deleteDraft } from './lib/database';
 import { ReportMode } from './ReportMode';
 import { getStateClosingCosts } from './utils/stateClosingCosts';
 import { estimateMonthlyInsurance, estimateMonthlyTax } from './utils/stateHoldingCosts';
@@ -105,6 +105,12 @@ const App: React.FC = () => {
   // Version State — default NORMAL; HIDEOUT only available when hideoutModeEnabled in settings
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT'>('NORMAL');
 
+  // Auto-save state
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isRestoringDraftRef = useRef(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
   // When switching versions, update both the appVersion state AND inputs.appVersion (used by calculateLoan)
   const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
     setAppVersion(version);
@@ -128,6 +134,75 @@ const App: React.FC = () => {
   
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
   const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75% (main ARV)
+
+  // --- AUTO-SAVE ---
+  // Restore draft on mount / user change
+  useEffect(() => {
+    const restoreDraft = async () => {
+      try {
+        if (isSupabaseConfigured && supabase && currentUser && currentUser.id !== 'local') {
+          const draft = await loadDraft();
+          if (draft) {
+            isRestoringDraftRef.current = true;
+            setInputs(prev => ({ ...prev, ...draft.inputs }));
+            if (draft.lenders) setLenders(draft.lenders);
+            if (draft.appVersion) setAppVersion(draft.appVersion as 'NORMAL' | 'HIDEOUT');
+            setSaveNotification('Draft restored');
+            setTimeout(() => setSaveNotification(null), 2000);
+            setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
+          }
+        } else if (currentUser) {
+          const key = `zsrehab_draft_${currentUser.email}`;
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.inputs) {
+              isRestoringDraftRef.current = true;
+              setInputs(prev => ({ ...prev, ...parsed.inputs }));
+              if (parsed.lenders) setLenders(parsed.lenders);
+              if (parsed.appVersion) setAppVersion(parsed.appVersion);
+              if (parsed.savedAt) setLastSavedAt(new Date(parsed.savedAt));
+              setSaveNotification('Draft restored');
+              setTimeout(() => setSaveNotification(null), 2000);
+              setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to restore draft:', e);
+      }
+    };
+    restoreDraft();
+  }, [currentUser?.email]);
+
+  // Debounced auto-save whenever inputs, lenders, or appVersion change
+  useEffect(() => {
+    if (isRestoringDraftRef.current) return;
+    if (!currentUser) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    setAutoSaveStatus('saving');
+    autoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+          await saveDraft(currentUser.id, inputs, lenders, appVersion);
+        } else {
+          const key = `zsrehab_draft_${currentUser.email}`;
+          localStorage.setItem(key, JSON.stringify({ inputs, lenders, appVersion, savedAt: new Date().toISOString() }));
+        }
+        const now = new Date();
+        setLastSavedAt(now);
+        setAutoSaveStatus('saved');
+        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      } catch (e) {
+        console.error('Auto-save failed:', e);
+        setAutoSaveStatus('error');
+        setTimeout(() => setAutoSaveStatus('idle'), 5000);
+      }
+    }, 1000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [inputs, lenders, appVersion, currentUser]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -810,6 +885,15 @@ const App: React.FC = () => {
     }
     
     setTimeout(() => setSaveNotification(null), 3000);
+
+    // Clear draft after successful save
+    if (supabaseSuccess || localStorageSuccess) {
+      if (isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+        deleteDraft(currentUser.id).catch(e => console.error('Draft cleanup failed:', e));
+      } else {
+        localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
+      }
+    }
   };
 
   const handleLoadDeal = (deal: SavedDeal) => {
@@ -922,9 +1006,17 @@ const App: React.FC = () => {
 
   const handleNewDeal = () => {
     if (window.confirm('Start a new deal? Unsaved changes will be lost.')) {
+      // Clear draft
+      if (currentUser && isSupabaseConfigured && supabase && currentUser.id !== 'local') {
+        deleteDraft(currentUser.id).catch(e => console.error('Draft cleanup failed:', e));
+      } else if (currentUser) {
+        localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
+      }
       setInputs(DEFAULT_INPUTS);
       setLenders([]);
-      setCurrentDealId(null); // Clear current deal ID when starting new deal
+      setCurrentDealId(null);
+      setLastSavedAt(null);
+      setAutoSaveStatus('idle');
     }
   };
 
@@ -1204,6 +1296,8 @@ const App: React.FC = () => {
         currentUser={currentUser}
         savedDeals={savedDeals}
         saveNotification={saveNotification}
+        autoSaveStatus={autoSaveStatus}
+        lastSavedAt={lastSavedAt}
         appVersion={appVersion}
         onVersionChange={handleVersionChange}
         showVersionSelector={userPreferences.hideoutModeEnabled}

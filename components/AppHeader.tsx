@@ -8,6 +8,8 @@ interface AppHeaderProps {
   };
   savedDeals: SavedDeal[];
   saveNotification: string | null;
+  autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  lastSavedAt?: Date | null;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   onVersionChange?: (version: 'NORMAL' | 'HIDEOUT') => void;
   showVersionSelector?: boolean;
@@ -31,6 +33,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   currentUser,
   savedDeals,
   saveNotification,
+  autoSaveStatus = 'idle',
+  lastSavedAt,
   appVersion = 'HIDEOUT',
   onVersionChange,
   showVersionSelector = false,
@@ -52,6 +56,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const featuresRef = React.useRef<HTMLDivElement>(null);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
 
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -117,6 +125,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </div>
             )}
           </button>
+
+          {/* Auto-save indicator */}
+          <span className="text-xs flex items-center gap-1 whitespace-nowrap">
+            {autoSaveStatus === 'saving' && (
+              <span className="text-amber-300 animate-pulse">Saving…</span>
+            )}
+            {autoSaveStatus === 'saved' && lastSavedAt && (
+              <span className="text-green-400">Saved {formatTime(lastSavedAt)}</span>
+            )}
+            {autoSaveStatus === 'error' && (
+              <span className="text-red-400">Save failed</span>
+            )}
+            {autoSaveStatus === 'idle' && lastSavedAt && (
+              <span className="text-gray-400">Saved {formatTime(lastSavedAt)}</span>
+            )}
+          </span>
 
           <button onClick={onOpenDealModal} className="bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm font-medium transition">
             My Deals ({savedDeals.length})
@@ -244,6 +268,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <span className="ml-2 text-xs text-amber-300">{saveNotification}</span>
             )}
           </button>
+          {/* Auto-save indicator (mobile) */}
+          <div className="px-3 py-1 text-xs">
+            {autoSaveStatus === 'saving' && (
+              <span className="text-amber-300 animate-pulse">Saving…</span>
+            )}
+            {autoSaveStatus === 'saved' && lastSavedAt && (
+              <span className="text-green-400">Auto-saved {formatTime(lastSavedAt)}</span>
+            )}
+            {autoSaveStatus === 'error' && (
+              <span className="text-red-400">Auto-save failed</span>
+            )}
+            {autoSaveStatus === 'idle' && lastSavedAt && (
+              <span className="text-gray-400">Auto-saved {formatTime(lastSavedAt)}</span>
+            )}
+          </div>
           <button onClick={() => { onOpenDealModal(); closeMenu(); }} className="text-left text-amber-400 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition">
             My Deals ({savedDeals.length})
           </button>
