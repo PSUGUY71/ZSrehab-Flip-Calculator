@@ -1,6 +1,6 @@
 # CLAUDE.md — ZS Flip Calculator Master Project Document
 
-> Last updated: February 24, 2026
+> Last updated: March 23, 2026
 
 ---
 
@@ -44,7 +44,7 @@
 | 17 | Net Profit Projected | Detailed profit breakdown: revenue − acquisition − holding − disposition; after-tax profit toggle | ✅ COMPLETE |
 | 18 | Seller's Estimated Net | Seller-side proceeds calculation | ✅ COMPLETE |
 | 19 | Printable PDF Report | Full deal summary formatted for 8.5×11" with print CSS; includes lender comparison; export via html2canvas/jspdf | ✅ COMPLETE |
-| 20 | Saved Deals (CRUD) | Save, load, clone, delete deals; Supabase primary + localStorage backup; auto-saves on changes | ✅ COMPLETE |
+| 20 | Saved Deals (CRUD) | Save, load, clone, delete deals; Supabase primary + localStorage backup; **auto-save draft** on every input change (debounced 1s, restores on page load) | ✅ COMPLETE |
 | 21 | HIDEOUT Mode | Privacy toggle that switches between PA-specific Walker/Hideout fees and generic county-based costs | ✅ COMPLETE |
 | 22 | User Settings | Display name, password change (Supabase only), calculation defaults (financing %, tax rate, commission) | ✅ COMPLETE |
 | 23 | State Auto-Defaults | State selection auto-populates CPL fee, title insurance rate, transfer tax, property tax, insurance per $100k | ✅ COMPLETE |
@@ -272,6 +272,7 @@ State change triggers → county costs auto-fill → holding costs auto-estimate
 | 2026-02-17 | Hideout Fee Defaults | Set non-zero Hideout defaults, added handleVersionChange() | `types.ts`, `App-refactored.tsx` |
 | 2026-02-17 | Remove 4 Fee Fields | Removed survey/pest/credit/flood from all layers | `types.ts`, `utils/thirdPartyCosts.ts`, `components/InputSections.tsx`, `components/LoanEstimateCard.tsx`, `components/CostsBreakdown.tsx`, `ReportMode.tsx` |
 | 2026-02-17 | Version Fee Separation | HIDEOUT fees zeroed in NORMAL mode and vice versa | `utils/calculations.ts` |
+| 2026-03-23 | Auto-Save Draft | Added debounced auto-save (1s delay) that persists `inputs`, `lenders`, and `appVersion` to localStorage on every change. Draft auto-restores on page load or user login. Key: `zsrehab_draft_{email}` (or `zsrehab_draft_guest`). Draft cleared on explicit Save Deal or New Deal. Shows "Draft restored" notification on load. Prevents data loss on accidental page refresh. Uses `useRef` flags to avoid save-during-restore loops. | `App.tsx` |
 | 2026-03-12 | HUD-1 Comparison Fixes (HIDEOUT) | Compared actual Walker & Walker HUD-1 (File #6614838, 1355 Woodhill Lane) with HIDEOUT calculator. Fixed 7 categories: (1) Title insurance basis changed from purchasePrice+rehabBudget to purchasePrice only for lender's policy; (2) Hideout Transfer Fee changed from auto-calc via PA title chart to manual-only entry; (3) Endorsement rate $100→$50/each (4×$50=$200 matching HUD); (4) Walker fee structure expanded from 3 fields to 6 (added Attorney $750, Notary $140, Settlement $1,583.40); (5) Added 4 new HUD line items: Title Search ($180), Owner's Title Policy ($35), Capital Improvement ($50), Resale Certificate ($250); (6) Walker fee defaults changed from hardcoded $500/$200/$50 to $0 (user enters actuals); (7) All display components updated for new fields | `types.ts`, `utils/calculations.ts`, `components/InputSections.tsx`, `components/LoanEstimateCard.tsx`, `ReportMode.tsx`, `App.tsx`, `App-refactored.tsx`, `components/CostsBreakdown.tsx` |
 | 2026-03-11 | HUD-1 Verification Round 2 | OCR'd 14-page calculator PDF output and compared against original HUD. Found: (1) PA transfer tax default was 0.5% but buyer's share is 1% — fixed stateDefaults.json PA transferTaxRate from 0.5 to 1.0; (2) Title insurance used PA sale/owner rate table ($1,213.10) but HUD shows lender's policy ($365.50) — added new `lendersTitleInsurance` dollar override field that takes priority over rate table when set; (3) Verified endorsement $50/each, Walker 6 fields, 4 new line items, manual Hideout transfer all correctly in code | `data/stateDefaults.json`, `types.ts`, `utils/calculations.ts`, `components/InputSections.tsx`, `App-refactored.tsx` |
 | 2026-02-17 | Missing 3rd Party Fees | Added otherThirdPartyFees catch-all, fixed CostsBreakdown/ReportMode | `types.ts`, `utils/calculations.ts`, `components/CostsBreakdown.tsx`, `ReportMode.tsx` |
