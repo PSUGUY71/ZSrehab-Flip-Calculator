@@ -349,13 +349,16 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const finalSchoolTaxProrated = appVersion === 'NORMAL' ? 0 : (schoolTaxProrated || 0);
   const finalSewerWaterProrated = appVersion === 'NORMAL' ? 0 : (sewerWaterProrated || 0);
 
+  // In HIDEOUT mode, Legal & Settlement is covered by Walker fees (1101-1107) — zero to prevent double-count
+  const legalSettlementAmount = appVersion === 'HIDEOUT' ? 0 : (legalSettlementFees || 0);
+
   // Inspection and Appraisal are prepaid before closing, not included in closing costs
   const totalThirdPartyFees = 
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
     (cplFeeCost || 0) +
     (endorsementCost || 0) +
-    (legalSettlementFees || 0) + 
+    legalSettlementAmount + 
     totalWalkerFees + // HIDEOUT only (zeroed above)
     titleCompanyChargesAmount + // NORMAL only (zeroed above)
     (recordingFees || 0) + 
@@ -930,7 +933,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     titleInsuranceCost,
     cplFeeCost,
     endorsementCost,
-    legalSettlementCost: legalSettlementFees,
+    legalSettlementCost: legalSettlementAmount,
     recordingCost: recordingFees,
     inspectionCost: inspectionCost || 0,
     appraisalCost: appraisalCost || 0,
@@ -961,6 +964,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     walkerAttorneyFee: walkerAttorneyFee || 0,
     walkerNotaryFee: walkerNotaryFee || 0,
     walkerSettlementFee: walkerSettlementFee || 0,
+    walkerDocPrep: walkerDocPrep || 0,
+    walkerOvernight: walkerOvernight || 0,
+    walkerWire: walkerWire || 0,
     totalWalkerFees,
 
     // Additional HUD line items

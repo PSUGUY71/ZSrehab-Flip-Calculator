@@ -967,6 +967,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
         </div>
         <div className="p-4 sm:p-6 grid gap-4 sm:gap-6">
           <div className="grid grid-cols-2 gap-6">
+            {appVersion !== 'HIDEOUT' && (
             <InputGroup 
               label="Title Ins. Rate" 
               id="title" 
@@ -976,6 +977,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               step={0.01}
               helpText={`Title insurance rate${inputs.state && getStateDefaults(inputs.state) ? (getStateDefaults(inputs.state)!.titleInsuranceRate === 0 ? ' - ' + getStateName(inputs.state) + ' uses rate table/chart (leave at 0)' : ' - Default ' + getStateDefaults(inputs.state)!.titleInsuranceRate + '% for ' + getStateName(inputs.state)) : ' - Enter percentage or leave at 0 for rate table'}. Enter a percentage to manually override.`}
             />
+            )}
             <InputGroup
               label="CPL Fee" 
               id="cpl" 
@@ -991,14 +993,16 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               onChange={(v) => onInputChange('numberOfEndorsements', v)} 
               helpText="Number of title endorsements at $50 each (per HUD: 4 endorsements = $200)"
             />
+            {appVersion !== 'HIDEOUT' && (
             <InputGroup 
               label="Legal & Settlement" 
               id="legal" 
               value={inputs.legalSettlementFees} 
               onChange={(v) => onInputChange('legalSettlementFees', v)} 
               prefix="$"
-              helpText="Legal and settlement fees"
+              helpText="Legal and settlement fees (in HIDEOUT, use Walker fee fields instead)"
             />
+            )}
           </div>
           <div className="grid grid-cols-2 gap-6">
             <InputGroup 

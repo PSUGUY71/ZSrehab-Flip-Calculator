@@ -320,6 +320,9 @@ export interface CalculatedResults {
   walkerAttorneyFee: number;
   walkerNotaryFee: number;
   walkerSettlementFee: number;
+  walkerDocPrep: number;
+  walkerOvernight: number;
+  walkerWire: number;
   totalWalkerFees: number;
   
   // Additional HUD line items
