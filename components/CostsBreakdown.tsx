@@ -26,7 +26,8 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
   const dispositionCosts = {
     sellingCommission: results.totalSellingCommissionCost || 0,
     transferTax: results.sellingTransferTaxCost || 0,
-    closingCosts: 0, // Usually minimal on sell side
+    legalFees: results.sellingLegalFees || 0,
+    hideoutTransfer: results.sellingHideoutTransferFee || 0,
   };
   
   const totalDispositionCosts = Object.values(dispositionCosts).reduce((a, b) => a + b, 0);
@@ -141,6 +142,18 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
             <div className="flex justify-between text-gray-600">
               <span>Transfer Tax (selling side)</span>
               <span className="font-mono">{formatCurrency(dispositionCosts.transferTax)}</span>
+            </div>
+          )}
+          {dispositionCosts.legalFees > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Legal / Settlement (selling side)</span>
+              <span className="font-mono">{formatCurrency(dispositionCosts.legalFees)}</span>
+            </div>
+          )}
+          {dispositionCosts.hideoutTransfer > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Hideout Transfer (selling side)</span>
+              <span className="font-mono">{formatCurrency(dispositionCosts.hideoutTransfer)}</span>
             </div>
           )}
           {totalDispositionCosts === 0 && (

@@ -1071,35 +1071,42 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   prefix="$"
                   helpText="Mechanics lien insurance — protects against lien claims from contractors/suppliers. Especially relevant for flip/rehab properties. (PA BEC 1D)"
                 />
-                <InputGroup
-                  label="Survey Fee"
-                  id="surveyFee"
-                  value={inputs.surveyFee || 0}
-                  onChange={(v) => onInputChange('surveyFee', v)}
-                  prefix="$"
-                  helpText="Property survey fee — verifies boundary lines, easements, and encroachments. (PA BEC 1H)"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <InputGroup
-                  label="Domestic Lien Search"
-                  id="domesticLienSearch"
-                  value={inputs.domesticLienSearch || 0}
-                  onChange={(v) => onInputChange('domesticLienSearch', v)}
-                  prefix="$"
-                  helpText="Domestic/municipal lien search fee — searches for outstanding municipal liens on the property. (PA BEC 1I)"
-                />
-                <InputGroup
-                  label="Patriot Act Search"
-                  id="patriotActSearch"
-                  value={inputs.patriotActSearch || 0}
-                  onChange={(v) => onInputChange('patriotActSearch', v)}
-                  prefix="$"
-                  helpText="Patriot Act / OFAC name search fee — verifies parties are not on government watch lists. (PA BEC 1J)"
-                />
               </div>
             </div>
           )}
+
+          {/* Survey & Search Fees - Both modes (appear on HUD) */}
+          <div className="space-y-3 border-t border-purple-200 pt-3">
+            <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Survey & Search Fees</div>
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup
+                label="Survey Fee"
+                id="surveyFee"
+                value={inputs.surveyFee || 0}
+                onChange={(v) => onInputChange('surveyFee', v)}
+                prefix="$"
+                helpText="Property survey fee — verifies boundary lines, easements, and encroachments. (HUD 1309 / PA BEC 1H)"
+              />
+              <InputGroup
+                label="Domestic Lien Search"
+                id="domesticLienSearch"
+                value={inputs.domesticLienSearch || 0}
+                onChange={(v) => onInputChange('domesticLienSearch', v)}
+                prefix="$"
+                helpText="Domestic/municipal lien search fee — searches for outstanding municipal liens on the property. (HUD 1302 / PA BEC 1I)"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <InputGroup
+                label="Patriot Act Search"
+                id="patriotActSearch"
+                value={inputs.patriotActSearch || 0}
+                onChange={(v) => onInputChange('patriotActSearch', v)}
+                prefix="$"
+                helpText="Patriot Act / OFAC name search fee — verifies parties are not on government watch lists. (HUD 1302 / PA BEC 1J)"
+              />
+            </div>
+          </div>
 
           {/* Additional Inspections (Prepaid) - NORMAL mode (PA BEC Section 5) */}
           {appVersion !== 'HIDEOUT' && (
@@ -2047,6 +2054,29 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 suffix="%"
                 helpText="Transfer tax rate when selling the property"
               />
+            </div>
+            <div className="mt-4 pt-3 border-t border-yellow-200">
+              <div className="text-xs font-bold text-yellow-700 uppercase tracking-wide mb-2">Selling Closing Costs</div>
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup 
+                  label="Legal / Settlement" 
+                  id="sellingLegalFees" 
+                  value={inputs.sellingLegalFees || 0} 
+                  onChange={(v) => onInputChange('sellingLegalFees', v)} 
+                  prefix="$"
+                  helpText="Attorney and settlement fees when selling the flipped property (e.g., title company, closing agent)"
+                />
+                {appVersion === 'HIDEOUT' && (
+                  <InputGroup 
+                    label="Hideout Transfer" 
+                    id="sellingHideoutTransferFee" 
+                    value={inputs.sellingHideoutTransferFee || 0} 
+                    onChange={(v) => onInputChange('sellingHideoutTransferFee', v)} 
+                    prefix="$"
+                    helpText="Hideout POA transfer fee charged when selling the property — The Hideout charges a transfer fee on every ownership change"
+                  />
+                )}
+              </div>
             </div>
           </div>
           

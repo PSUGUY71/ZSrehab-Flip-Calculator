@@ -200,6 +200,8 @@ export interface LoanInputs {
   sellingSellerAgentCommissionRate: number; // Seller's agent commission rate when selling
   sellingBuyerAgentCommissionRate: number; // Buyer's agent commission rate when selling
   sellingSellerAgentBrokerRate: number; // Percentage of seller agent commission that goes to broker
+  sellingLegalFees: number; // Legal/settlement fees when selling the flip
+  sellingHideoutTransferFee: number; // Hideout transfer fee when selling (HIDEOUT only)
 
   // Refinance Scenario (from PDF)
   refinanceLTV: number; // Default 80%
@@ -369,6 +371,10 @@ export interface CalculatedResults {
   yearlyDuesCost: number; // Yearly dues cost (if included)
   monthlyInterestPayments: number[]; // Array of monthly interest payments (progressive draws)
   totalExitCosts: number;
+  totalSellingCommissionCost: number;
+  sellingTransferTaxCost: number;
+  sellingLegalFees: number;
+  sellingHideoutTransferFee: number;
   netProfit: number;
   closingTableProfit: number;
   
@@ -535,6 +541,8 @@ export const DEFAULT_INPUTS: LoanInputs = {
   sellingSellerAgentCommissionRate: 3, // Default to 3% (typical commission rate)
   sellingBuyerAgentCommissionRate: 3, // Default to 3% (typical commission rate)
   sellingSellerAgentBrokerRate: 0,
+  sellingLegalFees: 0,
+  sellingHideoutTransferFee: 0,
 
   refinanceLTV: 80.0,
   refinancePoints: 2.0,

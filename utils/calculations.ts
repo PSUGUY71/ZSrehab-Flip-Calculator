@@ -106,6 +106,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     sellingSellerAgentCommissionRate,
     sellingBuyerAgentCommissionRate,
     sellingSellerAgentBrokerRate,
+    sellingLegalFees,
+    sellingHideoutTransferFee,
     refinanceLTV,
     refinancePoints,
     refinanceFixedFees,
@@ -540,9 +542,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   let totalExitCosts = 0;
   let refinanceLoanAmount = 0;
+  let sellingTransferTaxAmount = 0;
+  let totalSellingCommissionAmount = 0;
+  const sellingLegalFeesAmount = sellingLegalFees || 0;
+  const sellingHideoutTransferAmount = (appVersion === 'HIDEOUT') ? (sellingHideoutTransferFee || 0) : 0;
 
   if (exitStrategy === 'SELL') {
-    const sellingTransferTax = arv * (sellingTransferTaxRate / 100);
+    sellingTransferTaxAmount = arv * (sellingTransferTaxRate / 100);
     
     // Calculate commissions: Use separate seller/buyer rates if provided, otherwise use legacy total rate
     let sellerAgentCommission = 0;
@@ -561,6 +567,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       sellerAgentCommission = totalSellingCommission / 2;
       buyerAgentCommission = totalSellingCommission / 2;
     }
+    totalSellingCommissionAmount = totalSellingCommission;
     
     // If we are the real estate agent, calculate net commission after broker split
     // Broker split applies to seller agent commission
@@ -571,10 +578,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       
       // Total commission cost = Buyer agent commission + Seller agent broker portion (we pay broker)
       // We receive seller agent net commission, so it's not subtracted
-      totalExitCosts = buyerAgentCommission + sellerAgentBrokerPortion + sellingTransferTax;
+      totalExitCosts = buyerAgentCommission + sellerAgentBrokerPortion + sellingTransferTaxAmount + sellingLegalFeesAmount + sellingHideoutTransferAmount;
     } else {
       // Not the agent: pay full commissions
-      totalExitCosts = totalSellingCommission + sellingTransferTax;
+      totalExitCosts = totalSellingCommission + sellingTransferTaxAmount + sellingLegalFeesAmount + sellingHideoutTransferAmount;
     }
   } else {
     // REFINANCE STRATEGY
@@ -666,9 +673,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       }
       if (weAreTheRealEstateAgent) {
           const brokerPortion = baselineSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
-          baselineExitCosts = baselineBuyerComm + brokerPortion + baselineTransferTax;
+          baselineExitCosts = baselineBuyerComm + brokerPortion + baselineTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
       } else {
-          baselineExitCosts = baselineSellerComm + baselineBuyerComm + baselineTransferTax;
+          baselineExitCosts = baselineSellerComm + baselineBuyerComm + baselineTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
       }
   } else {
       const baselineRefiLoan = baselineARV * (refinanceLTV / 100);
@@ -695,9 +702,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       }
       if (weAreTheRealEstateAgent) {
           const brokerPortion = minus10kSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
-          minus10kExitCosts = minus10kBuyerComm + brokerPortion + minus10kTransferTax;
+          minus10kExitCosts = minus10kBuyerComm + brokerPortion + minus10kTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
       } else {
-          minus10kExitCosts = minus10kSellerComm + minus10kBuyerComm + minus10kTransferTax;
+          minus10kExitCosts = minus10kSellerComm + minus10kBuyerComm + minus10kTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
       }
   } else {
       const minus10kRefiLoan = minus10kARV * (refinanceLTV / 100);
@@ -743,9 +750,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
           }
           if (weAreTheRealEstateAgent) {
               const brokerPortion = simSellerComm * ((sellingSellerAgentBrokerRate || 0) / 100);
-              simExitCosts = simBuyerComm + brokerPortion + simTransferTax;
+              simExitCosts = simBuyerComm + brokerPortion + simTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
           } else {
-              simExitCosts = simSellerComm + simBuyerComm + simTransferTax;
+              simExitCosts = simSellerComm + simBuyerComm + simTransferTax + sellingLegalFeesAmount + sellingHideoutTransferAmount;
           }
       } else {
           // Refi Costs change because loan amount (80% LTV) changes with ARV
@@ -997,6 +1004,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     yearlyWaterCost,
     yearlyDuesCost,
     totalExitCosts,
+    totalSellingCommissionCost: totalSellingCommissionAmount,
+    sellingTransferTaxCost: sellingTransferTaxAmount,
+    sellingLegalFees: sellingLegalFeesAmount,
+    sellingHideoutTransferFee: sellingHideoutTransferAmount,
     netProfit,
     estimatedCapitalGainsTax,
     netProfitAfterTax,

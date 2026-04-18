@@ -94,6 +94,18 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         <span className="opacity-70">Transfer Tax</span>
         <span className="font-bold text-red-600">-{formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate / 100))}</span>
       </div>
+      {(results.sellingLegalFees || 0) > 0 && (
+        <div className="flex justify-between">
+          <span className="opacity-70">Selling Legal Fees</span>
+          <span className="font-bold text-red-600">-{formatCurrency(results.sellingLegalFees)}</span>
+        </div>
+      )}
+      {(results.sellingHideoutTransferFee || 0) > 0 && (
+        <div className="flex justify-between">
+          <span className="opacity-70">Hideout Transfer (Sell)</span>
+          <span className="font-bold text-red-600">-{formatCurrency(results.sellingHideoutTransferFee)}</span>
+        </div>
+      )}
     </div>
 
     {/* Detailed Holding Cost Section */}
