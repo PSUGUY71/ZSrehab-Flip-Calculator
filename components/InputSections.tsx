@@ -1269,6 +1269,11 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             <>
             <div className="space-y-3 border-t border-purple-200 pt-3">
               <div className="text-xs font-bold text-purple-700 uppercase tracking-wide">Walker & Walker Title Charges (HUD 1100s)</div>
+              {results.totalWalkerFees === 0 && inputs.lendersTitleInsurance === 0 && inputs.hideoutTransferFee === 0 && (
+                <div className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                  ⚠ Enter your HUD values below — Walker fees, Lender's Title Policy, and Hideout Transfer are all $0. These won't appear in the results until you enter the amounts from your HUD-1.
+                </div>
+              )}
             <div className="grid grid-cols-3 gap-4">
               <InputGroup 
                 label="1104 Lender's Title Policy" 

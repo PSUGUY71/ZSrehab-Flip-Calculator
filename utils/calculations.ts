@@ -303,6 +303,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // otherwise use PA Title Insurance Rate Table based on PURCHASE PRICE
   // Per HUD comparison: the PA rate table has SALE/OWNER rates ($1,213 for $130k),
   // but lender's title policy is much lower ($365 for $226k loan). Use dollar override.
+  // In HIDEOUT mode: NEVER fall back to rate table — Walker/Penn Attorneys price separately.
   const totalLoanAmount = purchasePrice + rehabBudget;
   let titleInsuranceCost = 0;
   if (lendersTitleInsurance && lendersTitleInsurance > 0) {
@@ -311,8 +312,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   } else if (titleInsuranceRate && titleInsuranceRate > 0) {
     // Manual override: use percentage rate on purchase price
     titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
-  } else {
-    // Default: use PA Title Insurance Rate Table chart based on purchase price
+  } else if (appVersion !== 'HIDEOUT') {
+    // Default (NORMAL only): use PA Title Insurance Rate Table chart based on purchase price
+    // In HIDEOUT mode, skip — user must enter the actual lender's policy amount
     titleInsuranceCost = calculatePATitleInsurance(purchasePrice);
   }
   
