@@ -5,10 +5,11 @@ interface FeeBreakdownItemProps {
   label: string;
   value: number;
   subtext?: string;
+  alwaysShow?: boolean;
 }
 
-export const FeeBreakdownItem: React.FC<FeeBreakdownItemProps> = ({ label, value, subtext }) => {
-  if (value === 0) return null;
+export const FeeBreakdownItem: React.FC<FeeBreakdownItemProps> = ({ label, value, subtext, alwaysShow }) => {
+  if (value === 0 && !alwaysShow) return null;
   return (
     <div className="pl-3 py-0.5 border-l-2 border-gray-100 ml-1">
       <div className="flex justify-between items-start text-[10px] text-gray-500">

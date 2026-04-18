@@ -11,6 +11,7 @@ interface LoanEstimateCardProps {
 }
 
 export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, results }) => {
+  const isHideout = inputs.appVersion === 'HIDEOUT';
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="bg-gray-900 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-white rounded-t-xl">
@@ -176,9 +177,9 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <ResultRow label="Third Party Fees" value={results.totalThirdPartyFees} />
         {/* Detailed Third Party Fee Breakdown Corrected */}
         <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
-        <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
-        <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
-        <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} />
+        <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
         <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
         <FeeBreakdownItem label="Recording" value={results.recordingCost} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
@@ -197,12 +198,12 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
         <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
         <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
-        <FeeBreakdownItem label="Title Search" value={results.titleSearchFee} />
-        <FeeBreakdownItem label="Owner's Title Policy" value={results.ownersTitlePolicy} />
-        <FeeBreakdownItem label="Capital Improvement" value={results.capitalImprovementFee} />
-        <FeeBreakdownItem label="Resale Certificate" value={results.resaleCertificateFee} />
-        <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-        <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+        <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1308 Resale Certificate" : "Resale Certificate"} value={results.resaleCertificateFee} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1107 Walker & Walker Fees" : "Walker & Walker Fees"} value={results.totalWalkerFees} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? "1304 Hideout Transfer" : "Hideout Transfer"} value={results.hideoutTransferCost} alwaysShow={isHideout} />
         <FeeBreakdownItem 
           label="Dues (Pro)" 
           value={results.hideoutProratedDues}
@@ -238,9 +239,9 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <ResultRow label="Third Party" value={results.totalThirdPartyFees} />
           {/* Detailed Third Party Fee Breakdown in Cash Required */}
           <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
-          <FeeBreakdownItem label="Title Insurance" value={results.titleInsuranceCost} />
-          <FeeBreakdownItem label="CPL Fee (Penn Attorneys)" value={results.cplFeeCost} />
-          <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} />
+          <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
           <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
           <FeeBreakdownItem label="Recording" value={results.recordingCost} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
@@ -259,12 +260,12 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
           <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
           <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
-          <FeeBreakdownItem label="Title Search" value={results.titleSearchFee} />
-          <FeeBreakdownItem label="Owner's Title Policy" value={results.ownersTitlePolicy} />
-          <FeeBreakdownItem label="Capital Improvement" value={results.capitalImprovementFee} />
-          <FeeBreakdownItem label="Resale Certificate" value={results.resaleCertificateFee} />
-          <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
-          <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
+          <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1308 Resale Certificate" : "Resale Certificate"} value={results.resaleCertificateFee} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1107 Walker & Walker Fees" : "Walker & Walker Fees"} value={results.totalWalkerFees} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? "1304 Hideout Transfer" : "Hideout Transfer"} value={results.hideoutTransferCost} alwaysShow={isHideout} />
           <FeeBreakdownItem 
             label="Dues (Pro)" 
             value={results.hideoutProratedDues}
