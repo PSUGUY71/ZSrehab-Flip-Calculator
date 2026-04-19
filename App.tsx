@@ -81,9 +81,10 @@ const App: React.FC = () => {
           const draft = await loadDraft();
           if (draft) {
             isRestoringDraftRef.current = true;
-            setInputs(prev => ({ ...prev, ...draft.inputs }));
+            const restoredVersion = (draft.appVersion || draft.inputs?.appVersion || 'NORMAL') as 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+            setInputs(prev => ({ ...prev, ...draft.inputs, appVersion: restoredVersion }));
             if (draft.lenders) setLenders(draft.lenders);
-            if (draft.appVersion) setAppVersion(draft.appVersion as 'NORMAL' | 'HIDEOUT' | 'CUSTOM');
+            setAppVersion(restoredVersion);
             setSaveNotification('Draft restored');
             setTimeout(() => setSaveNotification(null), 2000);
             setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
@@ -96,9 +97,10 @@ const App: React.FC = () => {
             const parsed = JSON.parse(raw);
             if (parsed.inputs) {
               isRestoringDraftRef.current = true;
-              setInputs(prev => ({ ...prev, ...parsed.inputs }));
+              const restoredVersion = (parsed.appVersion || parsed.inputs?.appVersion || 'NORMAL') as 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
+              setInputs(prev => ({ ...prev, ...parsed.inputs, appVersion: restoredVersion }));
               if (parsed.lenders) setLenders(parsed.lenders);
-              if (parsed.appVersion) setAppVersion(parsed.appVersion);
+              setAppVersion(restoredVersion);
               setSaveNotification('Draft restored');
               setTimeout(() => setSaveNotification(null), 2000);
               setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
@@ -216,14 +218,20 @@ const App: React.FC = () => {
   // --- AUTO-POPULATE HIDEOUT DEFAULTS ---
   // When in HIDEOUT mode and all Walker/Hideout fields are at 0, populate with typical fees
   useEffect(() => {
-    if (inputs.appVersion !== 'HIDEOUT') return;
+    const isHideout = inputs.appVersion === 'HIDEOUT' || appVersion === 'HIDEOUT';
+    if (!isHideout) return;
+    // Ensure inputs.appVersion is synced
+    if (inputs.appVersion !== 'HIDEOUT') {
+      setInputs(prev => ({ ...prev, appVersion: 'HIDEOUT' }));
+      return;
+    }
     const allZero = !inputs.walkerAttorneyFee && !inputs.walkerNotaryFee && !inputs.walkerSettlementFee &&
       !inputs.walkerDocPrep && !inputs.walkerOvernight && !inputs.walkerWire &&
       !inputs.titleSearchFee && !inputs.lendersTitleInsurance && !inputs.hideoutTransferFee;
     if (allZero) {
       setInputs(prev => ({ ...prev, ...HIDEOUT_DEFAULTS }));
     }
-  }, [inputs.appVersion]);
+  }, [inputs.appVersion, appVersion]);
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
