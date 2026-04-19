@@ -111,25 +111,45 @@ const App: React.FC = () => {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
+  // --- HIDEOUT DEFAULTS (typical Walker & Walker / Hideout fees from HUD #6614838) ---
+  const HIDEOUT_DEFAULTS: Partial<LoanInputs> = {
+    walkerAttorneyFee: 750,
+    walkerNotaryFee: 140,
+    walkerSettlementFee: 1583.40,
+    walkerDocPrep: 175,
+    walkerOvernight: 200,
+    walkerWire: 200,
+    titleSearchFee: 180,
+    lendersTitleInsurance: 365.50,
+    ownersTitlePolicy: 35,
+    numberOfEndorsements: 4,
+    capitalImprovementFee: 50,
+    resaleCertificateFee: 250,
+    hideoutTransferFee: 2160,
+    surveyFee: 750,
+    domesticLienSearch: 5,
+    patriotActSearch: 5,
+    recordingFees: 225,
+    hideoutAnnualFee: 2400,
+    roamingwoodAnnual: 500,
+    schoolTaxAnnual: 1100,
+    sewerWaterAnnual: 1700,
+  };
+
   // When switching versions, update both the appVersion state AND inputs.appVersion (used by calculateLoan)
   const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
     setAppVersion(version);
-    setInputs(prev => ({
-      ...prev,
-      appVersion: version,
-      ...(version === 'HIDEOUT' ? {
-        walkerDocPrep: prev.walkerDocPrep || 0,
-        walkerOvernight: prev.walkerOvernight || 0,
-        walkerWire: prev.walkerWire || 0,
-        walkerAttorneyFee: prev.walkerAttorneyFee || 0,
-        walkerNotaryFee: prev.walkerNotaryFee || 0,
-        walkerSettlementFee: prev.walkerSettlementFee || 0,
-        lendersTitleInsurance: prev.lendersTitleInsurance || 0,
-        hideoutAnnualFee: prev.hideoutAnnualFee || 3000,
-        roamingwoodAnnual: prev.roamingwoodAnnual || 500,
-        schoolTaxAnnual: prev.schoolTaxAnnual || 1100,
-      } : {})
-    }));
+    setInputs(prev => {
+      const updated = { ...prev, appVersion: version };
+      if (version === 'HIDEOUT') {
+        // Apply HIDEOUT defaults for any field that's still at 0/default
+        const defs = HIDEOUT_DEFAULTS;
+        for (const [key, val] of Object.entries(defs)) {
+          if (!(updated as any)[key]) (updated as any)[key] = val;
+        }
+      }
+      return updated;
+    });
   };
   
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
@@ -144,9 +164,17 @@ const App: React.FC = () => {
           const draft = await loadDraft();
           if (draft) {
             isRestoringDraftRef.current = true;
-            setInputs(prev => ({ ...prev, ...draft.inputs }));
+            const restoredVersion = (draft.appVersion || draft.inputs?.appVersion || 'NORMAL') as 'NORMAL' | 'HIDEOUT';
+            let restored = { ...DEFAULT_INPUTS, ...draft.inputs, appVersion: restoredVersion };
+            // Apply HIDEOUT defaults for any missing fields
+            if (restoredVersion === 'HIDEOUT') {
+              for (const [key, val] of Object.entries(HIDEOUT_DEFAULTS)) {
+                if (!(restored as any)[key]) (restored as any)[key] = val;
+              }
+            }
+            setInputs(restored);
             if (draft.lenders) setLenders(draft.lenders);
-            if (draft.appVersion) setAppVersion(draft.appVersion as 'NORMAL' | 'HIDEOUT');
+            setAppVersion(restoredVersion);
             setSaveNotification('Draft restored');
             setTimeout(() => setSaveNotification(null), 2000);
             setTimeout(() => { isRestoringDraftRef.current = false; }, 100);
@@ -158,9 +186,16 @@ const App: React.FC = () => {
             const parsed = JSON.parse(raw);
             if (parsed.inputs) {
               isRestoringDraftRef.current = true;
-              setInputs(prev => ({ ...prev, ...parsed.inputs }));
+              const restoredVersion = (parsed.appVersion || parsed.inputs?.appVersion || 'NORMAL') as 'NORMAL' | 'HIDEOUT';
+              let restored = { ...DEFAULT_INPUTS, ...parsed.inputs, appVersion: restoredVersion };
+              if (restoredVersion === 'HIDEOUT') {
+                for (const [key, val] of Object.entries(HIDEOUT_DEFAULTS)) {
+                  if (!(restored as any)[key]) (restored as any)[key] = val;
+                }
+              }
+              setInputs(restored);
               if (parsed.lenders) setLenders(parsed.lenders);
-              if (parsed.appVersion) setAppVersion(parsed.appVersion);
+              setAppVersion(restoredVersion);
               if (parsed.savedAt) setLastSavedAt(new Date(parsed.savedAt));
               setSaveNotification('Draft restored');
               setTimeout(() => setSaveNotification(null), 2000);
@@ -904,7 +939,13 @@ const App: React.FC = () => {
     }
     
     // Merge with DEFAULT_INPUTS to ensure all fields are present (especially new fields added after deal was saved)
-    const loadedInputs = { ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' };
+    const loadedInputs = { ...DEFAULT_INPUTS, ...deal.data, exitStrategy: 'SELL' as const, appVersion };
+    // Apply HIDEOUT defaults for old deals missing Walker/Hideout fields
+    if (appVersion === 'HIDEOUT') {
+      for (const [key, val] of Object.entries(HIDEOUT_DEFAULTS)) {
+        if (!(loadedInputs as any)[key]) (loadedInputs as any)[key] = val;
+      }
+    }
     setInputs(loadedInputs);
     setLenders(deal.lenders || []);
     setCurrentDealId(deal.id); // Track which deal is currently loaded
@@ -1012,7 +1053,12 @@ const App: React.FC = () => {
       } else if (currentUser) {
         localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
       }
-      setInputs(DEFAULT_INPUTS);
+      const newInputs = { ...DEFAULT_INPUTS, appVersion };
+      // Apply HIDEOUT defaults for new deals
+      if (appVersion === 'HIDEOUT') {
+        Object.assign(newInputs, HIDEOUT_DEFAULTS);
+      }
+      setInputs(newInputs);
       setLenders([]);
       setCurrentDealId(null);
       setLastSavedAt(null);
