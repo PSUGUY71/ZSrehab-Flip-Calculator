@@ -467,8 +467,12 @@ const App: React.FC = () => {
   };
 
   const handleLoadDeal = (deal: SavedDeal) => {
-    // Force Sell strategy when loading if needed, though user requested removal of Refi option from UI
-    setInputs({ ...deal.data, exitStrategy: 'SELL' });
+    const loaded = { ...deal.data, exitStrategy: 'SELL' as const, appVersion };
+    // Apply HIDEOUT defaults to old deals that don't have Walker/Hideout fields
+    if (appVersion === 'HIDEOUT' && !loaded.walkerAttorneyFee && !loaded.walkerSettlementFee && !loaded.hideoutTransferFee) {
+      Object.assign(loaded, HIDEOUT_DEFAULTS);
+    }
+    setInputs(loaded);
     setLenders(deal.lenders || []);
     setIsDealModalOpen(false);
   };
@@ -504,7 +508,11 @@ const App: React.FC = () => {
             localStorage.removeItem(`zsrehab_draft_${currentUser.email}`);
           }
           const savedState = localStorage.getItem('zsrehab_selected_state');
-          const newInputs = { ...DEFAULT_INPUTS };
+          const newInputs = { ...DEFAULT_INPUTS, appVersion };
+          // Apply HIDEOUT defaults for new deals
+          if (appVersion === 'HIDEOUT') {
+            Object.assign(newInputs, HIDEOUT_DEFAULTS);
+          }
           if (savedState) {
             newInputs.state = savedState;
             // Apply state defaults to new deal
