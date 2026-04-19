@@ -47,6 +47,27 @@ const App: React.FC = () => {
   const [editingLender, setEditingLender] = useState<LenderOption | null>(null);
   const [appVersion, setAppVersion] = useState<'NORMAL' | 'HIDEOUT' | 'CUSTOM'>('HIDEOUT');
 
+  // --- HIDEOUT DEFAULTS (typical Walker & Walker / Hideout fees) ---
+  const HIDEOUT_DEFAULTS: Partial<LoanInputs> = {
+    walkerAttorneyFee: 750,
+    walkerNotaryFee: 140,
+    walkerSettlementFee: 1583.40,
+    walkerDocPrep: 175,
+    walkerOvernight: 200,
+    walkerWire: 200,
+    titleSearchFee: 180,
+    lendersTitleInsurance: 365.50,
+    ownersTitlePolicy: 35,
+    numberOfEndorsements: 4,
+    capitalImprovementFee: 50,
+    resaleCertificateFee: 250,
+    hideoutTransferFee: 2160,
+    surveyFee: 750,
+    domesticLienSearch: 5,
+    patriotActSearch: 5,
+    recordingFees: 225,
+  };
+
   // --- AUTO-SAVE ---
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isRestoringDraftRef = useRef(false);
@@ -191,6 +212,18 @@ const App: React.FC = () => {
 
     loadDeals();
   }, [currentUser]);
+
+  // --- AUTO-POPULATE HIDEOUT DEFAULTS ---
+  // When in HIDEOUT mode and all Walker/Hideout fields are at 0, populate with typical fees
+  useEffect(() => {
+    if (inputs.appVersion !== 'HIDEOUT') return;
+    const allZero = !inputs.walkerAttorneyFee && !inputs.walkerNotaryFee && !inputs.walkerSettlementFee &&
+      !inputs.walkerDocPrep && !inputs.walkerOvernight && !inputs.walkerWire &&
+      !inputs.titleSearchFee && !inputs.lendersTitleInsurance && !inputs.hideoutTransferFee;
+    if (allZero) {
+      setInputs(prev => ({ ...prev, ...HIDEOUT_DEFAULTS }));
+    }
+  }, [inputs.appVersion]);
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
@@ -830,7 +863,14 @@ const App: React.FC = () => {
               onChange={(e) => {
                 const newVersion = e.target.value as 'NORMAL' | 'HIDEOUT' | 'CUSTOM';
                 setAppVersion(newVersion);
-                setInputs(prev => ({ ...prev, appVersion: newVersion }));
+                setInputs(prev => {
+                  const updated = { ...prev, appVersion: newVersion };
+                  // Auto-populate HIDEOUT defaults when switching to HIDEOUT and all Walker fields are 0
+                  if (newVersion === 'HIDEOUT' && !prev.walkerAttorneyFee && !prev.walkerSettlementFee && !prev.hideoutTransferFee) {
+                    Object.assign(updated, HIDEOUT_DEFAULTS);
+                  }
+                  return updated;
+                });
               }}
               className="bg-amber-100 text-amber-900 px-4 py-1 rounded-full text-xs font-bold border border-amber-300 shadow-sm uppercase tracking-wide appearance-none cursor-pointer hover:bg-amber-200 transition"
             >
