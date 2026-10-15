@@ -305,8 +305,15 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // but lender's title policy is much lower ($365 for $226k loan). Use dollar override.
   // In HIDEOUT mode: NEVER fall back to rate table — Walker/Penn Attorneys price separately.
   const totalLoanAmount = purchasePrice + rehabBudget;
+  // HUD line items whose inputs only exist in HIDEOUT mode (Walker/Hideout HUD) — never charge them
+  // in NORMAL, where they're hidden and stale HIDEOUT defaults would otherwise leak into the totals
+  const hideoutOnly = (v: number | undefined) => (appVersion === 'HIDEOUT' ? v || 0 : 0);
+  const effTitleSearchFee = hideoutOnly(titleSearchFee);
+  const effOwnersTitlePolicy = hideoutOnly(ownersTitlePolicy);
+  const effCapitalImprovementFee = hideoutOnly(capitalImprovementFee);
+  const effResaleCertificateFee = hideoutOnly(resaleCertificateFee);
   let titleInsuranceCost = 0;
-  if (lendersTitleInsurance && lendersTitleInsurance > 0) {
+  if (appVersion === 'HIDEOUT' && lendersTitleInsurance && lendersTitleInsurance > 0) {
     // Dollar override: use exact amount from HUD (e.g., lender's title policy)
     titleInsuranceCost = lendersTitleInsurance;
   } else if (titleInsuranceRate && titleInsuranceRate > 0) {
@@ -370,10 +377,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     finalSchoolTaxProrated + // HIDEOUT only (zeroed above)
     finalSewerWaterProrated + // HIDEOUT only (zeroed above)
     // Additional HUD line items
-    (titleSearchFee || 0) +              // HUD 1103
-    (ownersTitlePolicy || 0) +           // HUD 1301
-    (capitalImprovementFee || 0) +       // HUD 1305
-    (resaleCertificateFee || 0) +        // HUD 1308
+    effTitleSearchFee +                  // HUD 1103 (HIDEOUT only)
+    effOwnersTitlePolicy +               // HUD 1301 (HIDEOUT only)
+    effCapitalImprovementFee +           // HUD 1305 (HIDEOUT only)
+    effResaleCertificateFee +            // HUD 1308 (HIDEOUT only)
     // Additional closing fees (PA Buyer's Estimated Cost Sheet)
     (mechanicsLienInsurance || 0) +    // 1D
     (surveyFee || 0) +                  // 1H
@@ -970,10 +977,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalWalkerFees,
 
     // Additional HUD line items
-    titleSearchFee: titleSearchFee || 0,
-    ownersTitlePolicy: ownersTitlePolicy || 0,
-    capitalImprovementFee: capitalImprovementFee || 0,
-    resaleCertificateFee: resaleCertificateFee || 0,
+    titleSearchFee: effTitleSearchFee,
+    ownersTitlePolicy: effOwnersTitlePolicy,
+    capitalImprovementFee: effCapitalImprovementFee,
+    resaleCertificateFee: effResaleCertificateFee,
 
     hideoutTransferCost: calculatedHideoutTransferFee,
     hideoutProratedDues: finalHideoutProratedDues,

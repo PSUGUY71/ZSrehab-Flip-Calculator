@@ -5,6 +5,26 @@ import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
 import { getCountyThirdPartyCosts } from './utils/thirdPartyCosts';
+import { getStateDefaults } from './utils/stateDefaults';
+
+// NORMAL mode: fill closing-cost fields from the property's county averages
+// (falls back to state default → national average when no county is picked)
+const applyCountyCosts = (inp: LoanInputs): LoanInputs => {
+  if (!inp.state) return inp;
+  const c = getCountyThirdPartyCosts(inp.state, inp.county);
+  // States with a filed rate table (e.g. PA) keep titleInsuranceRate = 0 so the table is used
+  const usesTitleRate = (getStateDefaults(inp.state)?.titleInsuranceRate || 0) > 0;
+  return {
+    ...inp,
+    inspectionCost: c.inspectionCost,
+    appraisalCost: c.appraisalCost,
+    recordingFees: c.recordingFees,
+    legalSettlementFees: c.lawyerFee,
+    surveyFee: c.surveyFee,
+    pestInspectionCost: c.pestInspectionCost,
+    ...(usesTitleRate ? { titleInsuranceRate: +(c.titleInsuranceCost * 100).toFixed(2) } : {}),
+  };
+};
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -140,7 +160,10 @@ const App: React.FC = () => {
   const handleVersionChange = (version: 'NORMAL' | 'HIDEOUT') => {
     setAppVersion(version);
     setInputs(prev => {
-      const updated = { ...prev, appVersion: version };
+      // Switching to NORMAL replaces leftover HIDEOUT/Walker amounts with the county's numbers
+      const updated = version === 'NORMAL' && prev.appVersion !== 'NORMAL'
+        ? applyCountyCosts({ ...prev, appVersion: version })
+        : { ...prev, appVersion: version };
       if (version === 'HIDEOUT') {
         // Apply HIDEOUT defaults for any field that's still at 0/default
         const defs = HIDEOUT_DEFAULTS;
@@ -152,6 +175,20 @@ const App: React.FC = () => {
     });
   };
   
+  // Single source of truth for the mode: the header selector (appVersion), clamped to NORMAL when
+  // HIDEOUT mode is disabled in Settings. Draft restores, deal loads, clones and resets replace
+  // `inputs` wholesale and could leave inputs.appVersion = 'HIDEOUT' — which drives calculateLoan
+  // and every closing chart — while the (hidden) selector says NORMAL.
+  useEffect(() => {
+    const effective = userPreferences.hideoutModeEnabled ? appVersion : 'NORMAL';
+    if (appVersion !== effective) setAppVersion(effective);
+    if (inputs.appVersion !== effective) {
+      setInputs(prev => effective === 'NORMAL'
+        ? applyCountyCosts({ ...prev, appVersion: 'NORMAL' })
+        : { ...prev, appVersion: effective });
+    }
+  }, [appVersion, inputs.appVersion, userPreferences.hideoutModeEnabled]);
+
   // Max Offer Analysis - ARV Percentage Selection (75% is the main/default)
   const [maxOfferLTVPercent, setMaxOfferLTVPercent] = useState<number>(0.75); // Default 75% (main ARV)
 
@@ -769,16 +806,11 @@ const App: React.FC = () => {
         updated.includeYearlyWater = true;
       }
 
-      // Auto-populate 3rd party costs when county changes (NORMAL version - 4 main fields)
-      if (field === 'county' && typeof value === 'string' && prev.state) {
-        const countyCosts = getCountyThirdPartyCosts(prev.state, value as string);
-        updated.inspectionCost = countyCosts.inspectionCost;
-        updated.appraisalCost = countyCosts.appraisalCost;
-        updated.recordingFees = countyCosts.recordingFees;
-        // Title insurance cost is stored as a percentage, so convert to decimal
-        updated.titleInsurancePercentage = countyCosts.titleInsuranceCost * 100;
+      // Auto-populate 3rd party costs when county changes (NORMAL mode only — HIDEOUT uses HUD values)
+      if (field === 'county' && prev.state && prev.appVersion !== 'HIDEOUT') {
+        return applyCountyCosts(updated);
       }
-      
+
       return updated;
     });
   };
