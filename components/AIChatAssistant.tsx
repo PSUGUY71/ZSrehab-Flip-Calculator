@@ -297,7 +297,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
           <span className="text-xl">🤖</span>
           <div>
             <h3 className="text-white font-bold text-sm leading-none">ZS AI Assistant</h3>
-            <span className="text-purple-200 text-[10px]">Powered by GPT-4o-mini</span>
+            <span className="text-purple-200 text-[10px]">Powered by {ai.label} · {ai.chatModel}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
