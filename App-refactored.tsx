@@ -4,27 +4,7 @@ import { calculateLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
-import { getCountyThirdPartyCosts } from './utils/thirdPartyCosts';
-import { getStateDefaults } from './utils/stateDefaults';
-
-// NORMAL mode: fill closing-cost fields from the property's county averages
-// (falls back to state default → national average when no county is picked)
-const applyCountyCosts = (inp: LoanInputs): LoanInputs => {
-  if (!inp.state) return inp;
-  const c = getCountyThirdPartyCosts(inp.state, inp.county);
-  // States with a filed rate table (e.g. PA) keep titleInsuranceRate = 0 so the table is used
-  const usesTitleRate = (getStateDefaults(inp.state)?.titleInsuranceRate || 0) > 0;
-  return {
-    ...inp,
-    inspectionCost: c.inspectionCost,
-    appraisalCost: c.appraisalCost,
-    recordingFees: c.recordingFees,
-    legalSettlementFees: c.lawyerFee,
-    surveyFee: c.surveyFee,
-    pestInspectionCost: c.pestInspectionCost,
-    ...(usesTitleRate ? { titleInsuranceRate: +(c.titleInsuranceCost * 100).toFixed(2) } : {}),
-  };
-};
+import { applyCountyCosts, withEstimates, markReal } from './utils/closingEstimates';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -771,14 +751,15 @@ const App: React.FC = () => {
   };
 
   // --- INPUT HANDLERS ---
-  const handleInputChange = (field: keyof LoanInputs, value: string | number) => {
+  const handleInputChange = (field: keyof LoanInputs, value: string | number | string[]) => {
     // Mark that user has interacted with form
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
     }
 
     setInputs((prev) => {
-      const updated = { ...prev, [field]: value };
+      // Typing into an estimated field makes it a real number (never overwritten again)
+      const updated = { ...markReal(prev, field), [field]: value };
       
       // Auto-populate closing costs when state changes
       if (field === 'state' && typeof value === 'string') {
@@ -806,12 +787,13 @@ const App: React.FC = () => {
         updated.includeYearlyWater = true;
       }
 
-      // Auto-populate 3rd party costs when county changes (NORMAL mode only — HIDEOUT uses HUD values)
-      if (field === 'county' && prev.state && prev.appVersion !== 'HIDEOUT') {
+      // Auto-populate 3rd party costs when county/state changes (NORMAL mode only — HIDEOUT uses HUD values)
+      if ((field === 'county' || field === 'state') && updated.state && prev.appVersion !== 'HIDEOUT') {
         return applyCountyCosts(updated);
       }
 
-      return updated;
+      // Keep placeholder estimates in step with price, closing date, rate, financing…
+      return withEstimates(updated);
     });
   };
 

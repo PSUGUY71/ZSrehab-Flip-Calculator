@@ -14,6 +14,7 @@ interface InputGroupProps {
   min?: number;
   max?: number;
   helpText?: string;
+  estimated?: boolean; // value is a placeholder average — typing a real number clears it
 }
 
 export const InputGroup: React.FC<InputGroupProps> = ({
@@ -27,7 +28,8 @@ export const InputGroup: React.FC<InputGroupProps> = ({
   step,
   min,
   max,
-  helpText // Help text for tooltip
+  helpText, // Help text for tooltip
+  estimated
 }) => {
   const [showHelp, setShowHelp] = useState(false);
   
@@ -37,6 +39,14 @@ export const InputGroup: React.FC<InputGroupProps> = ({
         <label htmlFor={id} className="text-xs font-semibold text-amber-800 uppercase tracking-wide print:text-gray-800">
           {label}
         </label>
+        {estimated && (
+          <span
+            className="text-[9px] font-bold uppercase px-1 rounded bg-amber-100 text-amber-700 border border-amber-300 print:hidden"
+            title="Placeholder average — type the real number to replace it"
+          >
+            Est
+          </span>
+        )}
         {helpText && (
           <div className="relative group">
             <button
@@ -73,7 +83,7 @@ export const InputGroup: React.FC<InputGroupProps> = ({
           step={step}
           min={min}
           max={max}
-          className={`block w-full rounded-lg border-amber-300 py-2 focus:border-amber-500 focus:ring-amber-500 sm:text-sm border pl-3 pr-3 ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''} print:border-none print:shadow-none print:p-0 print:pl-0 print:bg-transparent print:font-medium`}
+          className={`block w-full rounded-lg ${estimated ? 'border-dashed border-amber-400 bg-amber-50/50 italic' : 'border-amber-300'} py-2 focus:border-amber-500 focus:ring-amber-500 sm:text-sm border pl-3 pr-3 ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''} print:border-none print:shadow-none print:p-0 print:pl-0 print:bg-transparent print:font-medium`}
           value={value}
           onChange={(e) => {
             const val = type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;

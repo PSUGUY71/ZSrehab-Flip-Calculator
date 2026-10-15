@@ -10,6 +10,7 @@ import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
+import { ESTIMATE_FIELDS } from '../utils/closingEstimates';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -18,7 +19,7 @@ interface InputSectionsProps {
   maxOfferResults: CalculatedResults;
   maxOfferLTVPercent: number;
   onMaxOfferLTVChange: (percent: number) => void;
-  onInputChange: (field: keyof LoanInputs, value: string | number) => void;
+  onInputChange: (field: keyof LoanInputs, value: string | number | string[]) => void;
   onCaptureBaseline: () => void;
   onRehabLineItemAdd: () => void;
   onRehabLineItemUpdate: (id: string, field: keyof RehabLineItem, value: string | number) => void;
@@ -51,6 +52,11 @@ export const InputSections: React.FC<InputSectionsProps> = ({
     { label: '70%', value: 0.70 },
     { label: '75%', value: 0.75 },
   ];
+
+  // NORMAL mode placeholder averages (utils/closingEstimates.ts) — shown with an EST badge
+  const isEst = (field: string) => appVersion !== 'HIDEOUT' && !!inputs.estimatedFields?.includes(field);
+  const blankEstimateFields = ESTIMATE_FIELDS.filter((f) => !(inputs as any)[f] && !isEst(f));
+  const estimateCount = ESTIMATE_FIELDS.filter(isEst).length;
 
   // Calculate suggested lender fees (3% of loan amount for hard money)
   const suggestedLenderFees = useMemo(() => {
@@ -951,6 +957,24 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               Closing costs updated for {inputs.state}. Adjust if property is in a different county with higher costs.
             </div>
           )}
+          {appVersion !== 'HIDEOUT' && inputs.state && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px]">
+              {estimateCount > 0 && (
+                <span className="text-amber-700">
+                  <span className="font-bold">{estimateCount} fields are placeholder averages</span> (dashed, marked EST) for {inputs.county || `${inputs.state} averages`} — type the real number to replace any of them.
+                </span>
+              )}
+              {blankEstimateFields.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onInputChange('estimatedFields', [...(inputs.estimatedFields || []), ...blankEstimateFields])}
+                  className="px-2 py-0.5 rounded border border-amber-400 bg-white text-amber-700 font-bold hover:bg-amber-50"
+                >
+                  Fill {blankEstimateFields.length} blank field{blankEstimateFields.length > 1 ? 's' : ''} with averages
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <div className="p-4 sm:p-6 grid gap-4 sm:gap-6">
           <div className="grid grid-cols-2 gap-6">
@@ -985,6 +1009,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               label="Legal & Settlement" 
               id="legal" 
               value={inputs.legalSettlementFees} 
+
+              estimated={isEst('legalSettlementFees')}
               onChange={(v) => onInputChange('legalSettlementFees', v)} 
               prefix="$"
               helpText="Legal and settlement fees (in HIDEOUT, use Walker fee fields instead)"
@@ -996,6 +1022,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               label="Govt Recording" 
               id="rec" 
               value={inputs.recordingFees} 
+
+              estimated={isEst('recordingFees')}
               onChange={(v) => onInputChange('recordingFees', v)} 
               prefix="$"
               helpText="Government recording fees"
@@ -1006,6 +1034,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               label="Inspection Cost" 
               id="inspectionCost" 
               value={inputs.inspectionCost} 
+
+              estimated={isEst('inspectionCost')}
               onChange={(v) => onInputChange('inspectionCost', v)} 
               prefix="$"
               helpText="Property inspection cost"
@@ -1014,6 +1044,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               label="Appraisal Cost" 
               id="appraisalCost" 
               value={inputs.appraisalCost} 
+
+              estimated={isEst('appraisalCost')}
               onChange={(v) => onInputChange('appraisalCost', v)} 
               prefix="$"
               helpText="Property appraisal cost"
@@ -1074,6 +1106,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 label="Survey Fee"
                 id="surveyFee"
                 value={inputs.surveyFee || 0}
+
+                estimated={isEst('surveyFee')}
                 onChange={(v) => onInputChange('surveyFee', v)}
                 prefix="$"
                 helpText="Property survey fee — verifies boundary lines, easements, and encroachments. (HUD 1309 / PA BEC 1H)"
@@ -1082,6 +1116,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 label="Domestic Lien Search"
                 id="domesticLienSearch"
                 value={inputs.domesticLienSearch || 0}
+
+                estimated={isEst('domesticLienSearch')}
                 onChange={(v) => onInputChange('domesticLienSearch', v)}
                 prefix="$"
                 helpText="Domestic/municipal lien search fee — searches for outstanding municipal liens on the property. (HUD 1302 / PA BEC 1I)"
@@ -1092,6 +1128,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 label="Patriot Act Search"
                 id="patriotActSearch"
                 value={inputs.patriotActSearch || 0}
+
+                estimated={isEst('patriotActSearch')}
                 onChange={(v) => onInputChange('patriotActSearch', v)}
                 prefix="$"
                 helpText="Patriot Act / OFAC name search fee — verifies parties are not on government watch lists. (HUD 1302 / PA BEC 1J)"
@@ -1108,6 +1146,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Wood Infestation/Pest"
                   id="pestInspectionCost"
                   value={inputs.pestInspectionCost || 0}
+
+                  estimated={isEst('pestInspectionCost')}
                   onChange={(v) => onInputChange('pestInspectionCost', v)}
                   prefix="$"
                   helpText="Wood infestation / termite inspection fee — typically required by lenders. (PA BEC 5B)"
@@ -1116,6 +1156,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Radon Inspection"
                   id="radonInspection"
                   value={inputs.radonInspection || 0}
+
+                  estimated={isEst('radonInspection')}
                   onChange={(v) => onInputChange('radonInspection', v)}
                   prefix="$"
                   helpText="Radon inspection fee — common in PA; required in many counties. (PA BEC 5C)"
@@ -1151,6 +1193,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="County Tax Proration"
                   id="countyTaxProration"
                   value={inputs.countyTaxProration || 0}
+
+                  estimated={isEst('countyTaxProration')}
                   onChange={(v) => onInputChange('countyTaxProration', v)}
                   prefix="$"
                   helpText="County property tax proration — portion of county tax owed from closing date through end of tax period. (PA BEC 4B)"
@@ -1159,6 +1203,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Municipal Tax Proration"
                   id="municipalTaxProration"
                   value={inputs.municipalTaxProration || 0}
+
+                  estimated={isEst('municipalTaxProration')}
                   onChange={(v) => onInputChange('municipalTaxProration', v)}
                   prefix="$"
                   helpText="Municipal / township / borough tax proration at closing. (PA BEC 4C)"
@@ -1169,6 +1215,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="School Tax Proration"
                   id="schoolTaxAtClosing"
                   value={inputs.schoolTaxAtClosing || 0}
+
+                  estimated={isEst('schoolTaxAtClosing')}
                   onChange={(v) => onInputChange('schoolTaxAtClosing', v)}
                   prefix="$"
                   helpText="School district tax proration — portion of school tax from closing date through end of school tax year (July–June). (PA BEC 4A)"
@@ -1204,6 +1252,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   label="Prepaid Interest (6G)"
                   id="prepaidInterestAtClosing"
                   value={inputs.prepaidInterestAtClosing || 0}
+
+                  estimated={isEst('prepaidInterestAtClosing')}
                   onChange={(v) => onInputChange('prepaidInterestAtClosing', v)}
                   prefix="$"
                   helpText={`Prepaid interest from settlement date through end of month. Formula: (Loan × Rate / 360) × days remaining in month. Estimated daily rate: ${inputs.interestRate > 0 && inputs.purchasePrice > 0 ? '$' + ((inputs.purchasePrice * (inputs.interestRate / 100)) / 360).toFixed(2) + '/day' : 'enter purchase price & rate'}. (PA BEC 6G)`}

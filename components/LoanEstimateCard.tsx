@@ -12,6 +12,8 @@ interface LoanEstimateCardProps {
 
 export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, results }) => {
   const isHideout = inputs.appVersion === 'HIDEOUT';
+  const est = (field: string) => !isHideout && !!inputs.estimatedFields?.includes(field);
+  const estimateCount = isHideout ? 0 : (inputs.estimatedFields?.length || 0);
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="bg-gray-900 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-white rounded-t-xl">
@@ -24,8 +26,14 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         </div>
       </div>
       <div className="p-4 sm:p-6">
-        <ResultRow 
-          label="Total Loan Amount" 
+        {estimateCount > 0 && (
+          <div className="mb-3 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 print:hidden">
+            Includes <span className="font-bold">{estimateCount} placeholder averages</span> (marked “est.”) for {inputs.county || `${inputs.state} averages`}.
+            Replace them with real numbers in Detailed HUD Charges for an exact figure.
+          </div>
+        )}
+        <ResultRow
+          label="Total Loan Amount"
           value={results.requestedLoanAmount} 
           isTotal 
           subtext="Total Cost × Financing% (actual loan based on financing terms)"
@@ -180,24 +188,24 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
-        {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />}
-        <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+        {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
+        <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
         <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
         <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
-        <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} />
-        <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} />
-        <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} />
+        <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} estimated={est('surveyFee')} />
+        <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} estimated={est('domesticLienSearch')} />
+        <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} estimated={est('patriotActSearch')} />
         <FeeBreakdownItem label="Lender Insurance Escrow" value={results.lenderEscrowInsurance} />
-        <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} />
-        <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} />
-        <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} />
+        <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} estimated={est('countyTaxProration')} />
+        <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} estimated={est('municipalTaxProration')} />
+        <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} estimated={est('schoolTaxAtClosing')} />
         <FeeBreakdownItem label="Lender Tax Escrow" value={results.lenderEscrowTaxes} />
         <FeeBreakdownItem label="HOA Proration" value={results.hoaProration} />
         <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
         <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
         <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
-        <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
+        <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
         <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />
@@ -251,24 +259,24 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
-          {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />}
-          <FeeBreakdownItem label="Recording" value={results.recordingCost} />
+          {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
+          <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
           <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
           <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
-          <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} />
-          <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} />
-          <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} />
+          <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} estimated={est('surveyFee')} />
+          <FeeBreakdownItem label="Domestic Lien Search" value={results.domesticLienSearch} estimated={est('domesticLienSearch')} />
+          <FeeBreakdownItem label="Patriot Act Search" value={results.patriotActSearch} estimated={est('patriotActSearch')} />
           <FeeBreakdownItem label="Lender Insurance Escrow" value={results.lenderEscrowInsurance} />
-          <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} />
-          <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} />
-          <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} />
+          <FeeBreakdownItem label="County Tax Proration" value={results.countyTaxProration} estimated={est('countyTaxProration')} />
+          <FeeBreakdownItem label="Municipal Tax Proration" value={results.municipalTaxProration} estimated={est('municipalTaxProration')} />
+          <FeeBreakdownItem label="School Tax Proration" value={results.schoolTaxAtClosing} estimated={est('schoolTaxAtClosing')} />
           <FeeBreakdownItem label="Lender Tax Escrow" value={results.lenderEscrowTaxes} />
           <FeeBreakdownItem label="HOA Proration" value={results.hoaProration} />
           <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
           <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
           <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
-          <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} />
+          <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
           <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />
@@ -355,10 +363,10 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           {/* Prepaid Costs Section */}
           <div className="mt-4 pt-4 border-t border-yellow-300">
             <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Prepaid Before Closing</div>
-            <FeeBreakdownItem label="Inspection" value={results.inspectionCost} />
-            <FeeBreakdownItem label="Appraisal" value={results.appraisalCost} />
-            <FeeBreakdownItem label="Wood Infestation/Pest" value={results.pestInspectionCost} />
-            <FeeBreakdownItem label="Radon Inspection" value={results.radonInspection} />
+            <FeeBreakdownItem label="Inspection" value={results.inspectionCost} estimated={est('inspectionCost')} />
+            <FeeBreakdownItem label="Appraisal" value={results.appraisalCost} estimated={est('appraisalCost')} />
+            <FeeBreakdownItem label="Wood Infestation/Pest" value={results.pestInspectionCost} estimated={est('pestInspectionCost')} />
+            <FeeBreakdownItem label="Radon Inspection" value={results.radonInspection} estimated={est('radonInspection')} />
             <FeeBreakdownItem label="Water Test" value={results.waterInspection} />
             <FeeBreakdownItem label="Sewer Inspection" value={results.sewerInspection} />
             <FeeBreakdownItem label="Earnest Money Deposit" value={inputs.earnestMoneyDeposit} />

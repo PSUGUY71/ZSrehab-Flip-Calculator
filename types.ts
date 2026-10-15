@@ -133,6 +133,7 @@ export interface LoanInputs {
 
   // Third-Party Cost Range Estimator
   thirdPartyClosingCostRange: 'LOW' | 'MID' | 'HIGH'; // Range selector for quick estimate
+  estimatedFields?: string[]; // NORMAL mode: closing fields holding placeholder averages (see utils/closingEstimates.ts)
 
   // Additional Closing Fees (from PA Buyer's Estimated Cost Sheet)
   mechanicsLienInsurance: number;   // 1D - Mechanics Lien Insurance
