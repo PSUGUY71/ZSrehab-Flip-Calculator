@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { LoanInputs } from '../types';
+import { AIConfig } from '../utils/aiProvider';
 
 /**
  * Upload lender documents (term sheet, loan estimate, commitment letter — PDF, image or text),
- * have OpenAI read the loan terms, review them side by side, and apply the ones you check.
- * Uses the same OpenAI key as the AI Assistant (Settings → AI Assistant).
+ * have the AI (OpenAI or Grok, per Settings → AI Assistant) read the loan terms, review them
+ * side by side, and apply the ones you check.
  */
 
 interface Props {
-  apiKey: string;
+  ai: AIConfig;
   inputs: LoanInputs;
   onApply: (data: Partial<LoanInputs>) => void;
   onClose: () => void;
@@ -72,17 +73,94 @@ const readAs = (file: File, how: 'dataUrl' | 'text') => new Promise<string>((res
   how === 'dataUrl' ? r.readAsDataURL(file) : r.readAsText(file);
 });
 
-const toContentPart = async (file: File) => {
-  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-    return { type: 'file', file: { filename: file.name, file_data: await readAs(file, 'dataUrl') } };
+// ponytail: Grok's chat endpoint takes images, not PDFs — render the first pages instead of using xAI's
+// Files API + Responses flow; raise if term sheets with more pages show up
+const MAX_PDF_PAGES = 10;
+
+const imagePart = (url: string) => ({ type: 'image_url', image_url: { url, detail: 'high' } });
+
+/** Render PDF pages to JPEG data URLs in the browser (pdf.js, loaded only when needed). */
+const pdfToImages = async (file: File) => {
+  const pdfjs = await import('pdfjs-dist');
+  pdfjs.GlobalWorkerOptions.workerSrc = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+  const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+  const urls: string[] = [];
+  for (let i = 1; i <= Math.min(pdf.numPages, MAX_PDF_PAGES); i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2 }); // ~150 dpi: small print stays readable
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
+    urls.push(canvas.toDataURL('image/jpeg', 0.85));
+  }
+  return { urls, skipped: Math.max(0, pdf.numPages - MAX_PDF_PAGES) };
+};
+
+/** Grok accepts JPG/PNG only — re-encode anything else (WebP, GIF, BMP…) as PNG. */
+const toPngDataUrl = async (file: File) => {
+  const bmp = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = bmp.width;
+  canvas.height = bmp.height;
+  canvas.getContext('2d')!.drawImage(bmp, 0, 0);
+  return canvas.toDataURL('image/png');
+};
+
+/** One file → the message content parts for the chosen provider (+ a warning if pages were skipped). */
+const toContentParts = async (file: File, ai: AIConfig): Promise<{ parts: any[]; warning?: string }> => {
+  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+  if (isPdf && ai.provider === 'grok') {
+    const { urls, skipped } = await pdfToImages(file);
+    return {
+      parts: [{ type: 'text', text: `--- ${file.name} (${urls.length} page images) ---` }, ...urls.map(imagePart)],
+      warning: skipped ? `${file.name}: only the first ${MAX_PDF_PAGES} pages were read (${skipped} skipped).` : undefined,
+    };
+  }
+  if (isPdf) {
+    return { parts: [{ type: 'file', file: { filename: file.name, file_data: await readAs(file, 'dataUrl') } }] };
   }
   if (file.type.startsWith('image/')) {
-    return { type: 'image_url', image_url: { url: await readAs(file, 'dataUrl'), detail: 'high' } };
+    const jpgOrPng = /^image\/(jpe?g|png)$/.test(file.type);
+    return { parts: [imagePart(ai.provider === 'grok' && !jpgOrPng ? await toPngDataUrl(file) : await readAs(file, 'dataUrl'))] };
   }
   if (file.type.startsWith('text/') || /\.(txt|csv|md)$/i.test(file.name)) {
-    return { type: 'text', text: `--- ${file.name} ---\n${await readAs(file, 'text')}` };
+    return { parts: [{ type: 'text', text: `--- ${file.name} ---\n${await readAs(file, 'text')}` }] };
   }
   throw new Error(`${file.name}: unsupported file type. Use PDF, an image (PNG/JPG/screenshot), or text. For Word files, save as PDF first.`);
+};
+
+/** Chat-completions call with strict JSON schema; if the provider rejects the schema, retry once in plain JSON mode. */
+const extractTerms = async (ai: AIConfig, parts: any[]) => {
+  const call = (strict: boolean) => fetch(ai.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ai.apiKey}` },
+    body: JSON.stringify({
+      model: ai.docModel,
+      temperature: 0,
+      messages: [
+        { role: 'system', content: strict ? PROMPT : `${PROMPT}\nReply with only a JSON object matching this JSON schema (every key present, null when unknown):\n${JSON.stringify(SCHEMA)}` },
+        { role: 'user', content: [{ type: 'text', text: 'Extract the loan terms from these lender documents.' }, ...parts] },
+      ],
+      response_format: strict
+        ? { type: 'json_schema', json_schema: { name: 'loan_terms', strict: true, schema: SCHEMA } }
+        : { type: 'json_object' },
+    }),
+  });
+  let resp = await call(true);
+  let body = await resp.json();
+  if (resp.status === 400 && /schema|response_format/i.test(body?.error?.message || JSON.stringify(body))) {
+    resp = await call(false);
+    body = await resp.json();
+  }
+  if (!resp.ok) {
+    const msg = body?.error?.message || body?.error || `${ai.label} error ${resp.status}`;
+    throw new Error(resp.status === 401 ? `Invalid ${ai.label} API key — check Settings → AI Assistant.` : String(msg));
+  }
+  const msg = body.choices?.[0]?.message;
+  if (msg?.refusal) throw new Error(msg.refusal);
+  const json = String(msg?.content || '{}').replace(/^```(?:json)?\s*|\s*```$/g, '');
+  return JSON.parse(json);
 };
 
 const fmt = (kind: Kind, v: any) => {
@@ -99,37 +177,23 @@ const currentValue = (inputs: LoanInputs, key: string) =>
     ? (inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage)
     : (inputs as any)[key];
 
-export const LenderDocImportModal: React.FC<Props> = ({ apiKey, inputs, onApply, onClose, onOpenSettings }) => {
+export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onClose, onOpenSettings }) => {
+  const apiKey = ai.apiKey;
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [extracted, setExtracted] = useState<Record<string, any> | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
 
   const totalMB = files.reduce((s, f) => s + f.size, 0) / 1_048_576;
 
   const handleRead = async () => {
-    setLoading(true); setError(null); setExtracted(null);
+    setLoading(true); setError(null); setExtracted(null); setWarnings([]);
     try {
-      const parts = await Promise.all(files.map(toContentPart));
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: 'gpt-4o', // full model: reading money terms off scanned docs needs the accuracy
-          temperature: 0,
-          messages: [
-            { role: 'system', content: PROMPT },
-            { role: 'user', content: [{ type: 'text', text: 'Extract the loan terms from these lender documents.' }, ...parts] },
-          ],
-          response_format: { type: 'json_schema', json_schema: { name: 'loan_terms', strict: true, schema: SCHEMA } },
-        }),
-      });
-      const body = await resp.json();
-      if (!resp.ok) throw new Error(body?.error?.message || `OpenAI error ${resp.status}`);
-      const msg = body.choices?.[0]?.message;
-      if (msg?.refusal) throw new Error(msg.refusal);
-      const data = JSON.parse(msg?.content || '{}');
+      const converted = await Promise.all(files.map((f) => toContentParts(f, ai)));
+      setWarnings(converted.map((c) => c.warning).filter(Boolean) as string[]);
+      const data = await extractTerms(ai, converted.flatMap((c) => c.parts));
       setExtracted(data);
       // Pre-check every field the document actually stated and that differs from what's entered
       setChecked(Object.fromEntries(FIELDS.map((f) => [f.key,
@@ -178,7 +242,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ apiKey, inputs, onApply,
         <div className="p-4 sm:p-6 overflow-y-auto space-y-4">
           {!apiKey ? (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-              Reading documents uses your OpenAI API key (same as the AI Assistant).
+              Reading documents uses your {ai.label} API key (same as the AI Assistant).
               <button onClick={onOpenSettings} className="ml-2 underline font-bold">Add it in Settings → AI Assistant</button>
             </div>
           ) : (
@@ -198,7 +262,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ apiKey, inputs, onApply,
               {files.length > 0 && (
                 <div className="text-xs text-gray-600 space-y-0.5">
                   {files.map((f) => <div key={f.name}>• {f.name} <span className="text-gray-400">({(f.size / 1024).toFixed(0)} KB)</span></div>)}
-                  {totalMB > 30 && <div className="text-red-600">Files are {totalMB.toFixed(1)} MB — OpenAI accepts up to ~32 MB per request. Remove some pages/files.</div>}
+                  {totalMB > 30 && <div className="text-red-600">Files are {totalMB.toFixed(1)} MB — the AI accepts up to ~30 MB per request. Remove some pages/files.</div>}
                 </div>
               )}
 
@@ -209,11 +273,15 @@ export const LenderDocImportModal: React.FC<Props> = ({ apiKey, inputs, onApply,
               >
                 {loading ? 'Reading documents…' : 'Read loan terms'}
               </button>
-              <p className="text-[10px] text-gray-400 -mt-2">The files are sent to OpenAI with your key to be read; nothing is stored by this app.</p>
+              <p className="text-[10px] text-gray-400 -mt-2">
+                The files are sent to {ai.label} with your key to be read; nothing is stored by this app.
+                {ai.provider === 'grok' && ` PDFs are read as page images (first ${MAX_PDF_PAGES} pages).`}
+              </p>
             </>
           )}
 
           {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
+          {warnings.map((w) => <div key={w} className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2">{w}</div>)}
 
           {extracted && (
             <div className="space-y-3">

@@ -5,6 +5,7 @@ import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
 import { applyCountyCosts, withEstimates, markReal } from './utils/closingEstimates';
+import { getAIConfig } from './utils/aiProvider';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -1551,7 +1552,7 @@ const App: React.FC = () => {
       {/* Lender Doc Import (AI reads term sheet → fills loan terms) */}
       {isLenderDocImportOpen && (
         <LenderDocImportModal
-          apiKey={userPreferences.openaiApiKey || ''}
+          ai={getAIConfig(userPreferences)}
           inputs={inputs}
           onApply={(data) => {
             // Values from the lender's docs are real numbers — drop their EST tags, then refresh estimates
@@ -1572,7 +1573,7 @@ const App: React.FC = () => {
       {/* AI Chat Assistant */}
       {isAIChatOpen && (
         <AIChatAssistant
-          apiKey={userPreferences.openaiApiKey || ''}
+          ai={getAIConfig(userPreferences)}
           dealInputs={inputs}
           dealResults={results}
           onClose={() => setIsAIChatOpen(false)}

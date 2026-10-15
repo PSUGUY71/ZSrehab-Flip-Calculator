@@ -17,6 +17,8 @@ export interface UserPreferences {
   brandColor: string; // Hex color for report accent
   // AI Assistant
   openaiApiKey: string; // OpenAI API key for AI chat
+  aiProvider?: 'openai' | 'grok'; // Which AI service the AI features use (default OpenAI)
+  xaiApiKey?: string; // xAI (Grok) API key
   // App Mode
   hideoutModeEnabled: boolean; // Show Hideout version selector in nav
 }
@@ -348,8 +350,55 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
           {/* AI Assistant */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold uppercase text-gray-700 border-b pb-2">AI Assistant</h3>
-            <p className="text-xs text-gray-500 -mt-2">Connect to OpenAI to enable the AI chat assistant. Your key is stored locally and never sent to our servers.</p>
+            <p className="text-xs text-gray-500 -mt-2">Powers the AI chat assistant and Import Lender Docs. Your key is stored locally in this browser and only sent to the AI service you pick.</p>
 
+            <div>
+              <span className="block text-xs font-semibold text-gray-700 mb-1">AI Service</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([['openai', 'OpenAI (ChatGPT)'], ['grok', 'Grok (xAI)']] as const).map(([value, text]) => {
+                  const selected = (formData.aiProvider || 'openai') === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleChange('aiProvider', value)}
+                      className={`px-3 py-2 rounded border text-sm font-medium ${selected ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      {selected ? '● ' : '○ '}{text}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {formData.aiProvider === 'grok' ? (
+            <div>
+              <label htmlFor="xaiApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
+                Grok (xAI) API Key
+              </label>
+              <input
+                id="xaiApiKey"
+                type="password"
+                value={formData.xaiApiKey || ''}
+                onChange={(e) => handleChange('xaiApiKey', e.target.value)}
+                placeholder="xai-..."
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Get your key at{' '}
+                <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  console.x.ai
+                </a>
+                {' '}(separate from a SuperGrok / X Premium subscription). Uses grok-4.7.
+              </p>
+              {formData.xaiApiKey && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-xs text-green-700 font-medium">Key configured</span>
+                </div>
+              )}
+            </div>
+            ) : (
             <div>
               <label htmlFor="openaiApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
                 OpenAI API Key
@@ -376,6 +425,7 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* Default Calculation Settings */}

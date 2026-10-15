@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
+import { AIConfig } from '../utils/aiProvider';
 
 interface Message {
   id: string;
@@ -10,7 +11,7 @@ interface Message {
 }
 
 interface AIChatAssistantProps {
-  apiKey: string;
+  ai: AIConfig; // provider, key, endpoint and model (Settings → AI Assistant)
   dealInputs?: LoanInputs;
   dealResults?: CalculatedResults;
   onClose: () => void;
@@ -69,9 +70,9 @@ const generateDealContext = (inputs?: LoanInputs, results?: CalculatedResults): 
 - Rehab Budget: ${formatCurrency(inputs.rehabBudget)}
 - Sq Ft: ${inputs.sqFt || 'N/A'} | Beds: ${inputs.beds || 'N/A'} | Baths: ${inputs.baths || 'N/A'}
 - Loan Amount: ${formatCurrency(results.qualifiedLoanAmount)}
-- Interest Rate: ${inputs.interestRate}% | Points: ${inputs.loanPoints}
+- Interest Rate: ${inputs.interestRate}% | Points: ${inputs.originationPoints}
 - LTV: ${formatPercent(results.ltv)} | LTC: ${formatPercent(results.ltc)} | LTARV: ${formatPercent(results.ltarv)}
-- Hold Period: ${inputs.rehabMonths} months
+- Hold Period: ${inputs.holdingPeriodMonths} months
 - Total Closing Costs: ${formatCurrency(results.totalClosingCosts)}
 - Total Holding Costs: ${formatCurrency(results.totalHoldingCosts)}
 - Total Exit Costs: ${formatCurrency(results.totalExitCosts)}
@@ -79,16 +80,17 @@ const generateDealContext = (inputs?: LoanInputs, results?: CalculatedResults): 
 - Net Profit: ${formatCurrency(results.netProfit)}
 - ROI: ${formatPercent(results.roi)}
 - 70% Rule: ${results.passes70Rule ? 'PASS' : 'FAIL'} (Max offer: ${formatCurrency(results.maxPurchasePrice70Rule)})
-- State: ${inputs.selectedState || 'Not set'}`;
+- State: ${inputs.state || 'Not set'}${inputs.county ? ` (${inputs.county})` : ''}`;
 };
 
 export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
-  apiKey,
+  ai,
   dealInputs,
   dealResults,
   onClose,
   onOpenSettings,
 }) => {
+  const apiKey = ai.apiKey;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -123,7 +125,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
     if (!trimmed || isStreaming) return;
 
     if (!apiKey) {
-      setError('No API key configured. Go to Settings → AI Assistant to add your OpenAI API key.');
+      setError(`No API key configured. Go to Settings → AI Assistant to add your ${ai.label} API key.`);
       return;
     }
 
@@ -160,14 +162,14 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
         .slice(-20)
         .map(m => ({ role: m.role, content: m.content }));
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(ai.url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: ai.chatModel,
           messages: [
             { role: 'system', content: systemMessage },
             ...conversationHistory,
@@ -183,11 +185,11 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
-          throw new Error('Invalid API key. Please check your OpenAI API key in Settings.');
+          throw new Error(`Invalid API key. Please check your ${ai.label} API key in Settings.`);
         } else if (response.status === 429) {
           throw new Error('Rate limit exceeded. Please wait a moment and try again.');
         } else if (response.status === 402 || response.status === 403) {
-          throw new Error('API key issue: Check your OpenAI account billing or permissions.');
+          throw new Error(`API key issue: Check your ${ai.label} account billing or permissions.`);
         }
         throw new Error(errorData.error?.message || `API error (${response.status})`);
       }
@@ -238,7 +240,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
       setIsStreaming(false);
       abortControllerRef.current = null;
     }
-  }, [input, isStreaming, apiKey, messages, dealInputs, dealResults]);
+  }, [input, isStreaming, apiKey, ai, messages, dealInputs, dealResults]);
 
   const handleStop = () => {
     abortControllerRef.current?.abort();
@@ -334,7 +336,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2">
           <span className="text-amber-600 text-sm">⚠️</span>
           <p className="text-xs text-amber-800 flex-1">
-            Add your OpenAI API key in{' '}
+            Add your {ai.label} API key in{' '}
             <button onClick={onOpenSettings} className="underline font-semibold hover:text-amber-900">
               Settings
             </button>{' '}
@@ -441,7 +443,7 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
           )}
         </div>
         <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-          Shift+Enter for new line • Responses use your OpenAI API key
+          Shift+Enter for new line • Responses use your {ai.label} API key
         </p>
       </div>
     </div>
