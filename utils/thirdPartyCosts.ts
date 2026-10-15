@@ -12,6 +12,8 @@ export interface CountyLevelCosts {
   lawyerFee: number; // Attorney/closing agent fee (varies by state)
   titleInsuranceCost: number; // Title insurance as % of property value (e.g., 0.006 = 0.6%)
   recordingFees: number; // Recording deed and mortgage documents
+  surveyFee: number; // Property survey
+  pestInspectionCost: number; // Wood infestation / pest inspection
 }
 
 type CountyMap = {
@@ -12441,6 +12443,8 @@ export const getCostLabel = (key: keyof CountyLevelCosts): string => {
     lawyerFee: 'Attorney/Closing',
     titleInsuranceCost: 'Title Insurance (%)',
     recordingFees: 'Recording Fees',
+    surveyFee: 'Survey',
+    pestInspectionCost: 'Pest Inspection',
   };
   return labels[key];
 };

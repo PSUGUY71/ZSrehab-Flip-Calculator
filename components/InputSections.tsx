@@ -1580,7 +1580,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
       {/* Third-Party Closing Cost Estimator */}
       {(() => {
-        const [lastApplied, setLastApplied] = useState<'MIN' | 'AVG' | 'MAX' | null>(null);
+        const [appliedChoice, setLastApplied] = useState<'MIN' | 'AVG' | 'MAX' | null>(null);
 
         const price = inputs.purchasePrice || 0;
         const range = inputs.thirdPartyClosingCostRange || 'MID';
@@ -1590,9 +1590,28 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           HIGH: { lo: 0.020, hi: 0.040 },
         };
         const { lo, hi } = ranges[range];
-        const minCost = price * lo;
-        const maxCost = price * hi;
-        const avgCost = price * ((lo + hi) / 2);
+
+        // NORMAL mode: baseline comes from the selected county's fee averages
+        // (falls back to state default, then national average). HIDEOUT keeps the % ranges.
+        const countyCosts = appVersion !== 'HIDEOUT' && inputs.state
+          ? getCountyThirdPartyCosts(inputs.state, inputs.county)
+          : null;
+        const countyLines: Record<string, number> | null = countyCosts && {
+          legalSettlementFees: countyCosts.lawyerFee,
+          recordingFees:       countyCosts.recordingFees,
+          surveyFee:           countyCosts.surveyFee,
+          inspectionCost:      countyCosts.inspectionCost,
+          appraisalCost:       countyCosts.appraisalCost,
+          pestInspectionCost:  countyCosts.pestInspectionCost,
+        };
+        const countyLabel = inputs.county || `${inputs.state} state average`;
+
+        // ponytail: ±15% band around county averages is a heuristic; replace with real county min/max data if it exists
+        const avgCost = countyLines
+          ? Object.values(countyLines).reduce((a, b) => a + b, 0)
+          : price * ((lo + hi) / 2);
+        const minCost = countyLines ? avgCost * 0.85 : price * lo;
+        const maxCost = countyLines ? avgCost * 1.15 : price * hi;
 
         const fmtCurrency = (n: number) =>
           n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
@@ -1611,29 +1630,51 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           otherThirdPartyFees:      0.21,  // Misc / catch-all
         };
 
-        const applyTotal = (total: number, label: 'MIN' | 'AVG' | 'MAX') => {
-          Object.entries(dist).forEach(([field, weight]) => {
-            onInputChange(field as keyof typeof inputs, Math.round(total * weight));
+        // Dollar amount per field at the AVG level; MIN/MAX scale it proportionally
+        const lines: Record<string, number> = countyLines
+          ?? Object.fromEntries(Object.entries(dist).map(([f, w]) => [f, avgCost * w]));
+        const totals = { MIN: minCost, AVG: avgCost, MAX: maxCost };
+        const lineValue = (v: number, label: 'MIN' | 'AVG' | 'MAX') => Math.round(v * (totals[label] / avgCost));
+        const canApply = avgCost > 0;
+        // Only show "Applied" while the fields still hold those values (county change or manual edit clears it)
+        const lastApplied = appliedChoice && Object.entries(lines).every(
+          ([f, v]) => (inputs as any)[f] === lineValue(v, appliedChoice)
+        ) ? appliedChoice : null;
+
+        const applyTotal = (label: 'MIN' | 'AVG' | 'MAX') => {
+          Object.entries(lines).forEach(([field, v]) => {
+            onInputChange(field as keyof typeof inputs, lineValue(v, label));
           });
           setLastApplied(label);
         };
 
-        const cards: { label: 'MIN' | 'AVG' | 'MAX'; value: number; pct: string; highlight: boolean }[] = [
-          { label: 'MIN', value: minCost, pct: `${(lo * 100).toFixed(1)}%`, highlight: false },
-          { label: 'AVG', value: avgCost, pct: `${(((lo + hi) / 2) * 100).toFixed(2)}%`, highlight: true },
-          { label: 'MAX', value: maxCost, pct: `${(hi * 100).toFixed(1)}%`, highlight: false },
+        const cards: { label: 'MIN' | 'AVG' | 'MAX'; value: number; pct: string; highlight: boolean }[] = countyLines ? [
+          { label: 'MIN', value: minCost, pct: '−15% vs county avg', highlight: false },
+          { label: 'AVG', value: avgCost, pct: 'county average', highlight: true },
+          { label: 'MAX', value: maxCost, pct: '+15% vs county avg', highlight: false },
+        ] : [
+          { label: 'MIN', value: minCost, pct: `${(lo * 100).toFixed(1)}% of price`, highlight: false },
+          { label: 'AVG', value: avgCost, pct: `${(((lo + hi) / 2) * 100).toFixed(2)}% of price`, highlight: true },
+          { label: 'MAX', value: maxCost, pct: `${(hi * 100).toFixed(1)}% of price`, highlight: false },
         ];
 
         return (
           <section className="bg-blue-50 rounded-xl shadow-sm border border-gray-200">
             <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
               <h2 className="text-sm font-bold text-gray-800 uppercase">Third-Party Closing Cost Estimator</h2>
-              <p className="text-[10px] text-gray-500 mt-0.5">Select a range, then click a card to distribute that estimate across the closing cost fields above</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {countyLines
+                  ? `Based on ${countyLabel} fee averages — click a card to apply them to the closing cost fields above`
+                  : 'Select a range, then click a card to distribute that estimate across the closing cost fields above'}
+              </p>
+              {countyLines && !inputs.county && (
+                <p className="text-[10px] text-amber-600 mt-0.5">Select the property's county in Property Information for county-specific numbers.</p>
+              )}
             </div>
             <div className="p-4 sm:p-6 space-y-4">
 
-              {/* Range Selector */}
-              <div>
+              {/* Range Selector (HIDEOUT / no state only — NORMAL uses county data) */}
+              {!countyLines && <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Cost Range</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['LOW', 'MID', 'HIGH'] as const).map((r) => {
@@ -1658,7 +1699,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
               {/* Result Cards with Apply buttons */}
               <div className="space-y-2">
@@ -1684,17 +1725,17 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                         <div className={`text-lg font-bold ${
                           isApplied ? 'text-green-700' : highlight ? 'text-white' : 'text-gray-800'
                         }`}>
-                          {price > 0 ? fmtCurrency(value) : '—'}
+                          {canApply ? fmtCurrency(value) : '—'}
                         </div>
                         <div className={`text-[10px] mt-0.5 ${
                           isApplied ? 'text-green-500' : highlight ? 'text-blue-200' : 'text-gray-400'
                         }`}>
-                          {pct} of price
+                          {pct}
                         </div>
-                        {price > 0 && (
+                        {canApply && (
                           <button
                             type="button"
-                            onClick={() => applyTotal(value, label)}
+                            onClick={() => applyTotal(label)}
                             className={`mt-2 w-full text-[10px] font-bold py-1 px-2 rounded transition-all ${
                               isApplied
                                 ? 'bg-green-500 text-white cursor-default'
@@ -1711,21 +1752,23 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   })}
                 </div>
 
-                {price === 0 && (
+                {!canApply && (
                   <p className="text-[10px] text-amber-600 text-center">Enter a purchase price above to see estimates</p>
                 )}
 
                 {/* Distribution preview */}
-                {price > 0 && lastApplied && (
+                {canApply && lastApplied && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
                     <div className="text-[10px] font-bold text-green-700 uppercase mb-2">✓ Applied {lastApplied} — Fields Updated</div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                      {Object.entries(dist).map(([field, weight]) => {
-                        const appliedValue = { MIN: minCost, AVG: avgCost, MAX: maxCost }[lastApplied!];
+                      {Object.entries(lines).map(([field, v]) => {
                         const fieldLabels: Record<string, string> = {
                           legalSettlementFees:      'Legal & Settlement',
                           recordingFees:            'Recording Fees',
                           surveyFee:                'Survey Fee',
+                          inspectionCost:           'Inspection',
+                          appraisalCost:            'Appraisal',
+                          pestInspectionCost:       'Pest Inspection',
                           domesticLienSearch:       'Domestic Lien Search',
                           patriotActSearch:         'Patriot Act Search',
                           insuranceCost:            'Insurance Cost',
@@ -1736,7 +1779,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                         return (
                           <div key={field} className="flex justify-between text-[10px] text-gray-600">
                             <span>{fieldLabels[field]}</span>
-                            <span className="font-semibold text-green-700">{fmtCurrency(Math.round(appliedValue * weight))}</span>
+                            <span className="font-semibold text-green-700">{fmtCurrency(lineValue(v, lastApplied!))}</span>
                           </div>
                         );
                       })}
@@ -1749,9 +1792,9 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   </div>
                 )}
 
-                {price > 0 && !lastApplied && (
+                {canApply && !lastApplied && (
                   <div className="text-[10px] text-gray-500 text-center pt-1">
-                    Based on purchase price of {fmtCurrency(price)} · Range: {fmtCurrency(minCost)} – {fmtCurrency(maxCost)}
+                    {countyLines ? `Based on ${countyLabel}` : `Based on purchase price of ${fmtCurrency(price)}`} · Range: {fmtCurrency(minCost)} – {fmtCurrency(maxCost)}
                   </div>
                 )}
               </div>
