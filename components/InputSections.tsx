@@ -26,6 +26,7 @@ interface InputSectionsProps {
   onRehabLineItemDelete: (id: string) => void;
   onOpenRehabEstimator?: () => void;
   onOpenPropertyImport?: () => void;
+  onOpenLenderDocImport?: () => void;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
@@ -43,6 +44,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onRehabLineItemDelete,
   onOpenRehabEstimator,
   onOpenPropertyImport,
+  onOpenLenderDocImport,
   appVersion = 'NORMAL',
   hasUserInteracted = false,
 }) => {
@@ -2464,9 +2466,20 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       <section className="bg-gray-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-sm font-bold text-gray-800 uppercase">Borrower & Active Loan</h2>
-          <button onClick={onCaptureBaseline} className="text-[10px] text-blue-600 hover:text-blue-500 font-bold transition">
-            Snapshot to Comparison
-          </button>
+          <div className="flex items-center gap-3">
+            {onOpenLenderDocImport && (
+              <button
+                onClick={onOpenLenderDocImport}
+                className="text-[10px] bg-gray-900 hover:bg-gray-700 text-white font-bold px-2 py-1 rounded transition"
+                title="Upload a term sheet / loan estimate and auto-fill the loan terms"
+              >
+                📄 Import Lender Docs
+              </button>
+            )}
+            <button onClick={onCaptureBaseline} className="text-[10px] text-blue-600 hover:text-blue-500 font-bold transition">
+              Snapshot to Comparison
+            </button>
+          </div>
         </div>
         <div className="p-4 sm:p-6 space-y-4">
           <InputGroup 

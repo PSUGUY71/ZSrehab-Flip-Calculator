@@ -29,6 +29,7 @@ import {
   SharedDealView,
   AIChatAssistant,
   PropertyImportModal,
+  LenderDocImportModal,
   ExpenseTrackerModal,
   ScenarioComparisonModal,
   TeamManagementModal,
@@ -89,6 +90,7 @@ const App: React.FC = () => {
   
   // Property Import State
   const [isPropertyImportOpen, setIsPropertyImportOpen] = useState(false);
+  const [isLenderDocImportOpen, setIsLenderDocImportOpen] = useState(false);
   
   // Expense Tracker State
   const [isExpenseTrackerOpen, setIsExpenseTrackerOpen] = useState(false);
@@ -1393,6 +1395,7 @@ const App: React.FC = () => {
             onRehabLineItemDelete={handleRehabLineItemDelete}
             onOpenRehabEstimator={() => setIsRehabEstimatorOpen(true)}
             onOpenPropertyImport={() => setIsPropertyImportOpen(true)}
+            onOpenLenderDocImport={() => setIsLenderDocImportOpen(true)}
             appVersion={appVersion}
             hasUserInteracted={hasUserInteracted}
           />
@@ -1542,6 +1545,27 @@ const App: React.FC = () => {
             setHasUserInteracted(true);
           }}
           onClose={() => setIsPropertyImportOpen(false)}
+        />
+      )}
+
+      {/* Lender Doc Import (AI reads term sheet → fills loan terms) */}
+      {isLenderDocImportOpen && (
+        <LenderDocImportModal
+          apiKey={userPreferences.openaiApiKey || ''}
+          inputs={inputs}
+          onApply={(data) => {
+            // Values from the lender's docs are real numbers — drop their EST tags, then refresh estimates
+            setInputs(prev => withEstimates({
+              ...prev,
+              ...data,
+              estimatedFields: prev.estimatedFields?.filter(f => !(f in data)),
+            }));
+            setHasUserInteracted(true);
+            setSaveNotification('Lender terms applied');
+            setTimeout(() => setSaveNotification(null), 2500);
+          }}
+          onClose={() => setIsLenderDocImportOpen(false)}
+          onOpenSettings={() => { setIsLenderDocImportOpen(false); setIsSettingsModalOpen(true); }}
         />
       )}
 

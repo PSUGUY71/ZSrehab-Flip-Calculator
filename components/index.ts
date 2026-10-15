@@ -21,6 +21,7 @@ export { SharedDealView } from './SharedDealView';
 export { AIChatAssistant } from './AIChatAssistant';
 export { BrandingModal } from './BrandingModal';
 export { PropertyImportModal } from './PropertyImportModal';
+export { LenderDocImportModal } from './LenderDocImportModal';
 export { ExpenseTrackerModal } from './ExpenseTrackerModal';
 export { ScenarioComparisonModal } from './ScenarioComparisonModal';
 export { TeamManagementModal } from './TeamManagementModal';
