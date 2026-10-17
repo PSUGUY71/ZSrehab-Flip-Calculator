@@ -177,13 +177,13 @@ const lookupRentCast = async (address: string, key: string, withValuation: boole
  */
 export const lookupProperty = async (
   address: string,
-  opts: { county?: string; rentcastKey?: string; withValuation?: boolean } = {},
+  opts: { county?: string; rentcastKey?: string; withValuation?: boolean; force?: boolean } = {},
 ): Promise<PropertyRecord | null> => {
   if (!looksComplete(address)) return null;
   const philly = isPhiladelphia(address, opts.county);
   if (!philly && !opts.rentcastKey) return null;
   const key = `${philly ? 'phl' : 'rc'}${opts.withValuation && !philly ? '+avm' : ''}:${address.trim().toUpperCase().replace(/\s+/g, ' ')}`;
-  const cached = cacheGet(key);
+  const cached = opts.force ? undefined : cacheGet(key); // force = the user clicked "Look up" — ask again
   if (cached !== undefined) return cached;
   let rec = philly ? await lookupPhilly(address) : null;
   if (!rec && opts.rentcastKey) rec = await lookupRentCast(address, opts.rentcastKey, !!opts.withValuation);

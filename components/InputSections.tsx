@@ -66,16 +66,18 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   // --- Automatic property tax lookup: once a full address is typed, fetch the real tax bill (free for
   // Philadelphia, RentCast elsewhere when a key is set). Never overwrites a number the user typed. ---
   const [taxLookup, setTaxLookup] = useState<{ status: 'idle' | 'loading' | 'found' | 'none' | 'error'; message?: string }>({ status: 'idle' });
-  const lastTaxLookupRef = useRef('');
-  useEffect(() => {
+  const lastTaxLookupRef = useRef(''); // address + whether a key was available — a newly added key retries
+  const runTaxLookup = async (force = false) => {
     const addr = inputs.address;
-    if (appVersion === 'HIDEOUT' || !looksComplete(addr) || addr === lastTaxLookupRef.current) return;
-    if (inputs.annualPropertyTax && !inputs.annualPropertyTaxSource) return; // user's own number wins
-    const timer = setTimeout(async () => {
-      lastTaxLookupRef.current = addr;
-      setTaxLookup({ status: 'loading', message: 'Looking up this property’s taxes…' });
+    if (!looksComplete(addr)) {
+      setTaxLookup({ status: 'error', message: 'Enter the full address first: street, city, state and zip (e.g. 123 Main St, Honesdale, PA 18431).' });
+      return;
+    }
+    lastTaxLookupRef.current = `${addr}|${rentcastApiKey ? 'key' : ''}`;
+    setTaxLookup({ status: 'loading', message: 'Looking up this property’s taxes…' });
+    {
       try {
-        const rec = await lookupProperty(addr, { county: inputs.county, rentcastKey: rentcastApiKey });
+        const rec = await lookupProperty(addr, { county: inputs.county, rentcastKey: rentcastApiKey, force });
         if (rec?.annualTax) {
           // Fill state/county too if they're still blank, so every county-based estimate kicks in
           if (!inputs.state && rec.state) selectState(rec.state);
@@ -91,11 +93,19 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               : 'Using the county average. (Tip: a free RentCast key in Settings → Property Data looks up each property’s actual taxes.)' });
         }
       } catch (e: any) {
-        setTaxLookup({ status: 'error', message: `${e?.message || 'Tax lookup failed'} Using the county average.` });
+        const msg = e instanceof TypeError ? 'Could not reach the property records service (network/blocked).' : e?.message || 'Tax lookup failed.';
+        setTaxLookup({ status: 'error', message: `${msg} Using the county average.` });
       }
-    }, 1500);
+    }
+  };
+  // Automatic: once a full address is typed (and again if a key is added later). Never replaces a typed number.
+  useEffect(() => {
+    const addr = inputs.address;
+    if (!looksComplete(addr) || `${addr}|${rentcastApiKey ? 'key' : ''}` === lastTaxLookupRef.current) return;
+    if (inputs.annualPropertyTax && !inputs.annualPropertyTaxSource) return; // user's own number wins
+    const timer = setTimeout(() => runTaxLookup(), 1500);
     return () => clearTimeout(timer);
-  }, [inputs.address, rentcastApiKey, appVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [inputs.address, rentcastApiKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ltvOptions = [
     { label: '60%', value: 0.60 },
@@ -346,11 +356,22 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               prefix="$"
               helpText={`Filled in automatically from public records when we can find this address. You can also type the yearly tax from the listing. Drives tax prorations and monthly holding taxes; if blank we use the ${inputs.county || 'county'} average tax rate (U.S. Census data).`}
             />
-            {taxLookup.status !== 'idle' && (
-              <div className={`col-span-2 sm:col-span-4 -mt-2 text-[10px] ${taxLookup.status === 'found' ? 'text-green-700' : taxLookup.status === 'error' ? 'text-amber-700' : 'text-gray-500'}`}>
-                {taxLookup.message}
-              </div>
-            )}
+            <div className="col-span-2 sm:col-span-4 -mt-2 flex flex-wrap items-center gap-2 text-[10px]">
+              <button
+                type="button"
+                onClick={() => runTaxLookup(true)}
+                disabled={taxLookup.status === 'loading'}
+                className="px-2 py-0.5 rounded border border-blue-300 bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 disabled:opacity-50"
+                title="Look up this property's yearly tax bill from public records (uses the address above)"
+              >
+                {taxLookup.status === 'loading' ? 'Looking up…' : '🔍 Look up taxes'}
+              </button>
+              {taxLookup.status !== 'idle' && (
+                <span className={taxLookup.status === 'found' ? 'text-green-700' : taxLookup.status === 'error' ? 'text-amber-700' : 'text-gray-500'}>
+                  {taxLookup.message}
+                </span>
+              )}
+            </div>
             <div className="col-span-1">
               <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Type</label>
               <select 
