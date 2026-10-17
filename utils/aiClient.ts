@@ -82,14 +82,18 @@ export const streamChat = async (
     signal,
   });
   if (!resp.ok) throw await openaiHttpError(resp, ai.label);
+  await readSSE(resp, onDelta);
+};
+
+/** Read an OpenAI-format SSE stream, calling onDelta with each text piece. Throws on refusal / in-stream error. */
+const readSSE = async (resp: Response, onDelta: (text: string) => void) => {
   const reader = resp.body?.getReader();
   if (!reader) throw new Error('No response stream');
-
   const decoder = new TextDecoder();
   let buffer = '';
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) return;
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
     buffer = lines.pop() || ''; // keep a partial line for the next chunk
@@ -97,12 +101,12 @@ export const streamChat = async (
       if (!line.startsWith('data: ')) continue;
       const data = line.slice(6).trim();
       if (data === '[DONE]') return;
-      try {
-        const delta = JSON.parse(data).choices?.[0]?.delta?.content;
-        if (delta) onDelta(delta);
-      } catch {
-        // skip malformed / keep-alive chunks
-      }
+      let parsed: any;
+      try { parsed = JSON.parse(data); } catch { continue; } // malformed / keep-alive chunk
+      if (parsed.error) throw new Error(parsed.error.message || String(parsed.error));
+      const delta = parsed.choices?.[0]?.delta;
+      if (delta?.refusal) throw new Error(delta.refusal);
+      if (delta?.content) onDelta(delta.content);
     }
   }
 };
@@ -112,10 +116,23 @@ const splitDataUrl = (dataUrl: string) => {
   return { mediaType, data };
 };
 
-/** Read documents and return the JSON object matching `schema`. Falls back to plain-JSON mode if strict schema is rejected. */
+export interface ExtractOptions {
+  signal?: AbortSignal;
+  /** Called once the request is sent, and then with the number of answer characters received so far. */
+  onSent?: () => void;
+  onText?: (chars: number) => void;
+}
+
+/**
+ * Read documents and return the JSON object matching `schema`. The answer is streamed so callers can show
+ * progress; falls back to plain-JSON mode if the provider rejects the strict schema.
+ */
 export const extractJSON = async (
-  ai: AIConfig, prompt: string, instruction: string, parts: DocPart[], schema: object,
+  ai: AIConfig, prompt: string, instruction: string, parts: DocPart[], schema: object, opts: ExtractOptions = {},
 ): Promise<any> => {
+  const { signal, onSent, onText } = opts;
+  let text = '';
+  const onDelta = (d: string) => { text += d; onText?.(text.length); };
   const looseSystem = `${prompt}\nReply with only a JSON object matching this JSON schema (every key present, null when unknown):\n${JSON.stringify(schema)}`;
   const parse = (text: string) => JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '') || '{}');
 
@@ -129,17 +146,23 @@ export const extractJSON = async (
         : { type: 'image', source: { type: 'base64', media_type: mediaType as 'image/png', data } };
     });
     content.push({ type: 'text', text: instruction }); // documents first, question last
-    const call = (strict: boolean) => client.beta.messages.create({
-      model: ai.docModel,
-      max_tokens: 16000,
-      system: strict ? prompt : looseSystem,
-      messages: [{ role: 'user', content }],
-      output_config: strict
-        ? { effort: 'high', format: { type: 'json_schema', schema: schema as Record<string, unknown> } }
-        : { effort: 'high' },
-      betas: CLAUDE_BETAS,
-      fallbacks: 'default',
-    });
+    const call = (strict: boolean) => {
+      text = '';
+      const stream = client.beta.messages.stream({
+        model: ai.docModel,
+        max_tokens: 16000,
+        system: strict ? prompt : looseSystem,
+        messages: [{ role: 'user', content }],
+        output_config: strict
+          ? { effort: 'high', format: { type: 'json_schema', schema: schema as Record<string, unknown> } }
+          : { effort: 'high' },
+        betas: CLAUDE_BETAS,
+        fallbacks: 'default',
+      }, { signal });
+      onSent?.();
+      stream.on('text', onDelta);
+      return stream.finalMessage();
+    };
     try {
       let msg;
       try {
@@ -149,8 +172,7 @@ export const extractJSON = async (
         msg = await call(false); // model/schema combo not supported for structured output
       }
       if (msg.stop_reason === 'refusal') throw new Error('Claude declined to read these documents.');
-      const text = msg.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
-      return parse(text);
+      return parse(msg.content.map((b) => (b.type === 'text' ? b.text : '')).join(''));
     } catch (err) {
       throw claudeError(sdk, err, ai.label);
     }
@@ -163,28 +185,33 @@ export const extractJSON = async (
         : p.type === 'pdf' ? { type: 'file', file: { filename: p.name, file_data: p.dataUrl } }
         : { type: 'image_url', image_url: { url: p.dataUrl, detail: 'high' } }),
   ];
-  const call = (strict: boolean) => fetch(ai.url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ai.apiKey}` },
-    body: JSON.stringify({
-      model: ai.docModel,
-      temperature: 0,
-      messages: [{ role: 'system', content: strict ? prompt : looseSystem }, { role: 'user', content }],
-      response_format: strict
-        ? { type: 'json_schema', json_schema: { name: 'loan_terms', strict: true, schema } }
-        : { type: 'json_object' },
-    }),
-  });
+  const call = (strict: boolean) => {
+    const req = fetch(ai.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ai.apiKey}` },
+      body: JSON.stringify({
+        model: ai.docModel,
+        temperature: 0,
+        stream: true,
+        messages: [{ role: 'system', content: strict ? prompt : looseSystem }, { role: 'user', content }],
+        response_format: strict
+          ? { type: 'json_schema', json_schema: { name: 'loan_terms', strict: true, schema } }
+          : { type: 'json_object' },
+      }),
+      signal,
+    });
+    onSent?.();
+    return req;
+  };
   let resp = await call(true);
   if (resp.status === 400) {
-    const text = await resp.clone().text();
-    if (/schema|response_format|json/i.test(text)) resp = await call(false);
+    const body = await resp.clone().text();
+    if (/schema|response_format|json/i.test(body)) resp = await call(false);
   }
   if (!resp.ok) throw await openaiHttpError(resp, ai.label);
-  const body = await resp.json();
-  const msg = body.choices?.[0]?.message;
-  if (msg?.refusal) throw new Error(msg.refusal);
-  return parse(String(msg?.content || '{}'));
+  await readSSE(resp, onDelta);
+  if (!text.trim()) throw new Error(`${ai.label} returned an empty answer. Try again, or pick a different model in Settings → AI Assistant.`);
+  return parse(text);
 };
 
 /** Model ids the provider offers, for the Settings model picker. OpenRouter is filtered to free models. */
