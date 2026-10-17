@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { AIProvider, PROVIDERS, KEY_FIELD, DEFAULT_OMNIROUTE_URL, getAIConfig } from '../utils/aiProvider';
+import { listModels } from '../utils/aiClient';
 
 export interface UserPreferences {
   displayName: string;
@@ -17,8 +19,14 @@ export interface UserPreferences {
   brandColor: string; // Hex color for report accent
   // AI Assistant
   openaiApiKey: string; // OpenAI API key for AI chat
-  aiProvider?: 'openai' | 'grok'; // Which AI service the AI features use (default OpenAI)
+  aiProvider?: AIProvider; // Which AI service the AI features use (default OpenAI)
   xaiApiKey?: string; // xAI (Grok) API key
+  anthropicApiKey?: string; // Claude
+  geminiApiKey?: string; // Google AI Studio
+  openrouterApiKey?: string;
+  omnirouteUrl?: string; // OmniRoute base URL (default http://localhost:20128/v1)
+  omnirouteApiKey?: string; // key created in the OmniRoute dashboard
+  aiModels?: Partial<Record<AIProvider, string>>; // model picked per provider (blank = default)
   // App Mode
   hideoutModeEnabled: boolean; // Show Hideout version selector in nav
 }
@@ -46,6 +54,35 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // AI model list for the selected provider (Settings → AI Assistant → Load models)
+  const provider: AIProvider = formData.aiProvider && PROVIDERS[formData.aiProvider] ? formData.aiProvider : 'openai';
+  const providerInfo = PROVIDERS[provider];
+  const ai = getAIConfig(formData);
+  const [models, setModels] = useState<string[]>([]);
+  const [modelStatus, setModelStatus] = useState('');
+  useEffect(() => { setModels([]); setModelStatus(''); }, [provider]);
+
+  const loadModels = async () => {
+    setModelStatus('loading');
+    try {
+      const list = await listModels(ai, formData);
+      setModels(list);
+      setModelStatus(list.length ? `Connected — ${list.length} models available` : 'Connected, but no models were returned');
+    } catch (err) {
+      setModels([]);
+      setModelStatus(err instanceof TypeError
+        ? provider === 'omniroute'
+          ? 'Could not reach OmniRoute — is it running at this URL? (Chrome may ask to allow local network access.)'
+          : `Could not reach ${providerInfo.label}. Check your internet connection.`
+        : (err as Error).message);
+    }
+  };
+
+  const setModel = (value: string) => {
+    setFormData((prev) => ({ ...prev, aiModels: { ...prev.aiModels, [provider]: value } }));
+    setHasChanges(true);
+  };
 
   useEffect(() => {
     setFormData(preferences);
@@ -354,78 +391,125 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
 
             <div>
               <span className="block text-xs font-semibold text-gray-700 mb-1">AI Service</span>
-              <div className="grid grid-cols-2 gap-2">
-                {([['openai', 'OpenAI (ChatGPT)'], ['grok', 'Grok (xAI)']] as const).map(([value, text]) => {
-                  const selected = (formData.aiProvider || 'openai') === value;
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(Object.keys(PROVIDERS) as AIProvider[]).map((value) => {
+                  const selected = provider === value;
                   return (
                     <button
                       key={value}
                       type="button"
                       onClick={() => handleChange('aiProvider', value)}
-                      className={`px-3 py-2 rounded border text-sm font-medium ${selected ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                      className={`px-3 py-2 rounded border text-sm font-medium text-left ${selected ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                     >
-                      {selected ? '● ' : '○ '}{text}
+                      {selected ? '● ' : '○ '}{PROVIDERS[value].label}
+                      {PROVIDERS[value].free && (
+                        <span className="ml-1 text-[10px] font-bold uppercase bg-green-100 text-green-700 px-1 rounded">Free</span>
+                      )}
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {formData.aiProvider === 'grok' ? (
-            <div>
-              <label htmlFor="xaiApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
-                Grok (xAI) API Key
-              </label>
-              <input
-                id="xaiApiKey"
-                type="password"
-                value={formData.xaiApiKey || ''}
-                onChange={(e) => handleChange('xaiApiKey', e.target.value)}
-                placeholder="xai-..."
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Get your key at{' '}
-                <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  console.x.ai
-                </a>
-                {' '}(separate from a SuperGrok / X Premium subscription). Uses grok-4.7.
-              </p>
-              {formData.xaiApiKey && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-xs text-green-700 font-medium">Key configured</span>
-                </div>
-              )}
-            </div>
-            ) : (
-            <div>
-              <label htmlFor="openaiApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
-                OpenAI API Key
-              </label>
-              <input
-                id="openaiApiKey"
-                type="password"
-                value={formData.openaiApiKey || ''}
-                onChange={(e) => handleChange('openaiApiKey', e.target.value)}
-                placeholder="sk-..."
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Get your key at{' '}
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  platform.openai.com/api-keys
-                </a>
-                . Uses GPT-4o-mini (~$0.15/1M tokens).
-              </p>
-              {formData.openaiApiKey && (
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="w-2 h-2 bg-green-500 rounded-full" />
-                  <span className="text-xs text-green-700 font-medium">Key configured</span>
-                </div>
-              )}
-            </div>
+            {providerInfo.free && (
+              <p className="text-xs text-green-800 bg-green-50 border border-green-200 rounded p-2">{providerInfo.free}</p>
             )}
+
+            {provider === 'omniroute' && (
+              <div>
+                <label htmlFor="omnirouteUrl" className="block text-xs font-semibold text-gray-700 mb-1">
+                  OmniRoute URL
+                </label>
+                <input
+                  id="omnirouteUrl"
+                  type="text"
+                  value={formData.omnirouteUrl ?? DEFAULT_OMNIROUTE_URL}
+                  onChange={(e) => handleChange('omnirouteUrl', e.target.value)}
+                  placeholder={DEFAULT_OMNIROUTE_URL}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  OmniRoute must be running on this computer — the AI features won't work from your phone or another PC.
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="aiApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
+                {providerInfo.label} API Key
+              </label>
+              <input
+                id="aiApiKey"
+                type="password"
+                value={(formData[KEY_FIELD[provider]] as string) || ''}
+                onChange={(e) => handleChange(KEY_FIELD[provider], e.target.value)}
+                placeholder={providerInfo.keyPlaceholder}
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {provider === 'omniroute' ? (
+                  'Create a key in your OmniRoute dashboard (API keys).'
+                ) : (
+                  <>
+                    Get your key at{' '}
+                    <a href={providerInfo.keyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {providerInfo.keyUrl.replace(/^https:\/\//, '')}
+                    </a>
+                    {provider === 'claude' && ' (an API key from the Claude Console — a Claude.ai Pro/Max chat subscription does not include API use)'}
+                    {provider === 'grok' && ' (separate from a SuperGrok / X Premium subscription)'}
+                    .
+                  </>
+                )}
+              </p>
+              {formData[KEY_FIELD[provider]] && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-xs text-green-700 font-medium">Key configured</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="aiModel" className="block text-xs font-semibold text-gray-700 mb-1">
+                Model
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="aiModel"
+                  type="text"
+                  list="aiModelList"
+                  value={formData.aiModels?.[provider] || ''}
+                  onChange={(e) => setModel(e.target.value)}
+                  placeholder={providerInfo.chatModel ? `default: ${providerInfo.chatModel}` : 'pick or type a model / combo name'}
+                  className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <datalist id="aiModelList">
+                  {models.map((m) => <option key={m} value={m} />)}
+                </datalist>
+                <button
+                  type="button"
+                  onClick={loadModels}
+                  disabled={!ai.apiKey || modelStatus === 'loading'}
+                  className="px-3 py-2 rounded border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+                >
+                  {modelStatus === 'loading' ? 'Loading…' : 'Load models'}
+                </button>
+              </div>
+              {modelStatus && modelStatus !== 'loading' && (
+                <p className={`text-xs mt-1 ${models.length ? 'text-green-700' : 'text-red-600'}`}>{modelStatus}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Leave blank to use the default{providerInfo.chatModel ? '' : ' (OmniRoute needs a model — click Load models)'}.
+                {provider === 'claude' && ' Default is Claude Opus 5.5; claude-haiku-5-5 costs much less.'}
+                {provider === 'openrouter' && ' Load models shows only the free ones.'}
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs text-blue-800">
+              <b>Reading PDFs &amp; images:</b> Import Lender Docs needs a model that can read images or PDFs (“vision”).
+              Claude, GPT-4o, Gemini and Grok can. Many free or text-only models (some OpenRouter / OmniRoute models) <b>cannot</b> —
+              with those the AI chat still works, but for lender docs paste the terms as text or upload a .txt file instead.
+            </div>
           </div>
 
           {/* Default Calculation Settings */}

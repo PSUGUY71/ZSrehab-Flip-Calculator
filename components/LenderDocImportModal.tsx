@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { LoanInputs } from '../types';
 import { AIConfig } from '../utils/aiProvider';
+import { extractJSON, DocPart, looksLikeNoVision } from '../utils/aiClient';
 
 /**
  * Upload lender documents (term sheet, loan estimate, commitment letter — PDF, image or text),
- * have the AI (OpenAI or Grok, per Settings → AI Assistant) read the loan terms, review them
+ * have the AI (whichever service is picked in Settings → AI Assistant) read the loan terms, review them
  * side by side, and apply the ones you check.
  */
 
@@ -73,11 +74,9 @@ const readAs = (file: File, how: 'dataUrl' | 'text') => new Promise<string>((res
   how === 'dataUrl' ? r.readAsDataURL(file) : r.readAsText(file);
 });
 
-// ponytail: Grok's chat endpoint takes images, not PDFs — render the first pages instead of using xAI's
-// Files API + Responses flow; raise if term sheets with more pages show up
+// ponytail: providers whose chat endpoint takes images, not PDFs (Grok, Gemini, OpenRouter, OmniRoute) get
+// the first pages rendered as images; raise if term sheets with more pages show up
 const MAX_PDF_PAGES = 10;
-
-const imagePart = (url: string) => ({ type: 'image_url', image_url: { url, detail: 'high' } });
 
 /** Render PDF pages to JPEG data URLs in the browser (pdf.js, loaded only when needed). */
 const pdfToImages = async (file: File) => {
@@ -97,7 +96,7 @@ const pdfToImages = async (file: File) => {
   return { urls, skipped: Math.max(0, pdf.numPages - MAX_PDF_PAGES) };
 };
 
-/** Grok accepts JPG/PNG only — re-encode anything else (WebP, GIF, BMP…) as PNG. */
+/** Most vision endpoints accept JPG/PNG only — re-encode anything else (WebP, GIF, BMP…) as PNG. */
 const toPngDataUrl = async (file: File) => {
   const bmp = await createImageBitmap(file);
   const canvas = document.createElement('canvas');
@@ -108,21 +107,21 @@ const toPngDataUrl = async (file: File) => {
 };
 
 /** One file → the message content parts for the chosen provider (+ a warning if pages were skipped). */
-const toContentParts = async (file: File, ai: AIConfig): Promise<{ parts: any[]; warning?: string }> => {
+const toContentParts = async (file: File, ai: AIConfig): Promise<{ parts: DocPart[]; warning?: string }> => {
   const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  if (isPdf && ai.provider === 'grok') {
+  if (isPdf && ai.pdfMode === 'images') {
     const { urls, skipped } = await pdfToImages(file);
     return {
-      parts: [{ type: 'text', text: `--- ${file.name} (${urls.length} page images) ---` }, ...urls.map(imagePart)],
+      parts: [{ type: 'text', text: `--- ${file.name} (${urls.length} page images) ---` }, ...urls.map((dataUrl) => ({ type: 'image' as const, dataUrl }))],
       warning: skipped ? `${file.name}: only the first ${MAX_PDF_PAGES} pages were read (${skipped} skipped).` : undefined,
     };
   }
   if (isPdf) {
-    return { parts: [{ type: 'file', file: { filename: file.name, file_data: await readAs(file, 'dataUrl') } }] };
+    return { parts: [{ type: 'pdf', name: file.name, dataUrl: await readAs(file, 'dataUrl') }] };
   }
   if (file.type.startsWith('image/')) {
     const jpgOrPng = /^image\/(jpe?g|png)$/.test(file.type);
-    return { parts: [imagePart(ai.provider === 'grok' && !jpgOrPng ? await toPngDataUrl(file) : await readAs(file, 'dataUrl'))] };
+    return { parts: [{ type: 'image', dataUrl: ai.pdfMode !== 'file' && !jpgOrPng ? await toPngDataUrl(file) : await readAs(file, 'dataUrl') }] };
   }
   if (file.type.startsWith('text/') || /\.(txt|csv|md)$/i.test(file.name)) {
     return { parts: [{ type: 'text', text: `--- ${file.name} ---\n${await readAs(file, 'text')}` }] };
@@ -130,38 +129,7 @@ const toContentParts = async (file: File, ai: AIConfig): Promise<{ parts: any[];
   throw new Error(`${file.name}: unsupported file type. Use PDF, an image (PNG/JPG/screenshot), or text. For Word files, save as PDF first.`);
 };
 
-/** Chat-completions call with strict JSON schema; if the provider rejects the schema, retry once in plain JSON mode. */
-const extractTerms = async (ai: AIConfig, parts: any[]) => {
-  const call = (strict: boolean) => fetch(ai.url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ai.apiKey}` },
-    body: JSON.stringify({
-      model: ai.docModel,
-      temperature: 0,
-      messages: [
-        { role: 'system', content: strict ? PROMPT : `${PROMPT}\nReply with only a JSON object matching this JSON schema (every key present, null when unknown):\n${JSON.stringify(SCHEMA)}` },
-        { role: 'user', content: [{ type: 'text', text: 'Extract the loan terms from these lender documents.' }, ...parts] },
-      ],
-      response_format: strict
-        ? { type: 'json_schema', json_schema: { name: 'loan_terms', strict: true, schema: SCHEMA } }
-        : { type: 'json_object' },
-    }),
-  });
-  let resp = await call(true);
-  let body = await resp.json();
-  if (resp.status === 400 && /schema|response_format/i.test(body?.error?.message || JSON.stringify(body))) {
-    resp = await call(false);
-    body = await resp.json();
-  }
-  if (!resp.ok) {
-    const msg = body?.error?.message || body?.error || `${ai.label} error ${resp.status}`;
-    throw new Error(resp.status === 401 ? `Invalid ${ai.label} API key — check Settings → AI Assistant.` : String(msg));
-  }
-  const msg = body.choices?.[0]?.message;
-  if (msg?.refusal) throw new Error(msg.refusal);
-  const json = String(msg?.content || '{}').replace(/^```(?:json)?\s*|\s*```$/g, '');
-  return JSON.parse(json);
-};
+const NO_VISION_HINT = 'Your AI model may not be able to read images or PDFs. Pick a vision-capable model in Settings → AI Assistant, or paste the loan terms as text below instead.';
 
 const fmt = (kind: Kind, v: any) => {
   if (v === null || v === undefined || v === '') return '—';
@@ -180,6 +148,7 @@ const currentValue = (inputs: LoanInputs, key: string) =>
 export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onClose, onOpenSettings }) => {
   const apiKey = ai.apiKey;
   const [files, setFiles] = useState<File[]>([]);
+  const [pasted, setPasted] = useState(''); // terms pasted as text — works with text-only models
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -193,13 +162,16 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
     try {
       const converted = await Promise.all(files.map((f) => toContentParts(f, ai)));
       setWarnings(converted.map((c) => c.warning).filter(Boolean) as string[]);
-      const data = await extractTerms(ai, converted.flatMap((c) => c.parts));
+      const parts = converted.flatMap((c) => c.parts);
+      if (pasted.trim()) parts.push({ type: 'text', text: `--- Pasted loan terms ---\n${pasted.trim()}` });
+      const data = await extractJSON(ai, PROMPT, 'Extract the loan terms from these lender documents.', parts, SCHEMA);
       setExtracted(data);
       // Pre-check every field the document actually stated and that differs from what's entered
       setChecked(Object.fromEntries(FIELDS.map((f) => [f.key,
         data[f.key] !== null && data[f.key] !== undefined && data[f.key] !== currentValue(inputs, f.key)])));
     } catch (e: any) {
-      setError(e.message || 'Failed to read the documents');
+      const msg = e.message || 'Failed to read the documents';
+      setError(files.length && looksLikeNoVision(msg) ? `${msg}\n\n${NO_VISION_HINT}` : msg);
     } finally {
       setLoading(false);
     }
@@ -266,21 +238,34 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
                 </div>
               )}
 
+              <textarea
+                value={pasted}
+                onChange={(e) => { setPasted(e.target.value); setExtracted(null); }}
+                rows={3}
+                placeholder="…or paste the loan terms as text (copy from the email / term sheet). Works with any AI model, even ones that can't read images or PDFs."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+
               <button
                 onClick={handleRead}
-                disabled={!files.length || loading || totalMB > 30}
+                disabled={(!files.length && !pasted.trim()) || loading || totalMB > 30}
                 className="w-full bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white font-bold py-2 rounded-lg text-sm"
               >
                 {loading ? 'Reading documents…' : 'Read loan terms'}
               </button>
               <p className="text-[10px] text-gray-400 -mt-2">
-                The files are sent to {ai.label} with your key to be read; nothing is stored by this app.
-                {ai.provider === 'grok' && ` PDFs are read as page images (first ${MAX_PDF_PAGES} pages).`}
+                The files are sent to {ai.label} ({ai.docModel || 'no model selected'}) with your key to be read; nothing is stored by this app.
+                {ai.pdfMode === 'images' && ` PDFs are read as page images (first ${MAX_PDF_PAGES} pages).`}
               </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-[11px] text-blue-800">
+                <b>Note:</b> PDFs, photos and screenshots only work if your AI model can read images (a “vision” model).
+                Some AIs — many free or text-only models — can’t read PDFs or images; with those, paste the terms as text above
+                or upload a .txt file. Recommended: Claude, GPT-4o, Gemini Flash, or a vision model in OpenRouter/OmniRoute.
+              </div>
             </>
           )}
 
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3 whitespace-pre-line">{error}</div>}
           {warnings.map((w) => <div key={w} className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg p-2">{w}</div>)}
 
           {extracted && (

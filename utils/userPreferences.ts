@@ -20,6 +20,12 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   openaiApiKey: '',
   aiProvider: 'openai',
   xaiApiKey: '',
+  anthropicApiKey: '',
+  geminiApiKey: '',
+  openrouterApiKey: '',
+  omnirouteUrl: 'http://localhost:20128/v1',
+  omnirouteApiKey: '',
+  aiModels: {},
   // App Mode
   hideoutModeEnabled: false,
 };

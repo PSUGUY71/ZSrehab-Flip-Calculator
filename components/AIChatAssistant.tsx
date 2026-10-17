@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
 import { AIConfig } from '../utils/aiProvider';
+import { streamChat, ChatTurn } from '../utils/aiClient';
 
 interface Message {
   id: string;
@@ -128,6 +129,10 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
       setError(`No API key configured. Go to Settings → AI Assistant to add your ${ai.label} API key.`);
       return;
     }
+    if (!ai.chatModel) {
+      setError(`No ${ai.label} model selected. Go to Settings → AI Assistant and pick a model.`);
+      return;
+    }
 
     setError(null);
     const userMessage: Message = {
@@ -160,71 +165,21 @@ export const AIChatAssistant: React.FC<AIChatAssistantProps> = ({
       const conversationHistory = messages
         .filter(m => m.role !== 'system' && m.id !== 'welcome')
         .slice(-20)
-        .map(m => ({ role: m.role, content: m.content }));
+        .map((m): ChatTurn => ({ role: m.role as ChatTurn['role'], content: m.content }));
 
-      const response = await fetch(ai.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: ai.chatModel,
-          messages: [
-            { role: 'system', content: systemMessage },
-            ...conversationHistory,
-            { role: 'user', content: trimmed },
-          ],
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 401) {
-          throw new Error(`Invalid API key. Please check your ${ai.label} API key in Settings.`);
-        } else if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please wait a moment and try again.');
-        } else if (response.status === 402 || response.status === 403) {
-          throw new Error(`API key issue: Check your ${ai.label} account billing or permissions.`);
-        }
-        throw new Error(errorData.error?.message || `API error (${response.status})`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response stream');
-
-      const decoder = new TextDecoder();
       let accumulated = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
-
-        for (const line of lines) {
-          const data = line.replace('data: ', '').trim();
-          if (data === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              accumulated += delta;
-              setMessages(prev => prev.map(m =>
-                m.id === assistantMessageId ? { ...m, content: accumulated } : m
-              ));
-            }
-          } catch {
-            // Skip malformed JSON chunks
-          }
-        }
-      }
+      await streamChat(
+        ai,
+        systemMessage,
+        [...conversationHistory, { role: 'user', content: trimmed }],
+        (delta) => {
+          accumulated += delta;
+          setMessages(prev => prev.map(m =>
+            m.id === assistantMessageId ? { ...m, content: accumulated } : m
+          ));
+        },
+        abortController.signal,
+      );
     } catch (err: any) {
       if (err.name === 'AbortError') {
         // User cancelled
