@@ -11,6 +11,7 @@ import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
 import { ESTIMATE_FIELDS } from '../utils/closingEstimates';
+import { paMunicipalitiesWithVariation, paTransferTaxTotal } from '../utils/paTransferTax';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -27,6 +28,7 @@ interface InputSectionsProps {
   onOpenRehabEstimator?: () => void;
   onOpenPropertyImport?: () => void;
   onOpenLenderDocImport?: () => void;
+  onOpenTitleQuoteImport?: () => void;
   appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
@@ -45,6 +47,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onOpenRehabEstimator,
   onOpenPropertyImport,
   onOpenLenderDocImport,
+  onOpenTitleQuoteImport,
   appVersion = 'NORMAL',
   hasUserInteracted = false,
 }) => {
@@ -265,6 +268,26 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     📍 Using {inputs.county} cost averages
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* PA: municipality sets the local realty transfer tax (most towns are the standard 2% total) */}
+            {inputs.state === 'PA' && appVersion !== 'HIDEOUT' && paMunicipalitiesWithVariation(inputs.county).length > 0 && inputs.county !== 'Philadelphia County' && (
+              <div className="col-span-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Municipality</label>
+                <select
+                  className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3"
+                  value={inputs.municipality || ''}
+                  onChange={(e) => onInputChange('municipality', e.target.value)}
+                >
+                  <option value="">All other towns — standard 2% transfer tax</option>
+                  {paMunicipalitiesWithVariation(inputs.county).map((m) => (
+                    <option key={m} value={m}>
+                      {m} — {paTransferTaxTotal(inputs.county, m).total}% total
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-1 text-[10px] text-gray-500 italic">Sets the transfer tax (state + local)</div>
               </div>
             )}
             
@@ -953,7 +976,19 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       {/* Detailed HUD */}
       <section className="bg-purple-50 rounded-xl shadow-sm border border-gray-200">
         <div className="bg-gray-50 px-4 sm:px-6 py-3 border-b border-gray-200">
-          <h2 className="text-sm font-bold text-gray-800 uppercase">Detailed HUD Charges</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-bold text-gray-800 uppercase">Detailed HUD Charges</h2>
+            {appVersion !== 'HIDEOUT' && onOpenTitleQuoteImport && (
+              <button
+                type="button"
+                onClick={onOpenTitleQuoteImport}
+                className="text-[10px] bg-gray-900 hover:bg-gray-700 text-white font-bold px-2 py-1 rounded transition"
+                title="Upload the title company's quote / Closing Disclosure / settlement statement and auto-fill these closing costs"
+              >
+                📄 Import Title Quote
+              </button>
+            )}
+          </div>
           {inputs.state && (
             <div className="text-[10px] text-gray-600 mt-1">
               Closing costs updated for {inputs.state}. Adjust if property is in a different county with higher costs.
@@ -989,6 +1024,16 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               suffix="%" 
               step={0.01}
               helpText={`Title insurance rate${inputs.state && getStateDefaults(inputs.state) ? (getStateDefaults(inputs.state)!.titleInsuranceRate === 0 ? ' - ' + getStateName(inputs.state) + ' uses rate table/chart (leave at 0)' : ' - Default ' + getStateDefaults(inputs.state)!.titleInsuranceRate + '% for ' + getStateName(inputs.state)) : ' - Enter percentage or leave at 0 for rate table'}. Enter a percentage to manually override.`}
+            />
+            )}
+            {appVersion !== 'HIDEOUT' && (
+            <InputGroup
+              label="Title Ins. $ (from quote)"
+              id="titleInsuranceAmount"
+              value={inputs.titleInsuranceAmount || 0}
+              onChange={(v) => onInputChange('titleInsuranceAmount', v)}
+              prefix="$"
+              helpText="Exact title insurance premium from your title company's quote (owner's + lender's policy + endorsements). When filled in, it replaces the rate / rate-table estimate. Leave at 0 to estimate."
             />
             )}
             <InputGroup
@@ -1068,9 +1113,21 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.transferTaxRate} 
               onChange={(v) => onInputChange('transferTaxRate', v)} 
               suffix="%"
-              helpText="Transfer tax rate as a percentage of purchase price - auto-populated based on state. Adjust if your county has different rates."
+              helpText={inputs.state === 'PA'
+                ? "Buyer's share of PA realty transfer tax (% of price). Set automatically from the county + municipality picked under Property Info: 1% state + local rate, split 50/50 with the seller (PA custom). Change it if your contract splits it differently."
+                : 'Transfer tax rate as a percentage of purchase price - auto-populated based on state. Adjust if your county has different rates.'}
             />
           </div>
+          {appVersion !== 'HIDEOUT' && inputs.state === 'PA' && (() => {
+            const { local, total } = paTransferTaxTotal(inputs.county, inputs.municipality);
+            return (
+              <div className="-mt-2 text-[10px] text-gray-600">
+                PA transfer tax for {inputs.municipality || inputs.county || 'Pennsylvania'}: 1% state + {local}% local = <b>{total}%</b> total
+                {' '}→ buyer {formatCurrency((inputs.purchasePrice || 0) * (inputs.transferTaxRate || 0) / 100)} at purchase
+                {inputs.arv ? `, seller ${formatCurrency(inputs.arv * (inputs.sellingTransferTaxRate || 0) / 100)} when you sell` : ''}.
+              </div>
+            );
+          })()}
 
           <div className="grid grid-cols-2 gap-6">
             <InputGroup 

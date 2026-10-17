@@ -41,6 +41,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     transferTaxRate,
     titleInsuranceRate,
     lendersTitleInsurance,
+    titleInsuranceAmount,
     cplFee,
     numberOfEndorsements,
     legalSettlementFees,
@@ -316,6 +317,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   if (appVersion === 'HIDEOUT' && lendersTitleInsurance && lendersTitleInsurance > 0) {
     // Dollar override: use exact amount from HUD (e.g., lender's title policy)
     titleInsuranceCost = lendersTitleInsurance;
+  } else if (appVersion !== 'HIDEOUT' && titleInsuranceAmount && titleInsuranceAmount > 0) {
+    // NORMAL: exact title premium from a title company quote (Import Title Quote or typed in)
+    titleInsuranceCost = titleInsuranceAmount;
   } else if (titleInsuranceRate && titleInsuranceRate > 0) {
     // Manual override: use percentage rate on purchase price
     titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);

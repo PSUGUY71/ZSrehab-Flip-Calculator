@@ -45,6 +45,7 @@ export interface LoanInputs {
   address: string;
   state: string;
   county?: string; // County for 3rd party cost lookups (NORMAL version)
+  municipality?: string; // PA: municipality for the local realty transfer tax rate (utils/paTransferTax.ts)
   zipCode: string;
   propertyType: 'SFR' | 'Multi-Family' | 'Mixed-Use';
   units: number;
@@ -118,6 +119,7 @@ export interface LoanInputs {
   // Specific HUD Line Items
   titleInsuranceRate: number; // Percentage (0.7%)
   lendersTitleInsurance: number; // Dollar override for lender's title policy (HIDEOUT — enter exact $ from HUD Line 1104)
+  titleInsuranceAmount?: number; // NORMAL: exact title premium $ from a title quote (overrides rate % / PA rate table when > 0)
   cplFee: number; // CPL (Certificate of Property Location) fee - always $125 payable to Penn Attorneys
   numberOfEndorsements: number; // Number of title endorsements at $50 each
   

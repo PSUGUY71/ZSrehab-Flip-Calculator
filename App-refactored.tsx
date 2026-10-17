@@ -6,6 +6,8 @@ import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator'
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
 import { applyCountyCosts, withEstimates, markReal } from './utils/closingEstimates';
 import { getAIConfig } from './utils/aiProvider';
+import { paTransferTaxShares } from './utils/paTransferTax';
+import type { DocImportKind } from './components/LenderDocImportModal';
 import { loadUserPreferences, saveUserPreferences, DEFAULT_PREFERENCES } from './utils/userPreferences';
 import { loadBrandingSettings } from './components/BrandingModal';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -91,7 +93,7 @@ const App: React.FC = () => {
   
   // Property Import State
   const [isPropertyImportOpen, setIsPropertyImportOpen] = useState(false);
-  const [isLenderDocImportOpen, setIsLenderDocImportOpen] = useState(false);
+  const [docImport, setDocImport] = useState<DocImportKind | null>(null); // AI doc import: lender terms or title quote
   
   // Expense Tracker State
   const [isExpenseTrackerOpen, setIsExpenseTrackerOpen] = useState(false);
@@ -775,6 +777,15 @@ const App: React.FC = () => {
         }
       }
       
+      // PA: transfer tax depends on the municipality (1% state + local). Set buyer's share at purchase and
+      // seller's share at resale (50/50 PA custom) whenever the location changes. NORMAL mode only.
+      if (field === 'county' || field === 'state') updated.municipality = '';
+      if ((field === 'state' || field === 'county' || field === 'municipality') && updated.state === 'PA' && prev.appVersion !== 'HIDEOUT') {
+        const { buyerRate, sellerRate } = paTransferTaxShares(updated.county, updated.municipality);
+        updated.transferTaxRate = buyerRate;
+        updated.sellingTransferTaxRate = sellerRate;
+      }
+
       // Auto-populate holding costs when exit strategy changes
       if (field === 'exitStrategy' && (value === 'SELL' || value === 'REFI')) {
         const template = getHoldingCostTemplate(value as 'SELL' | 'REFI', prev.arv || 100000);
@@ -1396,7 +1407,8 @@ const App: React.FC = () => {
             onRehabLineItemDelete={handleRehabLineItemDelete}
             onOpenRehabEstimator={() => setIsRehabEstimatorOpen(true)}
             onOpenPropertyImport={() => setIsPropertyImportOpen(true)}
-            onOpenLenderDocImport={() => setIsLenderDocImportOpen(true)}
+            onOpenLenderDocImport={() => setDocImport('lender')}
+            onOpenTitleQuoteImport={() => setDocImport('title')}
             appVersion={appVersion}
             hasUserInteracted={hasUserInteracted}
           />
@@ -1550,8 +1562,9 @@ const App: React.FC = () => {
       )}
 
       {/* Lender Doc Import (AI reads term sheet → fills loan terms) */}
-      {isLenderDocImportOpen && (
+      {docImport && (
         <LenderDocImportModal
+          kind={docImport}
           ai={getAIConfig(userPreferences)}
           inputs={inputs}
           onApply={(data) => {
@@ -1562,11 +1575,11 @@ const App: React.FC = () => {
               estimatedFields: prev.estimatedFields?.filter(f => !(f in data)),
             }));
             setHasUserInteracted(true);
-            setSaveNotification('Lender terms applied');
+            setSaveNotification(docImport === 'title' ? 'Title quote applied' : 'Lender terms applied');
             setTimeout(() => setSaveNotification(null), 2500);
           }}
-          onClose={() => setIsLenderDocImportOpen(false)}
-          onOpenSettings={() => { setIsLenderDocImportOpen(false); setIsSettingsModalOpen(true); }}
+          onClose={() => setDocImport(null)}
+          onOpenSettings={() => { setDocImport(null); setIsSettingsModalOpen(true); }}
         />
       )}
 

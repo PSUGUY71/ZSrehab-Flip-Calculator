@@ -4,12 +4,17 @@ import { AIConfig } from '../utils/aiProvider';
 import { extractJSON, DocPart, looksLikeNoVision } from '../utils/aiClient';
 
 /**
- * Upload lender documents (term sheet, loan estimate, commitment letter — PDF, image or text),
- * have the AI (whichever service is picked in Settings → AI Assistant) read the loan terms, review them
- * side by side, and apply the ones you check.
+ * Upload documents (PDF, image or text), have the AI (whichever service is picked in Settings → AI Assistant)
+ * read them, review the values side by side, and apply the ones you check. Two kinds:
+ * - 'lender': term sheet / loan estimate / commitment letter → loan terms
+ * - 'title':  title company quote / closing cost estimate / Closing Disclosure / settlement statement →
+ *             the buyer's closing costs (title premium, settlement, recording, transfer tax, prorations…)
  */
 
+export type DocImportKind = 'lender' | 'title';
+
 interface Props {
+  kind: DocImportKind;
   ai: AIConfig;
   inputs: LoanInputs;
   onApply: (data: Partial<LoanInputs>) => void;
@@ -18,8 +23,9 @@ interface Props {
 }
 
 type Kind = 'money' | 'percent' | 'number' | 'bool' | 'text' | 'date' | 'loanType';
+type Field = { key: string; label: string; kind: Kind; desc: string };
 // Field → label + how to show it. `financingPercent` maps onto financingPercentage / custom financing.
-const FIELDS: { key: string; label: string; kind: Kind; desc: string }[] = [
+const LENDER_FIELDS: Field[] = [
   { key: 'lenderName', label: 'Lender Name', kind: 'text', desc: 'Lender / company name' },
   { key: 'loanType', label: 'Loan Type', kind: 'loanType', desc: 'HARD_MONEY (fix & flip / bridge / private), CONVENTIONAL, PORTFOLIO, or OTHER' },
   { key: 'interestRate', label: 'Interest Rate', kind: 'percent', desc: 'Annual note rate in percent (12 for 12%)' },
@@ -42,30 +48,87 @@ const FIELDS: { key: string; label: string; kind: Kind; desc: string }[] = [
   { key: 'closingDate', label: 'Closing Date', kind: 'date', desc: 'Expected closing date as YYYY-MM-DD' },
 ];
 
+// Buyer-side closing costs from a title company. `transferTaxBuyer` ($) maps onto transferTaxRate (%);
+// `titleInsuranceAmount` includes endorsements, so applying it zeroes numberOfEndorsements.
+const TITLE_FIELDS: Field[] = [
+  { key: 'titleInsuranceAmount', label: 'Title Insurance (incl. endorsements)', kind: 'money', desc: "Total title insurance premium charged to the BUYER: owner's policy + lender's policy (incl. simultaneous issue) + all endorsements, in dollars. Do NOT include the CPL." },
+  { key: 'cplFee', label: 'CPL (Closing Protection Letter)', kind: 'money', desc: 'Closing protection letter fee(s) in dollars' },
+  { key: 'legalSettlementFees', label: 'Settlement / Closing Fees', kind: 'money', desc: 'Settlement or closing fee, attorney fee, notary, document preparation, courier/overnight, wire and e-recording service fees charged by the title/settlement company, summed, in dollars' },
+  { key: 'titleCompanyCharges', label: 'Title Search & Other Title Co. Charges', kind: 'money', desc: 'Title search/examination, abstract, tax and municipal certifications and any other title-company charges not counted elsewhere, summed, in dollars' },
+  { key: 'recordingFees', label: 'Recording Fees', kind: 'money', desc: 'Government recording fees for the deed and mortgage, in dollars (NOT transfer tax)' },
+  { key: 'transferTaxBuyer', label: "Transfer Tax (buyer's share)", kind: 'money', desc: "Buyer's share of realty transfer tax (state + local) in dollars" },
+  { key: 'surveyFee', label: 'Survey', kind: 'money', desc: 'Survey fee in dollars' },
+  { key: 'mechanicsLienInsurance', label: 'Mechanics Lien Insurance', kind: 'money', desc: 'Mechanics lien coverage in dollars' },
+  { key: 'domesticLienSearch', label: 'Domestic Lien Search', kind: 'money', desc: 'Domestic lien search fee in dollars' },
+  { key: 'patriotActSearch', label: 'Patriot Act Search', kind: 'money', desc: 'Patriot Act / OFAC search fee in dollars' },
+  { key: 'schoolTaxAtClosing', label: 'School Tax Proration', kind: 'money', desc: 'School tax proration the buyer pays/reimburses at closing, in dollars' },
+  { key: 'countyTaxProration', label: 'County Tax Proration', kind: 'money', desc: 'County tax proration the buyer pays/reimburses at closing, in dollars' },
+  { key: 'municipalTaxProration', label: 'Municipal Tax Proration', kind: 'money', desc: 'Municipal/township/city tax proration the buyer pays/reimburses at closing, in dollars' },
+  { key: 'lienableUtilities', label: 'Utilities (water/sewer/trash)', kind: 'money', desc: 'Lienable utility prorations or escrows (water, sewer, trash) charged to the buyer, in dollars' },
+  { key: 'hoaProration', label: 'HOA Proration', kind: 'money', desc: 'HOA / condo dues proration charged to the buyer, in dollars' },
+  { key: 'hoaCapitalContribution', label: 'HOA Capital Contribution', kind: 'money', desc: 'HOA capital contribution / transfer fee charged to the buyer, in dollars' },
+  { key: 'prepaidInterestAtClosing', label: 'Prepaid Interest', kind: 'money', desc: 'Prepaid / per-diem interest collected at closing, in dollars' },
+  { key: 'lenderEscrowTaxes', label: 'Tax Escrow Deposit', kind: 'money', desc: 'Initial escrow deposit for property taxes collected for the lender, in dollars' },
+  { key: 'lenderEscrowInsurance', label: 'Insurance Escrow Deposit', kind: 'money', desc: 'Initial escrow deposit for homeowners insurance collected for the lender, in dollars' },
+  { key: 'otherThirdPartyFees', label: 'Other Buyer Closing Costs', kind: 'money', desc: 'Any OTHER buyer closing charge not covered above, summed, in dollars. Exclude lender fees (points, underwriting, processing), the purchase price, deposits and credits. List what you summed in notes.' },
+  { key: 'purchasePrice', label: 'Purchase Price', kind: 'money', desc: 'Contract sales price in dollars' },
+  { key: 'closingDate', label: 'Closing Date', kind: 'date', desc: 'Settlement / closing date as YYYY-MM-DD' },
+];
+
 const typeFor = (k: Kind) => ({
   money: ['number', 'null'], percent: ['number', 'null'], number: ['number', 'null'],
   bool: ['boolean', 'null'], text: ['string', 'null'], date: ['string', 'null'],
   loanType: ['string', 'null'],
 }[k]);
 
-const SCHEMA = {
+const schemaFor = (fields: Field[], notes: string) => ({
   type: 'object',
   additionalProperties: false,
-  required: [...FIELDS.map((f) => f.key), 'notes'],
+  required: [...fields.map((f) => f.key), 'notes'],
   properties: {
-    ...Object.fromEntries(FIELDS.map((f) => [f.key, {
+    ...Object.fromEntries(fields.map((f) => [f.key, {
       type: typeFor(f.kind), description: f.desc,
       ...(f.kind === 'loanType' ? { enum: ['HARD_MONEY', 'CONVENTIONAL', 'PORTFOLIO', 'OTHER', null] } : {}),
     }])),
-    notes: { type: 'string', description: 'Other important terms that have no field above: draw/inspection fees, extension fees, reserves, exit fees, guaranty, conditions; and what was summed into otherLenderFees. Empty string if none.' },
+    notes: { type: 'string', description: notes },
   },
-};
+});
 
-const PROMPT = `You read real-estate lender documents (term sheets, loan estimates, commitment letters, fee sheets).
-Extract the loan terms into the JSON schema. Rules:
+const RULES = `Rules:
 - Only use values explicitly stated in the documents. If a value is not stated, return null. Never guess.
-- Percentages as plain numbers (12% -> 12, 2 points -> 2). Dollar amounts as plain numbers (no $ or commas).
-- If several options/scenarios are quoted, use the one the borrower appears to be getting and mention the others in notes.`;
+- Percentages as plain numbers (12% -> 12, 2 points -> 2). Dollar amounts as plain numbers (no $ or commas).`;
+
+const CONFIG = {
+  lender: {
+    title: 'Import Lender Docs',
+    noun: 'loan terms',
+    subtitle: 'Upload the term sheet / loan estimate — the AI reads the terms, you review before anything changes.',
+    pick: '📄 Choose lender documents',
+    hint: 'PDF, photos/screenshots (PNG, JPG) or text · several files OK (term sheet + fee sheet)',
+    instruction: 'Extract the loan terms from these lender documents.',
+    fields: LENDER_FIELDS,
+    prompt: `You read real-estate lender documents (term sheets, loan estimates, commitment letters, fee sheets).
+Extract the loan terms into the JSON schema. ${RULES}
+- If several options/scenarios are quoted, use the one the borrower appears to be getting and mention the others in notes.`,
+    schema: schemaFor(LENDER_FIELDS, 'Other important terms that have no field above: draw/inspection fees, extension fees, reserves, exit fees, guaranty, conditions; and what was summed into otherLenderFees. Empty string if none.'),
+    notesLabel: 'Lender doc terms',
+  },
+  title: {
+    title: 'Import Title Quote',
+    noun: 'closing costs',
+    subtitle: "Upload the title company's quote, closing cost estimate, Closing Disclosure or settlement statement — the AI fills in your closing costs.",
+    pick: '📄 Choose title quote / settlement statement',
+    hint: 'PDF, photos/screenshots or text · title quote, fee sheet, Closing Disclosure, HUD-1/ALTA settlement statement',
+    instruction: "Extract the buyer's closing costs from these title / settlement documents.",
+    fields: TITLE_FIELDS,
+    prompt: `You read real-estate title company documents (title quotes, closing cost estimates, Closing Disclosures,
+HUD-1 / ALTA settlement statements). Extract the BUYER's charges only (ignore the seller's column) into the JSON schema.
+Put each charge in exactly one field — never count the same charge twice. ${RULES}
+- Lender charges (origination, points, underwriting, processing) are NOT title costs — leave them out.`,
+    schema: schemaFor(TITLE_FIELDS, "Anything worth knowing that has no field above (e.g. seller-paid items, credits, what was summed into the 'other' fields, quote expiry). Empty string if none."),
+    notesLabel: 'Title quote',
+  },
+} as const;
 
 const readAs = (file: File, how: 'dataUrl' | 'text') => new Promise<string>((res, rej) => {
   const r = new FileReader();
@@ -143,7 +206,7 @@ type Progress = { pct: number; stage: string };
 const sizeOfParts = (parts: DocPart[]) =>
   parts.reduce((s, p) => s + (p.type === 'text' ? p.text.length : p.dataUrl.length), 0) / 1_048_576;
 
-const NO_VISION_HINT ='Your AI model may not be able to read images or PDFs. Pick a vision-capable model in Settings → AI Assistant, or paste the loan terms as text below instead.';
+const NO_VISION_HINT ='Your AI model may not be able to read images or PDFs. Pick a vision-capable model in Settings → AI Assistant, or paste the text below instead.';
 
 const fmt = (kind: Kind, v: any) => {
   if (v === null || v === undefined || v === '') return '—';
@@ -157,9 +220,13 @@ const fmt = (kind: Kind, v: any) => {
 const currentValue = (inputs: LoanInputs, key: string) =>
   key === 'financingPercent'
     ? (inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage)
-    : (inputs as any)[key];
+    : key === 'transferTaxBuyer'
+      ? Math.round((inputs.purchasePrice || 0) * (inputs.transferTaxRate || 0)) / 100
+      : (inputs as any)[key];
 
-export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onClose, onOpenSettings }) => {
+export const LenderDocImportModal: React.FC<Props> = ({ kind, ai, inputs, onApply, onClose, onOpenSettings }) => {
+  const cfg = CONFIG[kind];
+  const FIELDS = cfg.fields;
   const apiKey = ai.apiKey;
   const [files, setFiles] = useState<File[]>([]);
   const [pasted, setPasted] = useState(''); // terms pasted as text — works with text-only models
@@ -193,7 +260,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
       if (secs > READ_TIMEOUT_S) { timedOutRef.current = true; controller.abort(); }
       if (!sentAt) return;
       if (answerChars) {
-        setProgress({ pct: 75 + 23 * Math.min(1, answerChars / EXPECTED_ANSWER_CHARS), stage: `${ai.label} is writing out the loan terms…` });
+        setProgress({ pct: 75 + 23 * Math.min(1, answerChars / EXPECTED_ANSWER_CHARS), stage: `${ai.label} is writing out the ${cfg.noun}…` });
       } else {
         // No answer yet: the AI is reading/thinking. Creep toward 75% so the bar keeps moving.
         const wait = (Date.now() - sentAt) / 1000;
@@ -214,11 +281,11 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
       }
       setWarnings(converted.map((c) => c.warning).filter(Boolean) as string[]);
       const parts = converted.flatMap((c) => c.parts);
-      if (pasted.trim()) parts.push({ type: 'text', text: `--- Pasted loan terms ---\n${pasted.trim()}` });
+      if (pasted.trim()) parts.push({ type: 'text', text: `--- Pasted ${cfg.noun} ---\n${pasted.trim()}` });
 
       const mb = sizeOfParts(parts);
       setProgress({ pct: 30, stage: `Sending ${mb < 0.1 ? 'text' : `${mb.toFixed(1)} MB`} to ${ai.label}…` });
-      const data = await extractJSON(ai, PROMPT, 'Extract the loan terms from these lender documents.', parts, SCHEMA, {
+      const data = await extractJSON(ai, cfg.prompt, cfg.instruction, parts, cfg.schema, {
         signal: controller.signal,
         onSent: () => { sentAt = Date.now(); answerChars = 0; },
         onText: (chars) => { answerChars = chars; },
@@ -255,11 +322,18 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
         Object.assign(data, preset
           ? { financingPercentage: pct, useCustomFinancing: false }
           : { useCustomFinancing: true, customFinancingPercentage: pct });
+      } else if (f.key === 'transferTaxBuyer') {
+        // $ on the quote → % of price (the app stores transfer tax as a rate)
+        const price = (checked.purchasePrice && extracted.purchasePrice) || inputs.purchasePrice;
+        if (price > 0) data.transferTaxRate = Math.round((Number(extracted.transferTaxBuyer) / price) * 100 * 10000) / 10000;
+      } else if (f.key === 'titleInsuranceAmount') {
+        data.titleInsuranceAmount = extracted.titleInsuranceAmount;
+        data.numberOfEndorsements = 0; // the quoted premium already includes endorsements
       } else {
         data[f.key] = extracted[f.key];
       }
     }
-    if (extracted.notes) data.notes = [inputs.notes, `Lender doc terms: ${extracted.notes}`].filter(Boolean).join('\n');
+    if (extracted.notes) data.notes = [inputs.notes, `${cfg.notesLabel}: ${extracted.notes}`].filter(Boolean).join('\n');
     onApply(data);
     onClose();
   };
@@ -272,8 +346,8 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="bg-gray-900 text-white px-4 sm:px-6 py-3 rounded-t-xl flex justify-between items-center">
           <div>
-            <h2 className="text-base sm:text-lg font-bold uppercase">Import Lender Docs</h2>
-            <p className="text-[11px] text-gray-300">Upload the term sheet / loan estimate — the AI reads the terms, you review before anything changes.</p>
+            <h2 className="text-base sm:text-lg font-bold uppercase">{cfg.title}</h2>
+            <p className="text-[11px] text-gray-300">{cfg.subtitle}</p>
           </div>
           <button onClick={onClose} className="text-gray-300 hover:text-white text-xl px-2" aria-label="Close">×</button>
         </div>
@@ -294,8 +368,8 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
                   className="hidden"
                   onChange={(e) => { setFiles(Array.from(e.target.files || [])); setExtracted(null); setError(null); }}
                 />
-                <div className="text-sm font-semibold text-gray-700">📄 Choose lender documents</div>
-                <div className="text-[11px] text-gray-500 mt-1">PDF, photos/screenshots (PNG, JPG) or text · several files OK (term sheet + fee sheet)</div>
+                <div className="text-sm font-semibold text-gray-700">{cfg.pick}</div>
+                <div className="text-[11px] text-gray-500 mt-1">{cfg.hint}</div>
               </label>
 
               {files.length > 0 && (
@@ -309,7 +383,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
                 value={pasted}
                 onChange={(e) => { setPasted(e.target.value); setExtracted(null); }}
                 rows={3}
-                placeholder="…or paste the loan terms as text (copy from the email / term sheet). Works with any AI model, even ones that can't read images or PDFs."
+                placeholder={`…or paste the ${cfg.noun} as text (copy from the email or document). Works with any AI model, even ones that can't read images or PDFs.`}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
 
@@ -318,7 +392,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
                 disabled={(!files.length && !pasted.trim()) || loading || totalMB > 30}
                 className="w-full bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white font-bold py-2 rounded-lg text-sm"
               >
-                {loading ? `Reading documents… ${Math.round(progress.pct)}%` : 'Read loan terms'}
+                {loading ? `Reading documents… ${Math.round(progress.pct)}%` : `Read ${cfg.noun}`}
               </button>
 
               {loading && (
@@ -357,7 +431,7 @@ export const LenderDocImportModal: React.FC<Props> = ({ ai, inputs, onApply, onC
           {extracted && (
             <div className="space-y-3">
               {stated.length === 0 ? (
-                <div className="text-sm text-gray-600">No loan terms found in these documents.</div>
+                <div className="text-sm text-gray-600">No {cfg.noun} found in these documents.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">

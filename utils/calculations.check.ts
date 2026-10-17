@@ -42,3 +42,14 @@ console.log('OK  estimates (Allegheny, $300k):', Object.fromEntries(est.estimate
 
 console.log('OK  NORMAL 3rd party:', normal.totalThirdPartyFees.toFixed(2), '| HIDEOUT 3rd party:', hideout.totalThirdPartyFees.toFixed(2),
   '| NORMAL title (PA table):', normal.titleInsuranceCost.toFixed(2));
+
+// --- PA transfer tax by municipality (utils/paTransferTax.ts) + title quote $ override ---
+import { paTransferTaxTotal, paTransferTaxShares } from './paTransferTax';
+assert(paTransferTaxTotal('Allegheny County', '').total === 2, 'standard PA town = 2% total');
+assert(paTransferTaxTotal('Philadelphia County').total === 4.578, 'Philadelphia 4.578% total');
+assert(paTransferTaxTotal('Allegheny County', 'Pittsburgh, City of (Pittsburgh School District)').total === 5, 'Pittsburgh 5% total');
+assert(paTransferTaxShares('Berks County', 'Reading, City of').buyerRate === 2.5, 'Reading buyer half = 2.5%');
+const quoted = calculateLoan({ ...base, titleInsuranceAmount: 1234 } as LoanInputs);
+assert(quoted.titleInsuranceCost === 1234, 'NORMAL uses title $ from quote');
+assert(calculateLoan({ ...base, appVersion: 'HIDEOUT', titleInsuranceAmount: 1234, lendersTitleInsurance: 0 } as LoanInputs).titleInsuranceCost === 0, 'quote $ ignored in HIDEOUT');
+console.log('OK  PA transfer tax + title quote override');
