@@ -169,11 +169,57 @@ const toAppCounty = (state?: string, county?: string) => {
   return list.find((c) => c === county) || list.find((c) => c.toLowerCase().startsWith(county.toLowerCase() + ' '));
 };
 
+/**
+ * U.S. Census geocoder (free, no key). It sends no CORS header but supports JSONP, so call it with a <script> tag.
+ * Returns the official address spelling ("1355 WOODHILL LN, LAKE ARIEL, PA, 18436") and coordinates.
+ */
+const censusGeocode = (address: string): Promise<{ matched: string; lat: number; lon: number; street: string } | null> =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined') return resolve(null);
+    const cb = `zsGeo${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+    const script = document.createElement('script');
+    const done = (v: any) => { delete (window as any)[cb]; script.remove(); clearTimeout(timer); resolve(v); };
+    const timer = setTimeout(() => done(null), 12000);
+    (window as any)[cb] = (data: any) => {
+      const m = data?.result?.addressMatches?.[0];
+      done(m ? { matched: m.matchedAddress, lat: m.coordinates.y, lon: m.coordinates.x, street: m.addressComponents?.streetName || '' } : null);
+    };
+    script.onerror = () => done(null);
+    script.src = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(address)}`
+      + `&benchmark=Public_AR_Current&format=jsonp&callback=${cb}`;
+    document.head.appendChild(script);
+  });
+
+const firstRecord = (list: any) => (Array.isArray(list) ? list[0] : list) || null;
+
+/**
+ * Find the RentCast record. Exact address first; if RentCast doesn't know that spelling, retry with the Census
+ * geocoder's official spelling, then search records within ~0.15 mile of its coordinates and take the one with
+ * the same house number on the same street (never a different house).
+ */
+const findRentCastRecord = async (address: string, key: string) => {
+  const exact = firstRecord(await rentcastGet(`properties?address=${encodeURIComponent(address.trim())}`, key));
+  if (exact) return exact;
+  const geo = await censusGeocode(address);
+  if (!geo) return null;
+  const official = geo.matched.replace(/,\s*(\d{5})$/, ' $1'); // "…, PA, 18436" → "…, PA 18436"
+  if (official.toUpperCase() !== address.trim().toUpperCase()) {
+    const byOfficial = firstRecord(await rentcastGet(`properties?address=${encodeURIComponent(official)}`, key));
+    if (byOfficial) return byOfficial;
+  }
+  const near = await rentcastGet(`properties?latitude=${geo.lat}&longitude=${geo.lon}&radius=0.15&limit=100`, key);
+  const houseNo = address.trim().match(/^\d+[A-Za-z]?/)?.[0];
+  const streetWord = (geo.street || '').split(/\s+/)[0].toUpperCase();
+  return (Array.isArray(near) ? near : []).find((p: any) => {
+    const line = String(p.addressLine1 || p.formattedAddress || '').toUpperCase();
+    return houseNo && line.startsWith(houseNo + ' ') && (!streetWord || line.includes(streetWord));
+  }) || null;
+};
+
 const lookupRentCast = async (address: string, key: string, withValuation: boolean): Promise<PropertyRecord | null> => {
-  const q = encodeURIComponent(address.trim());
-  const list = await rentcastGet(`properties?address=${q}`, key);
-  const p = Array.isArray(list) ? list[0] : list;
+  const p = await findRentCastRecord(address, key);
   if (!p) return null;
+  const q = encodeURIComponent(p.formattedAddress || address.trim()); // valuation uses the address RentCast knows
   const tax = latest<{ year: number; total: number }>(p.propertyTaxes);
   const assess = latest<{ year: number; value: number }>(p.taxAssessments);
   const type = String(p.propertyType || '');
@@ -220,6 +266,6 @@ export const lookupProperty = async (
   if (cached !== undefined) return cached;
   let rec = philly ? await lookupPhilly(address) : null;
   if (!rec && opts.rentcastKey) rec = await lookupRentCast(address, opts.rentcastKey, !!opts.withValuation);
-  cacheSet(key, rec);
+  if (rec) cacheSet(key, rec); // don't remember misses — a corrected address or newer records should be tried again
   return rec;
 };

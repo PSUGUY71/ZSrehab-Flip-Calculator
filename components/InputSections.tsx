@@ -91,7 +91,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           setTaxLookup({ status: 'none', message: rec
             ? 'No tax amount on record for this address — using the county average.'
             : rentcastApiKey || /philadelphia/i.test(addr)
-              ? 'Property not found in public records — using the county average.'
+              ? `Property not found in public records (searched “${addr}”) — using the county average. Check the street spelling, or type the tax from the listing.`
               : 'Using the county average. (Tip: a free RentCast key in Settings → Property Data looks up each property’s actual taxes.)' });
         }
       } catch (e: any) {
