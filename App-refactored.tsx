@@ -1563,6 +1563,8 @@ const App: React.FC = () => {
       {isPropertyImportOpen && (
         <PropertyImportModal
           currentAddress={inputs.address || ''}
+          zipCode={inputs.zipCode}
+          state={inputs.state}
           county={inputs.county}
           rentcastApiKey={userPreferences.rentcastApiKey}
           onApplyData={(data) => {

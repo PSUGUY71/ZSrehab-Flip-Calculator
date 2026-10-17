@@ -12,7 +12,7 @@ import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
 import { ESTIMATE_FIELDS } from '../utils/closingEstimates';
 import { paMunicipalitiesWithVariation, paTransferTaxTotal } from '../utils/paTransferTax';
-import { lookupProperty, looksComplete } from '../utils/propertyLookup';
+import { lookupProperty, buildLookupAddress } from '../utils/propertyLookup';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -67,14 +67,16 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   // Philadelphia, RentCast elsewhere when a key is set). Never overwrites a number the user typed. ---
   const [taxLookup, setTaxLookup] = useState<{ status: 'idle' | 'loading' | 'found' | 'none' | 'error'; message?: string }>({ status: 'idle' });
   const lastTaxLookupRef = useRef(''); // address + whether a key was available — a newly added key retries
+  const lookupKey = `${inputs.address}|${inputs.zipCode}|${inputs.state}|${rentcastApiKey ? 'key' : ''}`;
   const runTaxLookup = async (force = false) => {
-    const addr = inputs.address;
-    if (!looksComplete(addr)) {
-      setTaxLookup({ status: 'error', message: 'Enter the full address first: street, city, state and zip (e.g. 123 Main St, Honesdale, PA 18431).' });
+    lastTaxLookupRef.current = lookupKey;
+    setTaxLookup({ status: 'loading', message: 'Looking up this property’s taxes…' });
+    const built = await buildLookupAddress(inputs); // street box + Zip/State fields → "street, city, ST zip"
+    if ('error' in built) {
+      setTaxLookup({ status: 'error', message: built.error });
       return;
     }
-    lastTaxLookupRef.current = `${addr}|${rentcastApiKey ? 'key' : ''}`;
-    setTaxLookup({ status: 'loading', message: 'Looking up this property’s taxes…' });
+    const addr = built.address;
     {
       try {
         const rec = await lookupProperty(addr, { county: inputs.county, rentcastKey: rentcastApiKey, force });
@@ -100,12 +102,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   };
   // Automatic: once a full address is typed (and again if a key is added later). Never replaces a typed number.
   useEffect(() => {
-    const addr = inputs.address;
-    if (!looksComplete(addr) || `${addr}|${rentcastApiKey ? 'key' : ''}` === lastTaxLookupRef.current) return;
+    // Needs a house number + street, and a zip (in the Zip field or typed in the address)
+    const hasStreet = /^\s*\d+[A-Za-z-]*\s+\S+/.test(inputs.address || '');
+    const hasZip = /\d{5}/.test(inputs.zipCode || '') || /\b\d{5}\b/.test(inputs.address || '');
+    if (!hasStreet || !hasZip || lookupKey === lastTaxLookupRef.current) return;
     if (inputs.annualPropertyTax && !inputs.annualPropertyTaxSource) return; // user's own number wins
     const timer = setTimeout(() => runTaxLookup(), 1500);
     return () => clearTimeout(timer);
-  }, [inputs.address, rentcastApiKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lookupKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ltvOptions = [
     { label: '60%', value: 0.60 },

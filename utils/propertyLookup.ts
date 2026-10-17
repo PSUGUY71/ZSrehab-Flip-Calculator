@@ -70,6 +70,39 @@ const cacheSet = (key: string, rec: PropertyRecord | null) => {
 export const looksComplete = (address?: string) =>
   !!address && /^\s*\d+[A-Za-z]?\s+\S+/.test(address) && (/,\s*\S+/.test(address) || /\b\d{5}\b/.test(address));
 
+/** City for a US zip (free zippopotam.us, CORS *), cached in this browser. */
+const cityForZip = async (zip: string): Promise<{ city: string; state: string } | null> => {
+  const ck = `zs_zip_city_v1:${zip}`;
+  try { const hit = localStorage.getItem(ck); if (hit) return JSON.parse(hit); } catch { /* no storage */ }
+  try {
+    const resp = await fetch(`https://api.zippopotam.us/us/${zip}`);
+    if (!resp.ok) return null;
+    const place = (await resp.json()).places?.[0];
+    const out = place ? { city: place['place name'], state: place['state abbreviation'] } : null;
+    try { if (out) localStorage.setItem(ck, JSON.stringify(out)); } catch { /* ignore */ }
+    return out;
+  } catch { return null; }
+};
+
+/**
+ * The address box usually holds only the street ("1355 Woodhill Ln") with State and Zip in their own fields.
+ * Build "street, city, ST zip" for the lookup (city from the zip). Returns an error message when it can't.
+ */
+export const buildLookupAddress = async (inp: { address?: string; state?: string; zipCode?: string }):
+  Promise<{ address: string } | { error: string }> => {
+  const street = (inp.address || '').trim();
+  if (!/^\d+[A-Za-z-]*\s+\S+/.test(street)) return { error: 'Enter the street address (house number and street) in Property Address.' };
+  if (street.includes(',') && /\b\d{5}\b/.test(street)) return { address: street }; // already "street, city, ST zip"
+  const zip = (inp.zipCode || '').match(/\d{5}/)?.[0] || street.match(/\b\d{5}\b/)?.[0];
+  if (street.includes(',') && zip) return { address: `${street}, ${inp.state || ''} ${zip}`.replace(/\s+/g, ' ').trim() }; // "street, city" + fields
+  if (street.includes(',') && /,\s*\S+.*\b[A-Z]{2}\b/i.test(street)) return { address: street }; // "street, city, ST" — try as typed
+  if (!zip) return { error: 'Add the Zip Code so we can find this property.' };
+  const place = await cityForZip(zip);
+  const state = inp.state || place?.state || '';
+  const line = street.split(',')[0].replace(/\b\d{5}\b/, '').trim();
+  return { address: [line, place?.city, `${state} ${zip}`.trim()].filter(Boolean).join(', ') };
+};
+
 const SUFFIX: Record<string, string> = {
   STREET: 'ST', AVENUE: 'AVE', ROAD: 'RD', DRIVE: 'DR', LANE: 'LN', BOULEVARD: 'BLVD', PLACE: 'PL', COURT: 'CT',
   TERRACE: 'TER', PARKWAY: 'PKWY', CIRCLE: 'CIR', HIGHWAY: 'HWY', SQUARE: 'SQ', PIKE: 'PIKE',

@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { LoanInputs } from '../types';
 import { formatCurrency } from '../utils/calculations';
-import { lookupProperty, looksComplete, PropertyRecord } from '../utils/propertyLookup';
+import { lookupProperty, looksComplete, buildLookupAddress, PropertyRecord } from '../utils/propertyLookup';
 
 /**
  * Auto-fill property details from REAL public records (utils/propertyLookup.ts):
@@ -12,6 +12,8 @@ import { lookupProperty, looksComplete, PropertyRecord } from '../utils/property
 
 interface PropertyImportModalProps {
   currentAddress: string;
+  zipCode?: string;
+  state?: string;
   county?: string;
   rentcastApiKey?: string;
   onApplyData: (data: Partial<LoanInputs>) => void;
@@ -38,12 +40,21 @@ const money = (v?: number) => (v ? formatCurrency(v) : '—');
 
 export const PropertyImportModal: React.FC<PropertyImportModalProps> = ({
   currentAddress,
+  zipCode,
+  state,
   county,
   rentcastApiKey,
   onApplyData,
   onClose,
 }) => {
   const [searchAddress, setSearchAddress] = useState(currentAddress || '');
+  // The deal's address box often holds only the street — add city/state/zip from the deal's fields
+  useEffect(() => {
+    if (!currentAddress || currentAddress.includes(',')) return;
+    buildLookupAddress({ address: currentAddress, state, zipCode }).then((b) => {
+      if ('address' in b) setSearchAddress((cur) => (cur === currentAddress ? b.address : cur));
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [isSearching, setIsSearching] = useState(false);
   const [record, setRecord] = useState<PropertyRecord | null>(null);
   const [message, setMessage] = useState<string | null>(null);
