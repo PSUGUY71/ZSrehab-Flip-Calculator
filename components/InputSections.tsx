@@ -119,7 +119,9 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       const estimates = estimateHoldingCosts(
         inputs.purchasePrice,
         inputs.state,
-        inputs.monthlyElectric
+        inputs.monthlyElectric,
+        inputs.county,
+        inputs.annualPropertyTax
       );
 
       // Only auto-populate if values are currently zero/unchecked
@@ -153,11 +155,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       return estimateHoldingCosts(
         inputs.purchasePrice,
         inputs.state,
-        inputs.monthlyElectric
+        inputs.monthlyElectric,
+        inputs.county,
+        inputs.annualPropertyTax
       );
     }
     return null;
-  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice, inputs.monthlyElectric]);
+  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice, inputs.monthlyElectric, inputs.county, inputs.annualPropertyTax]);
 
   // Check if holding costs are too low (validation)
   const monthlyHoldingCostTotal = useMemo(() => {
@@ -298,6 +302,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.zipCode} 
               onChange={(v) => onInputChange('zipCode', v)}
               helpText="Property zip code"
+            />
+            <InputGroup
+              label="Annual Property Taxes (optional)"
+              id="annualPropertyTax"
+              value={inputs.annualPropertyTax || 0}
+              onChange={(v) => onInputChange('annualPropertyTax', v)}
+              prefix="$"
+              helpText={`Yearly tax bill shown on the listing. Makes tax prorations and monthly holding taxes match this property. Leave at 0 and we estimate it from the ${inputs.county || 'county'} average tax rate (U.S. Census data).`}
             />
             <div className="col-span-1">
               <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Type</label>
@@ -2082,7 +2094,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 Add Monthly Taxes
                 {holdingCostEstimates && (
                   <span className="text-xs text-blue-600 font-normal ml-2">
-                    (Est: {formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo - {inputs.state} state average)
+                    (Est: {formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo - {inputs.annualPropertyTax ? 'from the listing tax' : inputs.county ? inputs.county + ' average' : inputs.state + ' state average'})
                   </span>
                 )}
               </label>
@@ -2098,7 +2110,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     onInputChange('monthlyTaxes', Math.max(0, numValue));
                   }} 
                   prefix="$"
-                  helpText={`Monthly property tax cost during holding period. ${holdingCostEstimates ? `State-based estimate: ${formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo for ${inputs.state}.` : 'Varies by state and property value.'}`}
+                  helpText={`Monthly property tax cost during holding period. ${holdingCostEstimates ? `Estimate: ${formatCurrency(holdingCostEstimates.monthlyTaxes)}/mo (${inputs.annualPropertyTax ? 'listing tax ÷ 12' : (inputs.county || inputs.state) + ' effective tax rate × price'}).` : 'Varies by state and property value.'}`}
                 />
               </div>
             )}

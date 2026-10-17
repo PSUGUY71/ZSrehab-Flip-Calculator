@@ -503,7 +503,7 @@ const App: React.FC = () => {
         // Auto-check taxes if unchecked and no value set
         if (!prev.includeMonthlyTaxes && prev.monthlyTaxes === 0) {
           updated.includeMonthlyTaxes = true;
-          updated.monthlyTaxes = estimateMonthlyTax(prev.purchasePrice, prev.state);
+          updated.monthlyTaxes = estimateMonthlyTax(prev.purchasePrice, prev.state, prev.county, prev.annualPropertyTax);
           changed = true;
         }
         
@@ -784,6 +784,12 @@ const App: React.FC = () => {
         const { buyerRate, sellerRate } = paTransferTaxShares(updated.county, updated.municipality);
         updated.transferTaxRate = buyerRate;
         updated.sellingTransferTaxRate = sellerRate;
+      }
+
+      // Listing tax bill entered → monthly holding taxes follow it (one number drives prorations + holding)
+      if (field === 'annualPropertyTax' && Number(value) > 0) {
+        updated.monthlyTaxes = Math.round(Number(value) / 12);
+        updated.includeMonthlyTaxes = true;
       }
 
       // Auto-populate holding costs when exit strategy changes

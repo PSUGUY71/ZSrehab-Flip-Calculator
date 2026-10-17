@@ -8,7 +8,7 @@
 import { LoanInputs } from '../types';
 import { getCountyThirdPartyCosts } from './thirdPartyCosts';
 import { getStateDefaults } from './stateDefaults';
-import { getStateHoldingCosts } from './stateHoldingCosts';
+import { annualPropertyTax } from './stateHoldingCosts';
 
 // Fields filled from the county cost table
 export const COUNTY_FIELDS = [
@@ -49,7 +49,7 @@ const remaining = (closingDate?: string) => {
 export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number> => {
   const c = getCountyThirdPartyCosts(inp.state, inp.county);
   const price = inp.purchasePrice || 0;
-  const annualTax = price * ((getStateHoldingCosts(inp.state)?.taxRatePercent || 0) / 100);
+  const annualTax = annualPropertyTax(inp).amount; // listing's tax bill, else county rate × price, else state rate
   const left = remaining(inp.closingDate);
   const financing = inp.useCustomFinancing ? inp.customFinancingPercentage : inp.financingPercentage;
   const loanAtClosing = price * ((financing || 0) / 100);

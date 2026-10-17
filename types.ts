@@ -46,6 +46,7 @@ export interface LoanInputs {
   state: string;
   county?: string; // County for 3rd party cost lookups (NORMAL version)
   municipality?: string; // PA: municipality for the local realty transfer tax rate (utils/paTransferTax.ts)
+  annualPropertyTax?: number; // Optional: yearly tax bill from the listing; blank = county effective rate × price
   zipCode: string;
   propertyType: 'SFR' | 'Multi-Family' | 'Mixed-Use';
   units: number;

@@ -65,3 +65,15 @@ const flip = calculateLoan({ ...base, titleInsuranceAmount: 0, titleInsuranceRat
   financingPercentage: 100, useCustomFinancing: false, arv: 400000, numberOfEndorsements: 3 } as LoanInputs);
 assert(flip.endorsementCost === 300, 'NORMAL endorsements $100 each');
 console.log('OK  PA title (TIRBOP 2024): $200k sale', paSaleRate(200000), '| flip price $200k + rehab $60k → premium', flip.titleInsuranceCost);
+
+// --- Property tax: county effective rate (Census ACS) or the listing's tax bill (utils/stateHoldingCosts.ts) ---
+import { annualPropertyTax } from './stateHoldingCosts';
+import { computeEstimates } from './closingEstimates';
+const philly = annualPropertyTax({ purchasePrice: 300000, state: 'PA', county: 'Philadelphia County' });
+const allegheny = annualPropertyTax({ purchasePrice: 300000, state: 'PA', county: 'Allegheny County' });
+assert(philly.source === 'county' && allegheny.amount > philly.amount, `county rates differ (Philly ${philly.amount}, Allegheny ${allegheny.amount})`);
+assert(annualPropertyTax({ purchasePrice: 300000, state: 'PA', county: 'Allegheny County', annualPropertyTax: 5400 }).amount === 5400, 'listing tax wins');
+assert(annualPropertyTax({ purchasePrice: 300000, state: 'PA' }).source === 'state', 'no county → state average');
+const withBill = computeEstimates({ ...base, annualPropertyTax: 6000, closingDate: '2026-07-01' } as LoanInputs);
+assert(withBill.schoolTaxAtClosing === Math.round(6000 * 0.68 * 365 / 365), `school proration from the bill on Jul 1 = full year (got ${withBill.schoolTaxAtClosing})`);
+console.log('OK  property tax: Philly $300k', Math.round(philly.amount), '| Allegheny $300k', Math.round(allegheny.amount));

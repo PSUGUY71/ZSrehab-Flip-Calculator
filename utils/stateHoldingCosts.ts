@@ -1,5 +1,6 @@
 // State-based default estimates for insurance and property tax
 // These are rough estimates based on typical market rates
+import { getCountyTaxRate } from './countyTaxRates';
 
 export interface StateHoldingCosts {
   insurancePerMonthPer100k: number; // Insurance cost per $100k of purchase price per month
@@ -84,12 +85,19 @@ export const estimateMonthlyInsurance = (purchasePrice: number, state: string): 
   return Math.round((purchasePrice / 100000) * stateCosts.insurancePerMonthPer100k);
 };
 
-export const estimateMonthlyTax = (purchasePrice: number, state: string): number => {
-  const stateCosts = getStateHoldingCosts(state);
-  if (!stateCosts) return 0;
-  // Calculate: (purchasePrice * taxRatePercent / 100) / 12
-  return Math.round((purchasePrice * stateCosts.taxRatePercent / 100) / 12);
+/**
+ * Yearly property tax for the deal: the actual bill if the user entered it (from the listing), otherwise
+ * price × the county's effective rate (Census ACS), otherwise the state average rate.
+ */
+export const annualPropertyTax = (inp: { purchasePrice?: number; state?: string; county?: string; annualPropertyTax?: number }) => {
+  if ((inp.annualPropertyTax || 0) > 0) return { amount: inp.annualPropertyTax!, source: 'listing' as const };
+  const county = getCountyTaxRate(inp.state, inp.county);
+  const rate = county ?? getStateHoldingCosts(inp.state || '')?.taxRatePercent ?? 0;
+  return { amount: (inp.purchasePrice || 0) * rate / 100, source: county !== undefined ? 'county' as const : 'state' as const, rate };
 };
+
+export const estimateMonthlyTax = (purchasePrice: number, state: string, county?: string, actualAnnualTax?: number): number =>
+  Math.round(annualPropertyTax({ purchasePrice, state, county, annualPropertyTax: actualAnnualTax }).amount / 12);
 
 // Regional utilities estimates (monthly averages for vacant/rehab properties)
 // Northeast: Higher heating costs, South: Lower heating but higher cooling
@@ -118,10 +126,12 @@ export interface HoldingCostEstimates {
 export const estimateHoldingCosts = (
   purchasePrice: number,
   state: string,
-  existingMonthlyElectric: number = 0
+  existingMonthlyElectric: number = 0,
+  county?: string,
+  actualAnnualTax?: number,
 ): HoldingCostEstimates => {
   const monthlyInsurance = estimateMonthlyInsurance(purchasePrice, state);
-  const monthlyTaxes = estimateMonthlyTax(purchasePrice, state);
+  const monthlyTaxes = estimateMonthlyTax(purchasePrice, state, county, actualAnnualTax);
   // Use existing electric if provided, otherwise estimate based on region
   const monthlyUtilities = existingMonthlyElectric > 0 
     ? existingMonthlyElectric 
