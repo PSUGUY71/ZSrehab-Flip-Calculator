@@ -12,6 +12,7 @@ import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
 import { ESTIMATE_FIELDS } from '../utils/closingEstimates';
 import { paMunicipalitiesWithVariation, paTransferTaxTotal } from '../utils/paTransferTax';
+import { lookupProperty, looksComplete } from '../utils/propertyLookup';
 import { ValidationAlert } from './ValidationAlert';
 
 interface InputSectionsProps {
@@ -29,6 +30,7 @@ interface InputSectionsProps {
   onOpenPropertyImport?: () => void;
   onOpenLenderDocImport?: () => void;
   onOpenTitleQuoteImport?: () => void;
+  rentcastApiKey?: string; // Settings → Property Data (optional; Philadelphia lookups need no key)
   appVersion?: 'NORMAL' | 'HIDEOUT';
   hasUserInteracted?: boolean;
 }
@@ -48,9 +50,53 @@ export const InputSections: React.FC<InputSectionsProps> = ({
   onOpenPropertyImport,
   onOpenLenderDocImport,
   onOpenTitleQuoteImport,
+  rentcastApiKey,
   appVersion = 'NORMAL',
   hasUserInteracted = false,
 }) => {
+  // State picked (menu or address lookup) → also apply that state's defaults
+  const selectState = (newState: string) => {
+    onInputChange('state', newState);
+    if (newState) {
+      const defaults = applyStateDefaults(inputs, newState, false);
+      Object.entries(defaults).forEach(([key, value]) => onInputChange(key as keyof LoanInputs, value));
+    }
+  };
+
+  // --- Automatic property tax lookup: once a full address is typed, fetch the real tax bill (free for
+  // Philadelphia, RentCast elsewhere when a key is set). Never overwrites a number the user typed. ---
+  const [taxLookup, setTaxLookup] = useState<{ status: 'idle' | 'loading' | 'found' | 'none' | 'error'; message?: string }>({ status: 'idle' });
+  const lastTaxLookupRef = useRef('');
+  useEffect(() => {
+    const addr = inputs.address;
+    if (appVersion === 'HIDEOUT' || !looksComplete(addr) || addr === lastTaxLookupRef.current) return;
+    if (inputs.annualPropertyTax && !inputs.annualPropertyTaxSource) return; // user's own number wins
+    const timer = setTimeout(async () => {
+      lastTaxLookupRef.current = addr;
+      setTaxLookup({ status: 'loading', message: 'Looking up this property’s taxes…' });
+      try {
+        const rec = await lookupProperty(addr, { county: inputs.county, rentcastKey: rentcastApiKey });
+        if (rec?.annualTax) {
+          // Fill state/county too if they're still blank, so every county-based estimate kicks in
+          if (!inputs.state && rec.state) selectState(rec.state);
+          if (!inputs.county && rec.county && (!inputs.state || inputs.state === rec.state)) onInputChange('county', rec.county);
+          onInputChange('annualPropertyTax', Math.round(rec.annualTax));
+          onInputChange('annualPropertyTaxSource', rec.sourceLabel);
+          setTaxLookup({ status: 'found', message: `✓ Found ${formatCurrency(rec.annualTax)}/yr — ${rec.sourceLabel}` });
+        } else {
+          setTaxLookup({ status: 'none', message: rec
+            ? 'No tax amount on record for this address — using the county average.'
+            : rentcastApiKey || /philadelphia/i.test(addr)
+              ? 'Property not found in public records — using the county average.'
+              : 'Using the county average. (Tip: a free RentCast key in Settings → Property Data looks up each property’s actual taxes.)' });
+        }
+      } catch (e: any) {
+        setTaxLookup({ status: 'error', message: `${e?.message || 'Tax lookup failed'} Using the county average.` });
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [inputs.address, rentcastApiKey, appVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const ltvOptions = [
     { label: '60%', value: 0.60 },
     { label: '65%', value: 0.65 },
@@ -205,7 +251,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             type="text" 
             value={inputs.address} 
             onChange={(v) => onInputChange('address', v)}
-            helpText="Enter the full property address"
+            helpText="Enter the full property address (street, city, state zip) — we look up the property's taxes automatically"
           />
           {onOpenPropertyImport && (
             <button
@@ -221,18 +267,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <select 
                 className="mt-1 block w-full rounded-md border-gray-300 py-2 text-sm border pl-3" 
                 value={inputs.state} 
-                onChange={(e) => {
-                  const newState = e.target.value;
-                  onInputChange('state', newState);
-                  
-                  // Auto-populate state defaults when state changes
-                  if (newState) {
-                    const defaults = applyStateDefaults(inputs, newState, false);
-                    Object.entries(defaults).forEach(([key, value]) => {
-                      onInputChange(key as keyof LoanInputs, value);
-                    });
-                  }
-                }}
+                onChange={(e) => selectState(e.target.value)}
               >
                 <option value="">Select State</option>
                 {getAllStateCodes()
@@ -309,8 +344,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               value={inputs.annualPropertyTax || 0}
               onChange={(v) => onInputChange('annualPropertyTax', v)}
               prefix="$"
-              helpText={`Yearly tax bill shown on the listing. Makes tax prorations and monthly holding taxes match this property. Leave at 0 and we estimate it from the ${inputs.county || 'county'} average tax rate (U.S. Census data).`}
+              helpText={`Filled in automatically from public records when we can find this address. You can also type the yearly tax from the listing. Drives tax prorations and monthly holding taxes; if blank we use the ${inputs.county || 'county'} average tax rate (U.S. Census data).`}
             />
+            {taxLookup.status !== 'idle' && (
+              <div className={`col-span-2 sm:col-span-4 -mt-2 text-[10px] ${taxLookup.status === 'found' ? 'text-green-700' : taxLookup.status === 'error' ? 'text-amber-700' : 'text-gray-500'}`}>
+                {taxLookup.message}
+              </div>
+            )}
             <div className="col-span-1">
               <label className="text-xs font-semibold text-gray-500 uppercase block mb-1">Type</label>
               <select 

@@ -27,6 +27,8 @@ export interface UserPreferences {
   omnirouteUrl?: string; // OmniRoute base URL (default http://localhost:20128/v1)
   omnirouteApiKey?: string; // key created in the OmniRoute dashboard
   aiModels?: Partial<Record<AIProvider, string>>; // model picked per provider (blank = default)
+  // Property Data
+  rentcastApiKey?: string; // RentCast property records (free plan 50/month); Philadelphia lookups need no key
   // App Mode
   hideoutModeEnabled: boolean; // Show Hideout version selector in nav
 }
@@ -509,6 +511,42 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
               <b>Reading PDFs &amp; images:</b> Import Lender Docs needs a model that can read images or PDFs (“vision”).
               Claude, GPT-4o, Gemini and Grok can. Many free or text-only models (some OpenRouter / OmniRoute models) <b>cannot</b> —
               with those the AI chat still works, but for lender docs paste the terms as text or upload a .txt file instead.
+            </div>
+          </div>
+
+          {/* Property Data */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase text-gray-700 border-b pb-2">Property Data</h3>
+            <p className="text-xs text-gray-500 -mt-2">
+              Looks up each property's real tax bill (and beds, baths, sqft, last sale) from public records when you type
+              its address. Philadelphia properties work for free with no key. For everywhere else, add a free RentCast key.
+            </p>
+            <div>
+              <label htmlFor="rentcastApiKey" className="block text-xs font-semibold text-gray-700 mb-1">
+                RentCast API Key (optional)
+              </label>
+              <input
+                id="rentcastApiKey"
+                type="password"
+                value={formData.rentcastApiKey || ''}
+                onChange={(e) => handleChange('rentcastApiKey', e.target.value)}
+                placeholder="paste your RentCast key"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Get a free key at{' '}
+                <a href="https://app.rentcast.io/app/api" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  app.rentcast.io/app/api
+                </a>
+                {' '}— free plan includes 50 lookups a month (each property is looked up once and remembered for 30 days).
+                Without a key, taxes are estimated from the county average.
+              </p>
+              {formData.rentcastApiKey && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-green-500 rounded-full" />
+                  <span className="text-xs text-green-700 font-medium">Key configured</span>
+                </div>
+              )}
             </div>
           </div>
 

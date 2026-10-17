@@ -787,9 +787,12 @@ const App: React.FC = () => {
       }
 
       // Listing tax bill entered → monthly holding taxes follow it (one number drives prorations + holding)
-      if (field === 'annualPropertyTax' && Number(value) > 0) {
-        updated.monthlyTaxes = Math.round(Number(value) / 12);
-        updated.includeMonthlyTaxes = true;
+      if (field === 'annualPropertyTax') {
+        updated.annualPropertyTaxSource = undefined; // typed by the user (a lookup sets the source right after)
+        if (Number(value) > 0) {
+          updated.monthlyTaxes = Math.round(Number(value) / 12);
+          updated.includeMonthlyTaxes = true;
+        }
       }
 
       // Auto-populate holding costs when exit strategy changes
@@ -1415,6 +1418,7 @@ const App: React.FC = () => {
             onOpenPropertyImport={() => setIsPropertyImportOpen(true)}
             onOpenLenderDocImport={() => setDocImport('lender')}
             onOpenTitleQuoteImport={() => setDocImport('title')}
+            rentcastApiKey={userPreferences.rentcastApiKey}
             appVersion={appVersion}
             hasUserInteracted={hasUserInteracted}
           />
@@ -1559,9 +1563,14 @@ const App: React.FC = () => {
       {isPropertyImportOpen && (
         <PropertyImportModal
           currentAddress={inputs.address || ''}
+          county={inputs.county}
+          rentcastApiKey={userPreferences.rentcastApiKey}
           onApplyData={(data) => {
-            setInputs(prev => ({ ...prev, ...data }));
-            setHasUserInteracted(true);
+            // Through the normal handler (state → county → rest) so state defaults, county costs,
+            // transfer tax and holding taxes all update like a manual entry
+            const rank = (k: string) => (k === 'state' ? 0 : k === 'county' ? 1 : 2);
+            const keys = Object.keys(data).sort((x, y) => rank(x) - rank(y));
+            keys.forEach((k) => handleInputChange(k as keyof LoanInputs, (data as any)[k]));
           }}
           onClose={() => setIsPropertyImportOpen(false)}
         />

@@ -26,6 +26,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   omnirouteUrl: 'http://localhost:20128/v1',
   omnirouteApiKey: '',
   aiModels: {},
+  // Property Data
+  rentcastApiKey: '',
   // App Mode
   hideoutModeEnabled: false,
 };
