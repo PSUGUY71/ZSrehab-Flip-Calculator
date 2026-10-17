@@ -1,6 +1,6 @@
 import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
 import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensitivityAnalysis';
-import { calculatePATitleInsurance } from './pennsylvaniaTitleRates';
+import { paPurchaseTitlePremium, PA_ENDORSEMENT_FEE } from './pennsylvaniaTitleRates';
 import { calculateFlipIRR, formatIRR } from './irrCalculation';
 
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
@@ -324,9 +324,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     // Manual override: use percentage rate on purchase price
     titleInsuranceCost = purchasePrice * (titleInsuranceRate / 100);
   } else if (appVersion !== 'HIDEOUT') {
-    // Default (NORMAL only): use PA Title Insurance Rate Table chart based on purchase price
-    // In HIDEOUT mode, skip — user must enter the actual lender's policy amount
-    titleInsuranceCost = calculatePATitleInsurance(purchasePrice);
+    // Default (NORMAL only): PA TIRBOP Sale Rate — owner's + lender's policy issued together are one charge on
+    // the higher of price and loan (TIRBOP Manual §5.2 C). In HIDEOUT mode, skip — user enters the HUD amount.
+    titleInsuranceCost = paPurchaseTitlePremium(purchasePrice, financingPercent > 0 ? qualifiedLoanAmount : 0);
   }
   
   // Hideout Transfer Fee: Manual dollar entry ONLY
@@ -344,8 +344,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // CPL fee is always $125 payable to Penn Attorneys (default if not specified)
   const cplFeeCost = cplFee || 125;
   
-  // Endorsement fees are $50 per endorsement (per HUD: 4 endorsements = $200)
-  const endorsementCost = (numberOfEndorsements || 0) * 50;
+  // Endorsements: NORMAL uses the TIRBOP 2024 flat charge ($100 each for PA 100/300/900/810/820);
+  // HIDEOUT keeps $50 each to match the Walker & Walker HUD it was built from (4 × $50 = $200)
+  const endorsementCost = (numberOfEndorsements || 0) * (appVersion === 'HIDEOUT' ? 50 : PA_ENDORSEMENT_FEE);
   
   // Walker fees: HIDEOUT only — includes all Walker & Walker line items
   const totalWalkerFees = appVersion === 'NORMAL' ? 0 : 

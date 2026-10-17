@@ -187,7 +187,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
         <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
-        <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
+        <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} alwaysShow={isHideout} />
         {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
         <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
         <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
@@ -258,7 +258,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="Transfer Tax" value={results.transferTaxCost} />
           <FeeBreakdownItem label={isHideout ? "1104 Lender's Title Policy" : "Title Insurance"} value={results.titleInsuranceCost} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1105 CPL Fee (Penn Attorneys)" : "CPL Fee (Penn Attorneys)"} value={results.cplFeeCost} alwaysShow={isHideout} />
-          <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} alwaysShow={isHideout} />
+          <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} alwaysShow={isHideout} />
           {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
           <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
           <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />

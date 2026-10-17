@@ -53,3 +53,15 @@ const quoted = calculateLoan({ ...base, titleInsuranceAmount: 1234 } as LoanInpu
 assert(quoted.titleInsuranceCost === 1234, 'NORMAL uses title $ from quote');
 assert(calculateLoan({ ...base, appVersion: 'HIDEOUT', titleInsuranceAmount: 1234, lendersTitleInsurance: 0 } as LoanInputs).titleInsuranceCost === 0, 'quote $ ignored in HIDEOUT');
 console.log('OK  PA transfer tax + title quote override');
+
+// --- PA title rates: TIRBOP manual 08/01/24 worked examples (utils/pennsylvaniaTitleRates.ts) ---
+import { paSaleRate, paNonSaleRate, paPurchaseTitlePremium } from './pennsylvaniaTitleRates';
+assert(paSaleRate(200000) === 1595, `Sale $200k = $1,595.00 (got ${paSaleRate(200000)})`);
+assert(paNonSaleRate(200000) === 1383.25, `Non-Sale $200k = $1,383.25 (got ${paNonSaleRate(200000)})`);
+assert(paSaleRate(30000) === 569 && paSaleRate(30001) === 576.41, 'base $569 to $30k, fraction of $1,000 rounds up');
+assert(Math.round(paNonSaleRate(200000) * 0.8 * 100) / 100 === 1106.6, 'manual §5.6 example: 80% of Non-Sale $200k = $1,106.60');
+assert(paPurchaseTitlePremium(200000, 250000) === paSaleRate(250000), 'simultaneous issue uses the higher of price and loan');
+const flip = calculateLoan({ ...base, titleInsuranceAmount: 0, titleInsuranceRate: 0, purchasePrice: 200000, rehabBudget: 60000,
+  financingPercentage: 100, useCustomFinancing: false, arv: 400000, numberOfEndorsements: 3 } as LoanInputs);
+assert(flip.endorsementCost === 300, 'NORMAL endorsements $100 each');
+console.log('OK  PA title (TIRBOP 2024): $200k sale', paSaleRate(200000), '| flip price $200k + rehab $60k → premium', flip.titleInsuranceCost);

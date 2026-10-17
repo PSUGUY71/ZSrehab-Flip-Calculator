@@ -1049,7 +1049,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               id="endorsements" 
               value={inputs.numberOfEndorsements} 
               onChange={(v) => onInputChange('numberOfEndorsements', v)} 
-              helpText="Number of title endorsements at $50 each (per HUD: 4 endorsements = $200)"
+              helpText={appVersion === 'HIDEOUT' ? "Number of title endorsements at $50 each (per HUD: 4 endorsements = $200)" : "Lender endorsements at $100 each (TIRBOP 2024 manual). Typical lender: 3 — PA 100 (restrictions), PA 300 (survey), PA 900 (environmental); add 1 for a condo (PA 810) or PUD (PA 820). Leave at 0 for a cash purchase."}
             />
             {appVersion !== 'HIDEOUT' && (
             <InputGroup 
