@@ -373,11 +373,10 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 value={results.gapAmount}
                 subtext="Purchase Price - (Purchase Price × Financing%) - Seller Buy Back"
               />
-              {inputs.sellerBuyBackAmount > 0 && (
-                <ResultRow 
-                  label="Seller Buy Back" 
-                  value={inputs.sellerBuyBackAmount * -1}
-                  subtext="Seller financing amount (reduces down payment)"
+              {inputs.earnestMoneyDeposit > 0 && (
+                <ResultRow
+                  label="Less: Earnest Money (already paid)"
+                  value={inputs.earnestMoneyDeposit * -1}
                 />
               )}
                 <ResultRow label="Seller Credit" value={results.sellerConcessionAmount * -1} />
@@ -472,7 +471,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <div className="text-right">
                     <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
                     <div className="text-[9px] text-gray-600 print:text-[8px]">
-                      {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                      {formatCurrency(results.totalInterestCosts)} interest over hold (progressive draws)
                     </div>
                   </div>
                 </div>
@@ -488,7 +487,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <div className="text-right">
                     <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
                     <div className="text-[9px] text-gray-600 print:text-[8px]">
-                      {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                      {formatCurrency(results.totalInterestCosts)} interest over hold (progressive draws)
                     </div>
                   </div>
                 </div>

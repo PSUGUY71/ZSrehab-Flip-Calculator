@@ -73,13 +73,13 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
 
         {/* Deal Viability Indicator - HIGHEST PRIORITY */}
         <DealViabilityIndicator
-          profitMargin={results.profitMargin}
+          profitMargin={inputs.arv > 0 ? results.netMargin / 100 : null}
           irr={results.irr}
-          seventyPercentRuleMet={results.seventyPercentRuleMet}
+          seventyPercentRuleMet={results.passes70Rule}
           ltv={results.ltv}
           arv={inputs.arv}
           purchasePrice={inputs.purchasePrice}
-          afterTaxProfit={results.afterTaxProfit}
+          afterTaxProfit={results.netProfitAfterTax}
         />
 
         {/* Eligibility Alert */}
@@ -102,7 +102,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
 
         {/* Costs Breakdown - NEW: Acquisition vs Disposition */}
         <div className="bg-white rounded-xl p-2 border border-amber-200">
-          <CostsBreakdown results={results} />
+          <CostsBreakdown results={results} inputs={inputs} />
         </div>
 
         {/* 70% Rule Card */}

@@ -378,6 +378,8 @@ export interface CalculatedResults {
   yearlyWaterCost: number; // Yearly water cost (if included)
   yearlyDuesCost: number; // Yearly dues cost (if included)
   monthlyInterestPayments: number[]; // Array of monthly interest payments (progressive draws)
+  totalInterestCosts: number; // Sum of monthlyInterestPayments — interest over the hold (use this, not monthlyPayment × months)
+  rehabOutOfPocket: number; // Rehab (and any loan shortfall) paid in cash because the loan doesn't cover it
   totalExitCosts: number;
   totalSellingCommissionCost: number;
   sellingTransferTaxCost: number;

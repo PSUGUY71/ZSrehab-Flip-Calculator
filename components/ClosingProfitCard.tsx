@@ -85,9 +85,16 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         </div>
       )}
 
-      {/* Other Buying Costs */}
+      {(inputs.sellerBuyBackAmount || 0) > 0 && (
+        <div className="flex justify-between">
+          <span className="opacity-70">Seller Note Payoff</span>
+          <span className="font-bold text-red-600">-{formatCurrency(inputs.sellerBuyBackAmount)}</span>
+        </div>
+      )}
+
+      {/* Your cash in: gap (incl. EMD) + closing − concessions + rehab the loan doesn't cover */}
       <div className="flex justify-between">
-        <span className="opacity-70">Other Cash Inv.</span>
+        <span className="opacity-70">Other Cash Inv.{results.rehabOutOfPocket > 0 ? ` (incl. ${formatCurrency(results.rehabOutOfPocket)} rehab)` : ''}</span>
         <span className="font-bold text-red-600">-{formatCurrency(results.totalBuyingCosts - results.totalWalkerFees)}</span>
       </div>
       <div className="flex justify-between">
@@ -118,9 +125,9 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         <div className="flex justify-between items-center">
           <div className="flex flex-col">
             <span className="opacity-70">Loan Interest</span>
-            <span className="text-[10px] opacity-50">({formatCurrency(results.monthlyPayment)} / mo)</span>
+            <span className="text-[10px] opacity-50">(progressive draws, up to {formatCurrency(results.monthlyPayment)} / mo)</span>
           </div>
-          <span className="font-medium text-red-600">-{formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)}</span>
+          <span className="font-medium text-red-600">-{formatCurrency(results.totalInterestCosts)}</span>
         </div>
         <div className="flex justify-between items-center">
           <div className="flex flex-col">

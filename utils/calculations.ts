@@ -3,6 +3,38 @@ import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensiti
 import { paPurchaseTitlePremium, PA_ENDORSEMENT_FEE } from './pennsylvaniaTitleRates';
 import { calculateFlipIRR, formatIRR } from './irrCalculation';
 
+/** Down payment on the purchase: price − financed purchase amount − seller buy-back note. The EMD is NOT taken out here. */
+export const purchaseGap = (purchasePrice: number, financingPercent: number, sellerBuyBackAmount = 0) =>
+  Math.max(0, purchasePrice - purchasePrice * (financingPercent / 100) - (sellerBuyBackAmount || 0));
+
+/**
+ * The buyer's cash position — the single formula every card, ROI, IRR and comparison uses, so they can't drift.
+ * EMD is part of the down payment: paid before closing, then credited ONCE against what's due at closing.
+ */
+export const cashPosition = (p: {
+  gap: number;
+  closingCosts: number;
+  earnestMoneyDeposit?: number;
+  sellerConcession?: number;
+  commissionCredit?: number;
+  otherPrepaid?: number; // paid before closing besides the EMD (inspection, appraisal…)
+  rehabBudget?: number;
+}) => {
+  const emd = p.earnestMoneyDeposit || 0;
+  const concession = p.sellerConcession || 0;
+  const dueAtClosing = p.gap + p.closingCosts - emd - concession - (p.commissionCredit || 0);
+  // Lender proof of funds: the whole down payment (gap before EMD — the EMD is your cash too) + closing costs
+  // + a rehab reserve of 15% of rehab, minimum $15,000. No per-diem: prepaid interest is already a closing-cost line.
+  const rehabReserve = Math.max((p.rehabBudget || 0) * 0.15, 15000);
+  return {
+    dueAtClosing,
+    totalPaidOut: emd + (p.otherPrepaid || 0) + dueAtClosing,
+    cashInvestedAtPurchase: p.gap + p.closingCosts - concession, // EMD is inside the gap — counted once
+    rehabReserve,
+    requiredLiquidity: p.gap + p.closingCosts + rehabReserve,
+  };
+};
+
 export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
   const {
     appVersion,
@@ -154,24 +186,14 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const maxPurchasePrice70Rule = (arv * 0.70) - rehabBudget;
   const passes70Rule = purchasePrice <= maxPurchasePrice70Rule;
   
-  // Gap / Down Payment
-  // Gap = Purchase Price - (Purchase Price × Financing %) - EMD - Seller Buy Back Amount
-  // This represents the cash down payment needed for the purchase price only
-  // EMD (Earnest Money Deposit) reduces the down payment (already paid at offer stage)
-  // Seller Buy Back Amount reduces the down payment (seller holds note/finances part)
-  // Example: Purchase $100k at 80% financing with $5k EMD and $5k seller buy back = $10k gap
-  const loanForPurchasePrice = purchasePrice * (financingPercent / 100);
-  const gapAmount = Math.max(0, purchasePrice - loanForPurchasePrice - (earnestMoneyDeposit || 0) - (sellerBuyBackAmount || 0));
+  // Gap / Down Payment = Purchase Price − financed purchase amount − Seller Buy Back.
+  // The EMD is part of the down payment, not a reduction of it — it's credited once, at closing (see cashPosition()).
+  const gapAmount = purchaseGap(purchasePrice, financingPercent, sellerBuyBackAmount);
   
   const holdbackAmount = rehabBudget;
   const initialFundedAmount = qualifiedLoanAmount - holdbackAmount;
 
   // 3. Ratios & Metrics
-  // LTV = Loan-to-Value = Loan Amount / Appraised Value (lender standard)
-  // Use appraised_value if provided; otherwise fall back to purchase price
-  const valueForLTV = appraised_value > 0 ? appraised_value : purchasePrice;
-  const ltv = valueForLTV > 0 ? (qualifiedLoanAmount / valueForLTV) * 100 : 0;
-  
   // LTC = Loan-to-Cost = Loan Amount / Total Project Cost
   // Total Project Cost = Purchase Price + Rehab Budget
   // Calculate actual LTC based on financing percentage (uncapped)
@@ -186,6 +208,11 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Calculate actual LTARV based on financing percentage loan amount (not the capped qualified amount)
   const actualLoanAmountForLTARV = loanAmountByFinancing; // Use financing-based loan, not capped
   const ltarv = arv > 0 ? (actualLoanAmountForLTARV / arv) * 100 : 0;
+
+  // LTV — ONE figure used everywhere (verdict, eligibility, realism check, loan section). Flip lenders size the
+  // loan against ARV (the 75% limit above), so LTV = LTARV. Without an ARV: appraised value, else purchase price.
+  const valueForLTV = appraised_value > 0 ? appraised_value : purchasePrice;
+  const ltv = arv > 0 ? ltarv : valueForLTV > 0 ? (loanAmountByFinancing / valueForLTV) * 100 : 0;
   
   // Also calculate the capped LTARV for reference (what the actual qualified loan gives)
   const cappedLTARV = arv > 0 ? (qualifiedLoanAmount / arv) * 100 : 0;
@@ -420,10 +447,17 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 8. Total Costs
   const totalClosingCosts = totalLenderFees + totalThirdPartyFees;
   
-  // Cash to close = Closing Costs + Gap - Seller Concessions - Earnest Money - Commission Credit
-  // We do NOT clamp at 0 anymore, allowing negative values (Cash to Borrower)
-  // Note: Seller Buy Back Amount is already subtracted from gapAmount above
-  const totalCashToClose = totalClosingCosts + gapAmount - sellerConcessionAmount - earnestMoneyDeposit - buyerAgentCommissionCredit;
+  // Due at closing / total paid out / cash invested — one shared formula (negative due = cash to borrower)
+  const cash = cashPosition({
+    gap: gapAmount,
+    closingCosts: totalClosingCosts,
+    earnestMoneyDeposit,
+    sellerConcession: sellerConcessionAmount,
+    commissionCredit: buyerAgentCommissionCredit,
+    otherPrepaid: prepaidCosts - (earnestMoneyDeposit || 0),
+    rehabBudget,
+  });
+  const totalCashToClose = cash.dueAtClosing;
 
   // 9. Interest Calculations
   // Use qualifiedLoanAmount (the actual loan amount that will be funded) for payment calculations
@@ -614,12 +648,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalExitCosts = refiPointsCost + refinanceFixedFees;
   }
 
-  // Total Project Outflow = Payoff Old Loan + Cash Invested (Closing Costs + Gap) + Holding Costs + Exit Costs
-  // Note: Cash Invested includes the EMD (money out of pocket previously) + Cash To Close (money out of pocket now).
-  // Total Buying Cost = Closing Costs + Gap - Concessions (Net Cost)
-  
-  const totalBuyingCosts = totalClosingCosts + gapAmount - sellerConcessionAmount;
-  const totalProjectCostBasis = qualifiedLoanAmount + totalBuyingCosts + totalHoldingCosts + totalExitCosts;
+  // Rehab the loan doesn't cover is your cash: loan funds financing% of price + rehab (capped at ARV × LTV), so
+  // rehab + financed purchase − loan is paid out of pocket (here it grows when the ARV cap binds on overruns).
+  const rehabOutOfPocket = Math.max(0, rehabBudget + purchasePrice * (financingPercent / 100) - qualifiedLoanAmount);
+  // Cash invested = Gap (incl. EMD) + Closing − Concessions + rehab out of pocket
+  const totalBuyingCosts = cash.cashInvestedAtPurchase + rehabOutOfPocket;
+  // Cost basis = loan payoff + seller-note payoff + cash invested + holding + exit (= price + rehab + all costs)
+  const totalProjectCostBasis = qualifiedLoanAmount + (sellerBuyBackAmount || 0) + totalBuyingCosts + totalHoldingCosts + totalExitCosts;
   
   // Net Profit (Sell) = ARV - Total Cost Basis
   // Net Equity (Refi) = ARV - Total Cost Basis (This represents equity retained after paying everything)
@@ -648,20 +683,21 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   
   // 4. IRR (Internal Rate of Return)
   // Calculate IRR based on actual cash flows: initial investment, monthly costs, and exit proceeds
+  // Same cash flows as net profit: only YOUR cash goes in up front (the lender-funded rehab is repaid in loanPayoff)
   const irrResult = calculateFlipIRR({
-    downPayment: gapAmount,                              // Down payment (gap)
-    closingCostsAndFees: totalClosingCosts,             // Acquisition closing costs
-    rehabBudget: rehabBudget,                            // Rehab (treated as upfront for IRR purposes)
-    monthlyHoldingCosts: monthlyHoldingCost,             // Average monthly carrying costs
-    holdingMonths: holdingPeriodMonths,                  // How long we hold
-    saleProceeds: arv,                                   // Gross ARV
-    sellingCosts: totalExitCosts,                        // Selling costs (commission, transfer tax, etc.)
-    loanPayoff: qualifiedLoanAmount                      // Loan balance to pay off at sale
+    downPayment: gapAmount,                                          // Down payment (gap, incl. EMD)
+    closingCostsAndFees: totalClosingCosts - sellerConcessionAmount, // Acquisition closing costs net of concessions
+    rehabBudget: rehabOutOfPocket,                                   // Rehab not covered by the loan (treated as upfront)
+    monthlyHoldingCosts: monthlyHoldingCost,                         // Average monthly carrying costs
+    holdingMonths: holdingPeriodMonths,                              // How long we hold
+    saleProceeds: arv,                                               // Gross ARV
+    sellingCosts: totalExitCosts,                                    // Selling costs (commission, transfer tax, etc.)
+    loanPayoff: qualifiedLoanAmount + (sellerBuyBackAmount || 0)     // Lender loan + seller note repaid at sale
   });
   const irr = irrResult; // Will be null if can't calculate, otherwise a decimal
   
   // 11. Scenarios Calculation
-  const baselineFixedCosts = qualifiedLoanAmount + totalBuyingCosts + totalHoldingCosts;
+  const baselineFixedCosts = totalProjectCostBasis - totalExitCosts;
   
   const scenarios: ProfitScenario[] = [];
   // ARV scenarios based on dollar amounts: -10k, baseline, +10k, +20k, +30k
@@ -790,30 +826,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
       });
   });
 
-  // 12. Proof of Funds / Liquidity Logic
-  // REQUIRED LIQUIDITY FORMULA (Lender Requirement):
-  // This is the amount of liquid cash the lender requires you to prove you have in bank statements.
-  // Formula: Max(Option A, Option B) where:
-  //   Option A = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + (15% of Rehab Budget)
-  //   Option B = (Total Closing Costs + Gap + Per Diem Interest - Commission Credit) + $15,000
-  // 
-  // Components:
-  //   - Total Closing Costs: Lender fees + Third party fees
-  //   - Gap: Down payment amount (Purchase Price - Financed Amount - EMD - Seller Buy Back)
-  //   - Per Diem Interest: Prepaid interest for days between closing and first payment
-  //   - Commission Credit: Reduces cash needed (if you're the agent)
-  //   - Buffer: Either 15% of rehab OR $15,000 (whichever is greater)
-  //
-  // This ensures lenders verify you have sufficient reserves and aren't borrowing the down payment.
-  const liquidityClosingCosts = totalClosingCosts + gapAmount + perDiemInterest - buyerAgentCommissionCredit;
-  
-  // Contingency: 15% of rehab budget (automatic calculation)
-  const rehabContingency = rehabBudget * 0.15;
-  
-  const liquidityOptionA = liquidityClosingCosts + rehabContingency;
-  const liquidityOptionB = liquidityClosingCosts + 15000;
-  
-  const requiredLiquidity = Math.max(liquidityOptionA, liquidityOptionB);
+  // 12. Proof of Funds / Liquidity — Gap (before EMD) + Closing Costs + max(15% of rehab, $15k), see cashPosition()
+  const rehabContingency = cash.rehabReserve;
+  const requiredLiquidity = cash.requiredLiquidity;
   
   // Emergency buffer: 5-10% of total deal cost (suggested, not required by lender)
   const totalDealCost = purchasePrice + rehabBudget;
@@ -1007,7 +1022,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalCashToClose,
     gapAmount,
     prepaidCosts,
-    totalPaidOut: prepaidCosts + totalCashToClose,
+    totalPaidOut: cash.totalPaidOut,
+    rehabOutOfPocket,
+    totalInterestCosts,
     requiredLiquidity,
     rehabContingency,
     emergencyBuffer5Percent,
@@ -1041,29 +1058,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     profitScenarios: scenarios,
     
     // Sensitivity Analysis
-    purchaseSensitivityScenarios: generatePurchaseSensitivity(
-      purchasePrice,
-      netProfit,
-      arv,
-      rehabBudget,
-      totalClosingCosts,
-      totalHoldingCosts,
-      totalExitCosts,
-      financingPercent,
-      MAX_LTV_PERCENT
-    ),
-    rehabSensitivityScenarios: generateRehabSensitivity(
-      rehabBudget,
-      netProfit,
-      arv,
-      purchasePrice,
-      totalClosingCosts,
-      gapAmount,
-      totalHoldingCosts,
-      totalExitCosts,
-      financingPercent,
-      MAX_LTV_PERCENT
-    ),
+    purchaseSensitivityScenarios: generatePurchaseSensitivity(purchasePrice, netProfit, arv),
+    rehabSensitivityScenarios: generateRehabSensitivity(rehabBudget, netProfit, arv),
 
     // Refi
     refinanceLoanAmount,

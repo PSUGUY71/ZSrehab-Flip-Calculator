@@ -315,33 +315,20 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           
           <ResultRow 
             label="Gap / Down Payment" 
-            subtext={inputs.earnestMoneyDeposit > 0 || inputs.sellerBuyBackAmount > 0 
-              ? `Purchase Price - Financed Amount - EMD Applied${inputs.sellerBuyBackAmount > 0 ? ' - Seller Buy Back' : ''}`
-              : "Purchase Price - (Purchase Price × Financing%)"}
-            value={results.gapAmount} 
+            subtext={inputs.sellerBuyBackAmount > 0
+              ? `Purchase Price − Financed Amount − Seller Buy Back (${formatCurrency(inputs.sellerBuyBackAmount)})`
+              : "Purchase Price − (Purchase Price × Financing%)"}
+            value={results.gapAmount}
           />
-          
+
           {inputs.earnestMoneyDeposit > 0 && (
-            <div className="pl-3 py-1 text-[11px] text-amber-700">
-              <div className="flex justify-between">
-                <span>Earnest Money Deposit (Applied):</span>
-                <span className="font-medium">-{formatCurrency(inputs.earnestMoneyDeposit)}</span>
-              </div>
-              <div className="text-[10px] text-gray-500 mt-0.5">
-                EMD paid at offer stage reduces your down payment
-              </div>
-            </div>
-          )}
-          
-          {inputs.sellerBuyBackAmount > 0 && (
-            <ResultRow 
-              label="Seller Buy Back" 
-              subtext="Seller financing amount (reduces down payment)"
-              value={inputs.sellerBuyBackAmount * -1} 
-              highlight
+            <ResultRow
+              label="Less: Earnest Money (already paid)"
+              subtext="Your EMD is part of the down payment — credited once here"
+              value={inputs.earnestMoneyDeposit * -1}
             />
           )}
-          
+
           <ResultRow label="Seller Concession" value={results.sellerConcessionAmount * -1} />
           {results.buyerAgentCommissionCredit > 0 && (
             <ResultRow label="Agent Comm. Credit" value={results.buyerAgentCommissionCredit * -1} highlight />
@@ -349,11 +336,9 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <div className="flex justify-between font-bold text-lg pt-2 mt-2 border-t border-yellow-300 text-gray-900">
             <div className="flex flex-col">
               <span>{results.totalCashToClose >= 0 ? 'Due at Closing' : 'Cash to Borrower'}</span>
-              {inputs.earnestMoneyDeposit > 0 && (
-                <span className="text-[10px] text-gray-500 font-normal mt-0.5">
-                  (Already paid EMD: {formatCurrency(inputs.earnestMoneyDeposit)})
-                </span>
-              )}
+              <span className="text-[10px] text-gray-500 font-normal mt-0.5">
+                Gap + Closing Costs − EMD − Concession{results.buyerAgentCommissionCredit > 0 ? ' − Agent Credit' : ''}
+              </span>
             </div>
             <span className={results.totalCashToClose < 0 ? 'text-amber-600' : ''}>
               {formatCurrency(Math.abs(results.totalCashToClose))}
@@ -395,8 +380,8 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <span className="text-xs font-semibold text-gray-700">Required Liquidity Evidence (Lender Requirement)</span>
                 <HelpTooltip
                   title="Required Liquidity Evidence"
-                  description="Most lenders require proof that you have cash reserves equal to your Total Paid Out at closing multiplied by 1.25. This verifies you're not borrowing the down payment from a credit card. Have this amount verified in bank statements when you apply for the loan."
-                  formula={`Calculation: Total Paid Out (${formatCurrency(results.totalPaidOut)}) × 1.25 = ${formatCurrency(results.requiredLiquidity)}`}
+                  description="Lenders want proof (bank statements) that you have the whole down payment — including the EMD you already paid — plus closing costs and a rehab reserve. This verifies you're not borrowing the down payment."
+                  formula={`Gap ${formatCurrency(results.gapAmount)} + Closing Costs ${formatCurrency(results.totalClosingCosts)} + Rehab Reserve ${formatCurrency(results.rehabContingency)} (15% of rehab, min $15k) = ${formatCurrency(results.requiredLiquidity)}`}
                 />
               </div>
               <span

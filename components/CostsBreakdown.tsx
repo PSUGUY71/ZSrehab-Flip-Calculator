@@ -1,13 +1,17 @@
 import React from 'react';
-import { CalculatedResults } from '../types';
+import { CalculatedResults, LoanInputs } from '../types';
 import { formatCurrency } from '../utils/calculations';
 import { HelpTooltip } from './HelpTooltip';
 
 interface CostsBreakdownProps {
   results: CalculatedResults;
+  inputs: LoanInputs;
 }
 
-export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
+export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs }) => {
+  // Everything that isn't price or rehab, derived from net profit so the formula line always adds up
+  // (closing costs, holding incl. interest, selling costs, minus concessions)
+  const otherCosts = (inputs.arv || 0) - (inputs.purchasePrice || 0) - (inputs.rehabBudget || 0) - (results.netProfit || 0);
   // ACQUISITION COSTS (buying side - paid at closing)
   const acquisitionCosts = {
     lenderFees: results.totalLenderFees || 0,
@@ -188,8 +192,11 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results }) => {
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
         <div className="font-bold text-blue-900 mb-2">Profit Calculation:</div>
         <div className="space-y-1 text-blue-800 font-mono text-[11px] break-all">
-          <div>Profit = ARV - Purchase Price - Rehab Budget - Total Costs</div>
-          <div>Profit = {formatCurrency(results.arv)} - {formatCurrency(0)} - {formatCurrency(0)} - {formatCurrency(totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts)}</div>
+          <div>Profit = ARV − Purchase Price − Rehab Budget − Total Costs</div>
+          <div>
+            Profit = {formatCurrency(inputs.arv)} − {formatCurrency(inputs.purchasePrice)} − {formatCurrency(inputs.rehabBudget)} − {formatCurrency(otherCosts)}
+            {' '}= <b>{formatCurrency(results.netProfit)}</b>
+          </div>
         </div>
       </div>
     </div>

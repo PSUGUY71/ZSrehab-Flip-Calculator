@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "esbuild utils/calculations.check.ts --bundle --platform=node --log-level=error | node && esbuild utils/cashPosition.check.ts --bundle --platform=node --log-level=error | node"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

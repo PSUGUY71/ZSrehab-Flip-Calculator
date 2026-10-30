@@ -2408,7 +2408,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     <div className="text-right">
                       <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
                       <div className="text-[10px] text-gray-600">
-                        {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                        {formatCurrency(results.totalInterestCosts)} interest over hold (progressive draws)
                       </div>
                     </div>
                     {inputs.loanType === 'CONVENTIONAL' && inputs.includePITI && results.monthlyPrincipalAndInterest && (
@@ -2444,7 +2444,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                     <div className="text-right">
                       <span className="font-bold text-gray-900">{formatCurrency(results.monthlyPayment)}</span>
                       <div className="text-[10px] text-gray-600">
-                        {formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)} total
+                        {formatCurrency(results.totalInterestCosts)} interest over hold (progressive draws)
                       </div>
                     </div>
                   </div>

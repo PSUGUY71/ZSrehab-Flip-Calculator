@@ -1,5 +1,5 @@
 import { LoanInputs, LenderOption, CalculatedResults } from '../types';
-import { calculateLoan } from './calculations';
+import { calculateLoan, purchaseGap, cashPosition } from './calculations';
 
 export const calculateLoanForLender = (baseInputs: LoanInputs, baseResults: CalculatedResults, lender: LenderOption) => {
   // Use lender-specific financing terms if provided, otherwise use base inputs
@@ -52,12 +52,24 @@ export const calculateLoanForLender = (baseInputs: LoanInputs, baseResults: Calc
     const maxLoanForPurchaseByLTC = baseInputs.purchasePrice * (lenderMaxLoanToCostPercent / 100);
     const loanForPurchaseByFinancing = baseInputs.purchasePrice * (lenderFinancingPercent / 100);
     const loanForPurchasePrice = Math.min(loanForPurchaseByFinancing, maxLoanForPurchaseByLTC, baseInputs.purchasePrice * lenderMaxARVPercent);
-    results.gapAmount = Math.max(0, baseInputs.purchasePrice - loanForPurchasePrice);
+    const effectivePct = baseInputs.purchasePrice > 0 ? (loanForPurchasePrice / baseInputs.purchasePrice) * 100 : 0;
+    results.gapAmount = purchaseGap(baseInputs.purchasePrice, effectivePct, baseInputs.sellerBuyBackAmount);
+    // Gap changed → due at closing / paid out must follow (same shared formula as the main card)
+    const cash = cashPosition({
+      gap: results.gapAmount,
+      closingCosts: results.totalClosingCosts,
+      earnestMoneyDeposit: baseInputs.earnestMoneyDeposit,
+      sellerConcession: results.sellerConcessionAmount,
+      commissionCredit: results.buyerAgentCommissionCredit,
+      otherPrepaid: results.prepaidCosts - (baseInputs.earnestMoneyDeposit || 0),
+    });
+    results.totalCashToClose = cash.dueAtClosing;
+    results.totalPaidOut = cash.totalPaidOut;
     
     // Recalculate LTV, LTC, and LTARV with the adjusted loan amount
-    results.ltv = baseInputs.purchasePrice > 0 ? (finalLoanAmount / baseInputs.purchasePrice) * 100 : 0;
     results.ltc = totalProjectCost > 0 ? (finalLoanAmount / totalProjectCost) * 100 : 0;
     results.ltarv = baseInputs.arv > 0 ? (finalLoanAmount / baseInputs.arv) * 100 : 0;
+    if (baseInputs.arv > 0) results.ltv = results.ltarv; // same single LTV definition as calculateLoan()
   }
   const holdMonths = baseInputs.holdingPeriodMonths;
 
@@ -74,10 +86,10 @@ export const calculateLoanForLender = (baseInputs: LoanInputs, baseResults: Calc
     comparisonMonthlyPayment = annualInterest / 12;
     
     // Recalculate LTV, LTC, and LTARV with the override loan amount
-    results.ltv = baseInputs.purchasePrice > 0 ? (comparisonLoanAmount / baseInputs.purchasePrice) * 100 : 0;
     const totalProjectCost = baseInputs.purchasePrice + baseInputs.rehabBudget;
     results.ltc = totalProjectCost > 0 ? (comparisonLoanAmount / totalProjectCost) * 100 : 0;
     results.ltarv = baseInputs.arv > 0 ? (comparisonLoanAmount / baseInputs.arv) * 100 : 0;
+    if (baseInputs.arv > 0) results.ltv = results.ltarv; // same single LTV definition as calculateLoan()
     
     // Also update qualifiedLoanAmount to match override for consistency
     results.qualifiedLoanAmount = comparisonLoanAmount;

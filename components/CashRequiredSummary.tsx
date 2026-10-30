@@ -17,14 +17,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
   // Calculate due at closing (cash to close)
   const dueAtClosing = results.totalCashToClose || 0;
 
-  // FIX: Use the same requiredLiquidity calculation as the report
-  // This matches the lender requirement formula: Max(ClosingCosts + Gap + PerDiem + 25% Rehab, ClosingCosts + Gap + PerDiem + $15k)
-  // The requiredLiquidity is already calculated in utils/calculations.ts and includes:
-  // - Total closing costs (lender + third party)
-  // - Gap amount (down payment)
-  // - Per diem interest (prepaids)
-  // - Minus commission credit (reduces cash needed)
-  // - Plus buffer: Max(25% of rehab, $15,000)
+  // Lender proof of funds, from cashPosition(): Gap (before EMD) + Closing Costs + max(15% of rehab, $15k)
   const totalLiquidityNeeded = results.requiredLiquidity || 0;
 
   // Timeline breakdown calculations
@@ -38,9 +31,11 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
   const monthlyHoldingCosts = holdingCosts;
   
   // 4. Contingency reserves - automatically calculated at 15% of rehab budget
-  const rehabContingency = results.rehabContingency || 0;
-  const liquidityClosingCosts = (results.totalClosingCosts || 0) + (results.gapAmount || 0) + (results.perDiemInterest || 0) - (results.buyerAgentCommissionCredit || 0);
-  const contingencyReserves = totalLiquidityNeeded - liquidityClosingCosts;
+  const rehabContingency = results.rehabContingency || 0; // max(15% of rehab, $15k)
+  const contingencyReserves = rehabContingency;
+
+  // Interest over the hold = sum of the progressive draw schedule (not the full-draw payment × months)
+  const totalInterest = (results.monthlyInterestPayments || []).reduce((s, m) => s + m, 0);
   
   // 5. Emergency buffer (suggested, not required by lender)
   const emergencyBuffer5Percent = results.emergencyBuffer5Percent || 0;
@@ -99,27 +94,56 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
             <div className="flex justify-between items-start mb-1">
               <div>
                 <div className="text-xs font-bold text-green-900 uppercase">2. Down Payment</div>
-                <div className="text-[10px] text-green-700 mt-0.5">At closing (gap + closing costs)</div>
+                <div className="text-[10px] text-green-700 mt-0.5">Due at closing (gap + closing costs − EMD already paid)</div>
               </div>
               <span className="text-base sm:text-lg font-bold text-green-900">{formatCurrency(downPaymentAtClosing)}</span>
             </div>
             <div className="mt-2 space-y-1 text-[10px] text-green-700">
               <div className="flex justify-between">
-                <span>Gap Amount:</span>
+                <span>Gap (down payment):</span>
                 <span>{formatCurrency(results.gapAmount || 0)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Closing Costs:</span>
+                <span>+ Closing Costs:</span>
                 <span>{formatCurrency(results.totalClosingCosts || 0)}</span>
               </div>
+              {earnestMoney > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>− Earnest Money (already paid):</span>
+                  <span>-{formatCurrency(earnestMoney)}</span>
+                </div>
+              )}
+              {results.sellerConcessionAmount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>− Seller Concession:</span>
+                  <span>-{formatCurrency(results.sellerConcessionAmount)}</span>
+                </div>
+              )}
               {results.buyerAgentCommissionCredit > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Less: Agent Credit:</span>
+                  <span>− Agent Credit:</span>
                   <span>-{formatCurrency(results.buyerAgentCommissionCredit)}</span>
                 </div>
               )}
+              <div className="flex justify-between pt-1 border-t border-green-200 font-bold">
+                <span>= Due at Closing:</span>
+                <span>{formatCurrency(downPaymentAtClosing)}</span>
+              </div>
             </div>
           </div>
+
+          {/* 2b. Rehab the loan doesn't cover */}
+          {results.rehabOutOfPocket > 0 && (
+            <div className="bg-white border-l-4 border-gray-400 rounded-r p-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-xs font-bold text-green-900 uppercase">Rehab Not Covered by Loan</div>
+                  <div className="text-[10px] text-green-700 mt-0.5">Your share of the rehab, paid as work is done</div>
+                </div>
+                <span className="text-base sm:text-lg font-bold text-green-900">{formatCurrency(results.rehabOutOfPocket)}</span>
+              </div>
+            </div>
+          )}
 
           {/* 3. Monthly During Hold */}
           <div className="bg-gray-50 border-l-4 border-gray-400 rounded-r p-3">
@@ -127,7 +151,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
               <div>
                 <div className="text-xs font-bold text-purple-900 uppercase">3. Monthly During Hold</div>
                 <div className="text-[10px] text-purple-700 mt-0.5">
-                  {holdingMonths > 0 ? `${holdingMonths} months × ${formatCurrency(monthlyPayment)}/mo` : 'No holding period'}
+                  {holdingMonths > 0 ? `${holdingMonths} months · interest grows as rehab draws are funded` : 'No holding period'}
                 </div>
               </div>
               <span className="text-base sm:text-lg font-bold text-purple-900">{formatCurrency(monthlyHoldingCosts)}</span>
@@ -135,13 +159,13 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
             {holdingMonths > 0 && (
               <div className="mt-2 space-y-1 text-[10px] text-purple-700">
                 <div className="flex justify-between">
-                  <span>Monthly Payment ({holdingMonths} mo):</span>
-                  <span>{formatCurrency(monthlyPayment * holdingMonths)}</span>
+                  <span>Interest ({holdingMonths} mo, progressive draws):</span>
+                  <span>{formatCurrency(totalInterest)}</span>
                 </div>
-                {monthlyHoldingCosts > (monthlyPayment * holdingMonths) && (
+                {monthlyHoldingCosts > totalInterest && (
                   <div className="flex justify-between">
                     <span>Utilities, Insurance & Taxes:</span>
-                    <span>{formatCurrency(monthlyHoldingCosts - (monthlyPayment * holdingMonths))}</span>
+                    <span>{formatCurrency(monthlyHoldingCosts - totalInterest)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-1 border-t border-purple-200">
@@ -158,7 +182,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
               <div>
                 <div className="text-xs font-bold text-orange-900 uppercase">4. Contingency Reserves</div>
                 <div className="text-[10px] text-orange-700 mt-0.5">
-                  Automatic: 15% of rehab budget (lender requirement)
+                  Automatic: 15% of rehab budget, minimum $15,000 (lender requirement)
                 </div>
               </div>
               <span className="text-base sm:text-lg font-bold text-orange-900">{formatCurrency(contingencyReserves)}</span>
@@ -217,7 +241,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                   Minimum liquidity required by lender
                 </span>
                 <span className="text-[10px] text-gray-400 mt-1">
-                  Formula: Max(Closing + Gap + 15% Rehab, Closing + Gap + $15k)
+                  Formula: Gap (before EMD) + Closing Costs + max(15% of Rehab, $15k)
                 </span>
               </div>
               <div className="text-right">

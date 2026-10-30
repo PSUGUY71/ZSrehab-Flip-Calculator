@@ -55,17 +55,28 @@ export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => 
       </div>
       <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
         <div className="col-span-4">Mortgage Interest</div>
-        <div className="col-span-3 text-right">{formatCurrency(results.monthlyPayment)}</div>
+        <div className="col-span-3 text-right">{formatCurrency(inputs.holdingPeriodMonths > 0 ? results.totalInterestCosts / inputs.holdingPeriodMonths : 0)} avg</div>
         <div className="col-span-2 text-center">{inputs.holdingPeriodMonths}</div>
-        <div className="col-span-3 text-right">{formatCurrency(results.monthlyPayment * inputs.holdingPeriodMonths)}</div>
+        <div className="col-span-3 text-right">{formatCurrency(results.totalInterestCosts)}</div>
       </div>
+      {(() => {
+        const otherHolding = results.totalHoldingCosts - results.totalInterestCosts - inputs.monthlyElectric * inputs.holdingPeriodMonths;
+        return otherHolding > 0.005 ? (
+          <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
+            <div className="col-span-4">Other Holding (ins., taxes, utilities)</div>
+            <div className="col-span-3 text-right">-</div>
+            <div className="col-span-2 text-center">{inputs.holdingPeriodMonths}</div>
+            <div className="col-span-3 text-right">{formatCurrency(otherHolding)}</div>
+          </div>
+        ) : null;
+      })()}
 
       {/* Exit Costs - Always Sell */}
       <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-        <div className="col-span-4">Commission ({inputs.sellingCommissionRate}%)</div>
-        <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingCommissionRate / 100))}</div>
+        <div className="col-span-4">Selling Commission</div>
+        <div className="col-span-3 text-right">{formatCurrency(results.totalSellingCommissionCost)}</div>
         <div className="col-span-2 text-center">1</div>
-        <div className="col-span-3 text-right">{formatCurrency(inputs.arv * (inputs.sellingCommissionRate / 100))}</div>
+        <div className="col-span-3 text-right">{formatCurrency(results.totalSellingCommissionCost)}</div>
       </div>
       <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
         <div className="col-span-4">Transfer Tax ({inputs.sellingTransferTaxRate}%)</div>
@@ -102,10 +113,10 @@ export const ProfitTable: React.FC<ProfitTableProps> = ({ inputs, results }) => 
 
       {/* Closing Fees Row */}
       <div className="grid grid-cols-12 bg-amber-100 border-b border-white py-1 px-2 items-center print-color-adjust-exact text-gray-900">
-        <div className="col-span-4">Down Pmt + Other Fees</div>
+        <div className="col-span-4">Closing Costs (net of credits)</div>
         <div className="col-span-3 text-right">-</div>
         <div className="col-span-2 text-center">1</div>
-        <div className="col-span-3 text-right">{formatCurrency(results.totalCashToClose - results.totalWalkerFees)}</div>
+        <div className="col-span-3 text-right">{formatCurrency(results.totalClosingCosts - results.sellerConcessionAmount - results.totalWalkerFees)}</div>
       </div>
 
       {/* Net Profit */}
