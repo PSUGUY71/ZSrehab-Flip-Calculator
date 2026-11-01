@@ -131,13 +131,22 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
           </div>
           <span className="font-medium text-red-600">-{formatCurrency(results.totalInterestCosts)}</span>
         </div>
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <span className="opacity-70">Utilities</span>
-            <span className="text-[10px] opacity-50">({formatCurrency(inputs.monthlyElectric)} / mo)</span>
+        {/* Every other component of Total Holding (results.holdingBreakdown sums to it) */}
+        {([
+          ['Utilities', results.holdingBreakdown.utilities, 'electric, internet, propane'],
+          ['Insurance', results.holdingBreakdown.insurance, results.insuranceMonthsPrepaid > 0 ? `after ${results.insuranceMonthsPrepaid} mo prepaid at closing` : 'monthly policy'],
+          ['Property Taxes', results.holdingBreakdown.taxes, 'monthly'],
+          ['Water / Sewer', results.holdingBreakdown.water, 'yearly'],
+          ['Dues', results.holdingBreakdown.dues, 'yearly'],
+        ] as [string, number, string][]).filter(([, v]) => v > 0.005).map(([label, v, note]) => (
+          <div key={label} className="flex justify-between items-center">
+            <div className="flex flex-col">
+              <span className="opacity-70">{label}</span>
+              <span className="text-[10px] opacity-50">({note})</span>
+            </div>
+            <span className="font-medium text-red-600">-{formatCurrency(v)}</span>
           </div>
-          <span className="font-medium text-red-600">-{formatCurrency(inputs.monthlyElectric * inputs.holdingPeriodMonths)}</span>
-        </div>
+        ))}
         <div className="border-t border-teal-300 pt-1 mt-1 flex justify-between font-bold">
           <span>Total Holding</span>
           <span className="text-red-700">-{formatCurrency(results.totalHoldingCosts)}</span>

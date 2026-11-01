@@ -1,43 +1,32 @@
 import React from 'react';
 import { CalculatedResults, LoanInputs } from '../types';
 import { formatCurrency } from '../utils/calculations';
-import { HelpTooltip } from './HelpTooltip';
 
 interface CostsBreakdownProps {
   results: CalculatedResults;
   inputs: LoanInputs;
 }
 
+const Row: React.FC<{ label: string; value: number }> = ({ label, value }) =>
+  Math.abs(value) > 0.005 ? (
+    <div className="flex justify-between text-gray-600 gap-2">
+      <span className="min-w-0">{label}</span>
+      <span className="font-mono">{value < 0 ? `-${formatCurrency(-value)}` : formatCurrency(value)}</span>
+    </div>
+  ) : null;
+
 export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs }) => {
-  // Everything that isn't price or rehab, derived from net profit so the formula line always adds up
-  // (closing costs, holding incl. interest, selling costs, minus concessions)
-  const otherCosts = (inputs.arv || 0) - (inputs.purchasePrice || 0) - (inputs.rehabBudget || 0) - (results.netProfit || 0);
-  // ACQUISITION COSTS (buying side - paid at closing)
-  const acquisitionCosts = {
-    lenderFees: results.totalLenderFees || 0,
-    transferTax: results.transferTaxCost || 0,
-    titleInsurance: results.titleInsuranceCost || 0,
-    closingCosts: (results.cplFeeCost || 0) + (results.endorsementCost || 0) + (results.legalSettlementCost || 0) + (results.recordingCost || 0) + (results.titleSearchFee || 0) + (results.ownersTitlePolicy || 0) + (results.capitalImprovementFee || 0) + (results.resaleCertificateFee || 0),
-    thirdPartyFees: (results.inspectionCost || 0) + (results.appraisalCost || 0) + (results.insuranceCost || 0) + (results.otherThirdPartyFees || 0),
-    walkerFees: results.totalWalkerFees || 0,
-    hideoutFees: (results.hideoutTransferCost || 0) + (results.hideoutProratedDues || 0),
-    prorations: (results.roamingwoodProrated || 0) + (results.schoolTaxProrated || 0) + (results.sewerWaterProrated || 0),
-  };
-  
-  const totalAcquisitionCosts = Object.values(acquisitionCosts).reduce((a, b) => a + b, 0);
-
-  // DISPOSITION COSTS (selling side - paid at sale)
-  const dispositionCosts = {
-    sellingCommission: results.totalSellingCommissionCost || 0,
-    transferTax: results.sellingTransferTaxCost || 0,
-    legalFees: results.sellingLegalFees || 0,
-    hideoutTransfer: results.sellingHideoutTransferFee || 0,
-  };
-  
-  const totalDispositionCosts = Object.values(dispositionCosts).reduce((a, b) => a + b, 0);
-
-  // HOLDING COSTS (carrying costs during ownership)
+  // All three totals come from calculateLoan(), the same numbers net profit uses — so Total Project Costs
+  // always equals the "Total Costs" in the Profit Calculation line below.
+  const a = results.acquisitionBreakdown;
+  const h = results.holdingBreakdown;
+  const totalAcquisitionCosts = results.totalAcquisitionCosts || 0;
   const totalHoldingCosts = results.totalHoldingCosts || 0;
+  const totalDispositionCosts = results.totalExitCosts || 0;
+  const transfer = results.sellingTransferTaxCost || 0;
+  const legal = results.sellingLegalFees || 0;
+  const hideout = results.sellingHideoutTransferFee || 0;
+  const totalProjectCosts = totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md border border-amber-200 space-y-4">
@@ -47,83 +36,33 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs 
       <div className="border-l-4 border-orange-500 pl-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
           <h4 className="text-sm font-bold text-gray-800">🏠 Acquisition Costs (At Purchase Closing)</h4>
-          <span className="text-base sm:text-lg font-bold text-orange-700">
-            {formatCurrency(totalAcquisitionCosts)}
-          </span>
+          <span className="text-base sm:text-lg font-bold text-orange-700">{formatCurrency(totalAcquisitionCosts)}</span>
         </div>
         <div className="space-y-1 text-xs">
-          {acquisitionCosts.lenderFees > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Lender Fees (points, origination, etc.)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.lenderFees)}</span>
-            </div>
-          )}
-          {acquisitionCosts.transferTax > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Transfer Tax (buying side)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.transferTax)}</span>
-            </div>
-          )}
-          {acquisitionCosts.titleInsurance > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Title Insurance</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.titleInsurance)}</span>
-            </div>
-          )}
-          {acquisitionCosts.closingCosts > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Closing Fees (CPL, recording, legal, endorsements)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.closingCosts)}</span>
-            </div>
-          )}
-          {acquisitionCosts.thirdPartyFees > 0 && (
-            <div className="flex justify-between text-gray-600 gap-2">
-              <span className="min-w-0">Third-Party Fees (inspection, appraisal, etc.)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.thirdPartyFees)}</span>
-            </div>
-          )}
-          {acquisitionCosts.walkerFees > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Walker & Walker Fees</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.walkerFees)}</span>
-            </div>
-          )}
-          {acquisitionCosts.hideoutFees > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Hideout Fees (transfer, dues)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.hideoutFees)}</span>
-            </div>
-          )}
-          {acquisitionCosts.prorations > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Prorations (city/town tax, school tax, sewer & water)</span>
-              <span className="font-mono">{formatCurrency(acquisitionCosts.prorations)}</span>
-            </div>
-          )}
+          <Row label="Lender Fees (points, origination, etc.)" value={a.lenderFees} />
+          <Row label="Transfer Tax (buying side)" value={a.transferTax} />
+          <Row label="Title Insurance" value={a.titleInsurance} />
+          <Row label="Tax Prorations (school, county, municipal)" value={a.taxProrations} />
+          <Row label="Insurance Premium (paid at closing)" value={a.insurancePremium} />
+          <Row label="Other Closing Fees (CPL, recording, legal, endorsements, etc.)" value={a.otherClosing} />
+          <Row label="Paid Before Closing (inspection, appraisal, tests)" value={a.prepaidInspections} />
+          <Row label="Less: Seller Concession" value={a.sellerConcession} />
         </div>
       </div>
 
-      {/* Holding Costs */}
+      {/* Holding Costs — every component of the total */}
       <div className="border-l-4 border-amber-500 pl-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
-          <h4 className="text-sm font-bold text-gray-800">📅 Holding Costs (Monthly Carrying)</h4>
-          <span className="text-base sm:text-lg font-bold text-blue-700">
-            {formatCurrency(totalHoldingCosts)}
-          </span>
+          <h4 className="text-sm font-bold text-gray-800">📅 Holding Costs ({inputs.holdingPeriodMonths || 0} months)</h4>
+          <span className="text-base sm:text-lg font-bold text-blue-700">{formatCurrency(totalHoldingCosts)}</span>
         </div>
         <div className="space-y-1 text-xs">
-          {results.monthlyHoldingCost > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Monthly Avg. (interest, utilities, taxes, insurance)</span>
-              <span className="font-mono">{formatCurrency(results.monthlyHoldingCost)}</span>
-            </div>
-          )}
-          {results.holdingPeriodMonths && (
-            <div className="flex justify-between text-gray-600">
-              <span>Holding Period</span>
-              <span className="font-mono">{results.holdingPeriodMonths} months</span>
-            </div>
-          )}
+          <Row label="Loan Interest (progressive draws)" value={h.interest} />
+          <Row label="Utilities (electric, internet, propane)" value={h.utilities} />
+          <Row label={`Insurance${results.insuranceMonthsPrepaid > 0 ? ` (after ${results.insuranceMonthsPrepaid} mo prepaid at closing)` : ''}`} value={h.insurance} />
+          <Row label="Property Taxes" value={h.taxes} />
+          <Row label="Water / Sewer (yearly)" value={h.water} />
+          <Row label="Dues (yearly)" value={h.dues} />
         </div>
       </div>
 
@@ -131,59 +70,32 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs 
       <div className="border-l-4 border-red-500 pl-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
           <h4 className="text-sm font-bold text-gray-800">🏡 Disposition Costs (At Sale/Exit)</h4>
-          <span className="text-base sm:text-lg font-bold text-red-700">
-            {formatCurrency(totalDispositionCosts)}
-          </span>
+          <span className="text-base sm:text-lg font-bold text-red-700">{formatCurrency(totalDispositionCosts)}</span>
         </div>
         <div className="space-y-1 text-xs">
-          {dispositionCosts.sellingCommission > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Real Estate Commission (seller + buyer agent)</span>
-              <span className="font-mono">{formatCurrency(dispositionCosts.sellingCommission)}</span>
-            </div>
+          {inputs.exitStrategy === 'SELL' ? (
+            <>
+              <Row label="Real Estate Commission (net of any you earn)" value={totalDispositionCosts - transfer - legal - hideout} />
+              <Row label="Transfer Tax (selling side)" value={transfer} />
+              <Row label="Legal / Settlement (selling side)" value={legal} />
+              <Row label="Hideout Transfer (selling side)" value={hideout} />
+            </>
+          ) : (
+            <Row label="Refinance points + fees" value={totalDispositionCosts} />
           )}
-          {dispositionCosts.transferTax > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Transfer Tax (selling side)</span>
-              <span className="font-mono">{formatCurrency(dispositionCosts.transferTax)}</span>
-            </div>
-          )}
-          {dispositionCosts.legalFees > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Legal / Settlement (selling side)</span>
-              <span className="font-mono">{formatCurrency(dispositionCosts.legalFees)}</span>
-            </div>
-          )}
-          {dispositionCosts.hideoutTransfer > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Hideout Transfer (selling side)</span>
-              <span className="font-mono">{formatCurrency(dispositionCosts.hideoutTransfer)}</span>
-            </div>
-          )}
-          {totalDispositionCosts === 0 && (
-            <div className="text-gray-400 italic">No disposition costs found</div>
-          )}
+          {totalDispositionCosts === 0 && <div className="text-gray-400 italic">No disposition costs found</div>}
         </div>
       </div>
 
       {/* Summary */}
       <div className="bg-white p-3 rounded-lg border border-gray-200">
         <div className="space-y-1 text-xs">
-          <div className="flex justify-between font-semibold text-gray-800">
-            <span>Total Acquisition Costs</span>
-            <span>{formatCurrency(totalAcquisitionCosts)}</span>
-          </div>
-          <div className="flex justify-between font-semibold text-gray-800">
-            <span>Total Holding Costs</span>
-            <span>{formatCurrency(totalHoldingCosts)}</span>
-          </div>
-          <div className="flex justify-between font-semibold text-gray-800">
-            <span>Total Disposition Costs</span>
-            <span>{formatCurrency(totalDispositionCosts)}</span>
-          </div>
+          <div className="flex justify-between font-semibold text-gray-800"><span>Total Acquisition Costs</span><span>{formatCurrency(totalAcquisitionCosts)}</span></div>
+          <div className="flex justify-between font-semibold text-gray-800"><span>Total Holding Costs</span><span>{formatCurrency(totalHoldingCosts)}</span></div>
+          <div className="flex justify-between font-semibold text-gray-800"><span>Total Disposition Costs</span><span>{formatCurrency(totalDispositionCosts)}</span></div>
           <div className="flex justify-between font-bold text-gray-900 text-sm mt-2 pt-2 border-t border-gray-300">
             <span>Total Project Costs</span>
-            <span className="text-base sm:text-lg">{formatCurrency(totalAcquisitionCosts + totalHoldingCosts + totalDispositionCosts)}</span>
+            <span className="text-base sm:text-lg">{formatCurrency(totalProjectCosts)}</span>
           </div>
         </div>
       </div>
@@ -192,9 +104,9 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs 
       <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs">
         <div className="font-bold text-blue-900 mb-2">Profit Calculation:</div>
         <div className="space-y-1 text-blue-800 font-mono text-[11px] break-all">
-          <div>Profit = ARV − Purchase Price − Rehab Budget − Total Costs</div>
+          <div>Profit = ARV − Purchase Price − Rehab Budget − Total Project Costs</div>
           <div>
-            Profit = {formatCurrency(inputs.arv)} − {formatCurrency(inputs.purchasePrice)} − {formatCurrency(inputs.rehabBudget)} − {formatCurrency(otherCosts)}
+            Profit = {formatCurrency(inputs.arv)} − {formatCurrency(inputs.purchasePrice)} − {formatCurrency(inputs.rehabBudget)} − {formatCurrency(totalProjectCosts)}
             {' '}= <b>{formatCurrency(results.netProfit)}</b>
           </div>
         </div>

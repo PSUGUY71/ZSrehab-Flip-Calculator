@@ -373,6 +373,8 @@ export interface CalculatedResults {
   totalCashNeeded: number; // EMD + other prepaid + due at closing + rehab not covered by loan + holding costs (+ contingency if toggled)
   cashShortfall: number; // totalCashNeeded − liquidity (0 if you have enough)
   holdingBreakdown: { interest: number; utilities: number; insurance: number; taxes: number; water: number; dues: number }; // sums to totalHoldingCosts
+  acquisitionBreakdown: { lenderFees: number; transferTax: number; titleInsurance: number; taxProrations: number; insurancePremium: number; otherClosing: number; prepaidInspections: number; sellerConcession: number };
+  totalAcquisitionCosts: number; // Sum of acquisitionBreakdown; + holding + exit = ARV − price − rehab − net profit
   insuranceMonthsPrepaid: number; // Months covered by the insurance premium paid at closing (not charged again monthly)
   cashRunwayMonth: number | null; // Month the money runs out (0 = short at closing), null if it lasts
   monthlyCashOut: number[]; // Your cash spent each month after closing

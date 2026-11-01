@@ -72,7 +72,8 @@ export const cashPosition = (p: {
   return {
     dueAtClosing,
     totalPaidOut: emd + (p.otherPrepaid || 0) + dueAtClosing,
-    cashInvestedAtPurchase: p.gap + p.closingCosts - concession, // EMD is inside the gap — counted once
+    // EMD is inside the gap — counted once. Prepaid inspections/appraisal are your cash too (they were missing from profit)
+    cashInvestedAtPurchase: p.gap + p.closingCosts - concession + (p.otherPrepaid || 0),
     rehabReserve,
     requiredLiquidity: p.gap + p.closingCosts + rehabReserve,
   };
@@ -709,6 +710,22 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Net Profit (Sell) = ARV - Total Cost Basis
   // Net Equity (Refi) = ARV - Total Cost Basis (This represents equity retained after paying everything)
   const netProfit = arv - totalProjectCostBasis;
+
+  // Acquisition costs exactly as profit counts them: closing costs + prepaid inspections − seller concession.
+  // Acquisition + holding + exit = ARV − price − rehab − net profit (the Profit Calculation line).
+  const taxProrations = (countyTaxProration || 0) + (municipalTaxProration || 0) + (schoolTaxAtClosing || 0) +
+    finalRoamingwoodProrated + finalSchoolTaxProrated + finalSewerWaterProrated + (finalHideoutProratedDues || 0);
+  const acquisitionBreakdown = {
+    lenderFees: totalLenderFees,
+    transferTax: transferTaxCost || 0,
+    titleInsurance: titleInsuranceCost || 0,
+    taxProrations,
+    insurancePremium: insuranceCost || 0,
+    otherClosing: totalClosingCosts - totalLenderFees - (transferTaxCost || 0) - (titleInsuranceCost || 0) - taxProrations - (insuranceCost || 0),
+    prepaidInspections: prepaidCosts - (earnestMoneyDeposit || 0),
+    sellerConcession: -sellerConcessionAmount,
+  };
+  const totalAcquisitionCosts = Object.values(acquisitionBreakdown).reduce((s, v) => s + v, 0);
   
   // Capital Gains Tax Calculation
   // Capital gains tax is applied to the net profit (gain on sale)
@@ -736,7 +753,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Same cash flows as net profit: only YOUR cash goes in up front (the lender-funded rehab is repaid in loanPayoff)
   const irrResult = calculateFlipIRR({
     downPayment: gapAmount,                                          // Down payment (gap, incl. EMD)
-    closingCostsAndFees: totalClosingCosts - sellerConcessionAmount, // Acquisition closing costs net of concessions
+    closingCostsAndFees: totalClosingCosts - sellerConcessionAmount + (prepaidCosts - (earnestMoneyDeposit || 0)), // Closing net of concessions + prepaid inspections
     rehabBudget: rehabOutOfPocket,                                   // Rehab not covered by the loan (treated as upfront)
     monthlyHoldingCosts: monthlyHoldingCost,                         // Average monthly carrying costs
     holdingMonths: holdingPeriodMonths,                              // How long we hold
@@ -1104,6 +1121,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     requiredLiquidity,
     totalCashNeeded,
     holdingBreakdown,
+    acquisitionBreakdown,
+    totalAcquisitionCosts,
     insuranceMonthsPrepaid,
     cashShortfall,
     cashRunwayMonth,

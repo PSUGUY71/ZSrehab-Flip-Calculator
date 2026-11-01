@@ -108,5 +108,28 @@ is(missing === 'appraisalCost,inspectionCost,insuranceCost,prepaidInterestAtClos
 is(likelyMissingCosts({ ...deal, appraisalCost: 600, inspectionCost: 450, insuranceCost: 4305, prepaidInterestAtClosing: 1471 }).length === 0, 'none flagged once entered');
 is(!likelyMissingCosts({ ...deal, interestRate: 0 }).some((m) => m.field === 'prepaidInterestAtClosing'), 'no prepaid interest flag without a rate');
 
+// --- 6. Total Project Costs = costs in the Profit Calculation ---
+const projectCosts = (x: typeof r) => x.totalAcquisitionCosts + x.totalHoldingCosts + x.totalExitCosts;
+eq(r.acquisitionBreakdown.taxProrations, 2224, 'tax prorations are their own acquisition line');
+eq(r.totalAcquisitionCosts, 20310.52, 'acquisition = closing costs (incl. the $2,224 prorations the old card dropped)');
+eq(projectCosts(r), 96849.52, 'Total Project Costs = 20,310.52 + 51,864 + 24,675');
+eq(projectCosts(r), 705000 - 430000 - 144000 - r.netProfit, 'Total Project Costs = ARV − price − rehab − profit');
+eq(r.netProfit, 34150.48, 'net profit');
+// Messier deal: concession, prepaid inspections, insurance, dues, agent split — still adds up
+const messy = calculateLoan({ ...deal, sellerConcessionRate: 2, appraisalCost: 600, inspectionCost: 450, radonInspection: 150,
+  insuranceCost: 4305, includeMonthlyInsurance: true, monthlyInsurance: 359, holdingPeriodMonths: 15,
+  includeYearlyDues: true, yearlyDues: 1200, includeMonthlyTaxes: true, monthlyTaxes: 360, weAreTheRealEstateAgent: true } as LoanInputs);
+eq(projectCosts(messy), 705000 - 430000 - 144000 - messy.netProfit, 'messy deal: Total Project Costs still = ARV − price − rehab − profit');
+// Prepaid inspection/appraisal are your cash — they now come out of profit (they were in Total Paid Out only)
+eq(calculateLoan({ ...deal, appraisalCost: 600 }).netProfit, r.netProfit - 600, 'appraisal paid before closing reduces profit');
+
+// --- 7. Holding breakdown lists every component of the total ---
+const hb = messy.holdingBreakdown;
+eq(hb.interest + hb.utilities + hb.insurance + hb.taxes + hb.water + hb.dues, messy.totalHoldingCosts, 'holding components sum to Total Holding');
+eq(hb.insurance, 359 * 3, 'insurance months 13–15 only');
+eq(hb.taxes, 360 * 15, 'taxes line');
+eq(hb.dues, 1200, 'dues line');
+eq(r.holdingBreakdown.interest + r.holdingBreakdown.utilities, 51864, 'reference: interest 45,288 + utilities 6,576');
+
 if (failed) { console.error(`${failed} check(s) failed`); process.exit(1); }
 console.log('All deal-case checks passed');
