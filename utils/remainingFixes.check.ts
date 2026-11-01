@@ -3,7 +3,7 @@
 import { readFileSync } from 'fs';
 import { calculateLoan, formatCurrency } from './calculations';
 import { estimateMonthlyInsurance, legacyHomeownerInsurance } from './stateHoldingCosts';
-import { withEstimates, refreshEstimates } from './closingEstimates';
+import { withEstimates, refreshEstimates, likelyMissingCosts, prepaidInterestDaysLabel } from './closingEstimates';
 import { dealVerdict, cashShortIssue } from './dealVerdict';
 import { sensitivityHeadline } from './sensitivityAnalysis';
 import { DEFAULT_INPUTS, LoanInputs } from '../types';
@@ -83,7 +83,8 @@ is(!ui.includes('$15K') && !ui.includes('$8K'), 'no hard-coded $15K / $8K text')
 
 // --- 5. Purchase sensitivity recalculates the whole deal ---
 for (const s of r.purchaseSensitivityScenarios) {
-  eq(s.profit, calculateLoan({ ...noDate, purchasePrice: s.purchasePrice }).netProfit, `${s.label} row = full recalculation`);
+  // full recalculation incl. the app's estimate refresh (prepaid interest follows the row's loan)
+  eq(s.profit, calculateLoan(withEstimates({ ...noDate, purchasePrice: s.purchasePrice })).netProfit, `${s.label} row = full recalculation`);
 }
 // +10% ($43,000): price + 1% buy-side transfer tax + points + interest on the bigger loan
 is(-p10.profitChange > 43000 + 430 + 38700 * 0.015, `+10% costs more than 1:1 ($${Math.round(-p10.profitChange).toLocaleString('en-US')})`);
@@ -108,6 +109,51 @@ is(/yearlyWaterCost > 0 \|\| results\.yearlyDuesCost > 0\) && \(\s*<span[^>]*>In
 is(inputsUi.includes("inputs.loanType !== 'HARD_MONEY' && inputs.includePITI ? ' (Insurance & Taxes in Payment)'"), 'hard money: no "(Insurance & Taxes in Payment)"');
 const cashCard = src('components/CashRequiredSummary.tsx');
 is(!cashCard.includes('(lender requirement)') && cashCard.includes('(per lender profile — verify)'), 'contingency label');
+
+// ===== Round 2 (same deal, as saved in the app: monthly insurance on with the old $34, taxes $364/mo, electric $150) =====
+const saved = withEstimates({ ...deal, includeMonthlyInsurance: true, monthlyInsurance: 34, includeMonthlyTaxes: true, monthlyTaxes: 364, monthlyElectric: 150 } as LoanInputs);
+const s2 = calculateLoan(saved);
+const row = (label: string) => s2.purchaseSensitivityScenarios.find((x) => x.label === label)!;
+
+// --- R2.1 Purchase sensitivity: $34 was only recognised as the old default at the base price ---
+const over5 = -row('Over 5%').profitChange, under5 = row('Under 5%').profitChange;
+is(over5 > 21500, `Over 5% loss ${formatCurrency(over5)} > $21,500 price change`);
+is(over5 > 21500 + 215, 'Over 5% loss > price change + 1% buy-side transfer tax');
+eq(row('At Price').profit, s2.netProfit, '"At Price" row === main net profit');
+for (const p of [408500, 451500]) {
+  eq(calculateLoan({ ...saved, purchasePrice: p }, 0.75, false).monthlyInsuranceUsed, 34, `(the bug) $34 read as a real quote at ${p}`);
+}
+eq(calculateLoan(withEstimates({ ...saved, purchasePrice: 451500, monthlyInsuranceEstimated: true }), 0.75, false).netProfit, row('Over 5%').profit, 'Over 5% row = deal at $451,500 on the $379 estimate');
+// Under 5% gain vs Over 5% loss: equal except where the lender's 75%-of-ARV cap binds ($543,750). Over 5% wants
+// $545,850, so $2,100 is paid in cash with no points/interest — overpaying costs that much less in profit.
+eq(calculateLoan({ ...saved, purchasePrice: 451500 }).qualifiedLoanAmount, 543750, 'Over 5% loan is capped at 75% of ARV');
+is(Math.abs(under5 - over5) < 250, `mirror: Under 5% gain ${formatCurrency(under5)} ≈ Over 5% loss ${formatCurrency(over5)} (cap effect)`);
+const uncapped = calculateLoan(withEstimates({ ...saved, arv: 780000 }));
+const u = (l: string) => uncapped.purchaseSensitivityScenarios.find((x) => x.label === l)!.profitChange;
+is(Math.abs(u('Under 5%') + u('Over 5%')) <= 12, `cap not hit (ARV $780k): Under ${formatCurrency(u('Under 5%'))} mirrors Over ${formatCurrency(-u('Over 5%'))} (≤ $12 whole-dollar insurance rounding)`);
+
+// --- R2.2 Insurance display reads the same value as the totals ---
+eq(s2.monthlyInsuranceUsed, 366, 'insurance used = $366, not the saved $34');
+eq(s2.holdingBreakdown.insurance, 366 * 12, 'totals use $366 × 12');
+const carrying = s2.monthlyPayment + s2.monthlyInsuranceUsed + saved.monthlyTaxes; // LoanEstimateCard "Monthly Carrying Cost"
+eq(carrying, 4788.44, 'Monthly Carrying Cost = 4,058.44 + 366 + 364');
+eq(carrying + saved.monthlyElectric, 4938.44, 'Total Monthly Cost = carrying + $150 electric');
+for (const f of ['components/LoanEstimateCard.tsx', 'components/InputSections.tsx', 'ReportMode.tsx']) {
+  is(!/formatCurrency\(inputs\.monthlyInsurance|\(inputs\.monthlyInsurance \|\| 0\) :/.test(src(f)), `${f}: no display reads the raw saved monthlyInsurance`);
+}
+
+// --- R2.3 Prepaid interest: blank closing date → 15 days, day count in the label ---
+is(DEFAULT_INPUTS.closingDate === '', 'new deals start with a blank closing date (was today → days from today)');
+eq(withEstimates({ ...DEFAULT_INPUTS, ...deal, closingDate: DEFAULT_INPUTS.closingDate } as LoanInputs).prepaidInterestAtClosing, 1471, 'new deal → 15 days = $1,471');
+is(prepaidInterestDaysLabel('') === '15 days, no closing date', `label: ${prepaidInterestDaysLabel('')}`);
+is(prepaidInterestDaysLabel('2026-11-21') === '10 days to month-end', `label: ${prepaidInterestDaysLabel('2026-11-21')}`);
+is(src('components/InputSections.tsx').includes('prepaidInterestDaysLabel(inputs.closingDate)') && loanCard.includes('prepaidInterestDaysLabel(inputs.closingDate)'), 'day count shown in both labels');
+
+// --- R2.4 Likely-costs warning: estimate in use → "get a quote", not "not entered" ---
+const ins = likelyMissingCosts(saved).find((m) => m.field === 'monthlyInsurance');
+is(!!ins && `${ins.label}: ${ins.message}` === "Monthly insurance: using builder's-risk estimate — get a quote", `warning: ${ins && ins.label + ': ' + ins.message}`);
+is(!likelyMissingCosts({ ...saved, monthlyInsurance: 250 }).some((m) => m.field === 'monthlyInsurance'), 'a typed quote → no insurance warning');
+is(likelyMissingCosts(saved).find((m) => m.field === 'appraisalCost')!.message === 'not entered — likely due (typically $450–$800)', 'blank costs still say "not entered"');
 
 if (failed) { console.error(`${failed} check(s) failed`); process.exit(1); }
 console.log('All remaining-fixes checks passed');

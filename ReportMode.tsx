@@ -545,16 +545,16 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                 </div>
               )}
               
-              {inputs.includeMonthlyInsurance && (
+              {results.insuranceMode === 'MONTHLY' && (
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="font-semibold text-gray-700">Insurance</div>
                     <div className="text-[9px] text-gray-500 print:text-[8px]">Monthly cost</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
+                    <div className="font-bold text-gray-900">{formatCurrency(results.monthlyInsuranceUsed)}</div>
                     <div className="text-[9px] text-gray-600 print:text-[8px]">
-                      {formatCurrency(results.holdingBreakdown.insurance)} total{results.insuranceMode !== 'MONTHLY' ? ' (premium paid upfront at closing instead)' : ''}
+                      {formatCurrency(results.holdingBreakdown.insurance)} total
                     </div>
                   </div>
                 </div>

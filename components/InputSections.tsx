@@ -10,7 +10,7 @@ import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
-import { ESTIMATE_FIELDS, likelyMissingCosts } from '../utils/closingEstimates';
+import { ESTIMATE_FIELDS, likelyMissingCosts, prepaidInterestDaysLabel } from '../utils/closingEstimates';
 import { paMunicipalitiesWithVariation, paTransferTaxTotal } from '../utils/paTransferTax';
 import { lookupProperty, buildLookupAddress } from '../utils/propertyLookup';
 import { ValidationAlert } from './ValidationAlert';
@@ -1141,8 +1141,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             const missing = likelyMissingCosts(inputs);
             return missing.length > 0 && (
               <div className="text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} not entered:</span>{' '}
-                {missing.map((m) => `${m.label} (${m.hint})`).join(' · ')}
+                <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} to check:</span>{' '}
+                {missing.map((m) => `${m.label}: ${m.message}`).join(' · ')}
               </div>
             );
           })()}
@@ -1441,10 +1441,9 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <InputGroup
-                  label="Prepaid Interest (6G)"
+                  label={`Prepaid Interest (6G)${isEst('prepaidInterestAtClosing') ? ` — ${prepaidInterestDaysLabel(inputs.closingDate)}` : ''}`}
                   id="prepaidInterestAtClosing"
                   value={inputs.prepaidInterestAtClosing || 0}
-
                   estimated={isEst('prepaidInterestAtClosing')}
                   onChange={(v) => onInputChange('prepaidInterestAtClosing', v)}
                   prefix="$"
@@ -2639,16 +2638,16 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   </div>
                 )}
                 
-                {inputs.includeMonthlyInsurance && (
+                {results.insuranceMode === 'MONTHLY' && (
                   <div className="flex justify-between items-center text-sm">
                     <div className="flex flex-col">
                       <span className="text-gray-700 font-medium">Insurance</span>
                       <span className="text-[10px] text-gray-500">Monthly cost</span>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
+                      <div className="font-semibold text-gray-900">{formatCurrency(results.monthlyInsuranceUsed)}</div>
                       <div className="text-[10px] text-gray-600">
-                        {formatCurrency(inputs.monthlyInsurance * inputs.holdingPeriodMonths)} total
+                        {formatCurrency(results.holdingBreakdown.insurance)} total
                       </div>
                     </div>
                   </div>
@@ -2692,7 +2691,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <div className="font-bold text-blue-600 text-base">
                     {formatCurrency(
                       results.monthlyPayment +
-                      (results.insuranceMode === 'MONTHLY' ? (inputs.monthlyInsurance || 0) : 0) +
+                      results.monthlyInsuranceUsed + // same insurance the totals use (0 unless paid monthly)
                       (inputs.includeMonthlyTaxes ? (inputs.monthlyTaxes || 0) : 0) +
                       (inputs.monthlyElectric || 0)
                     )}

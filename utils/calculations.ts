@@ -2,7 +2,8 @@ import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
 import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensitivityAnalysis';
 import { paPurchaseTitlePremium, PA_ENDORSEMENT_FEE } from './pennsylvaniaTitleRates';
 import { calculateFlipIRR, formatIRR } from './irrCalculation';
-import { insuranceModeOf, monthlyInsuranceFor, upfrontInsuranceFor } from './stateHoldingCosts';
+import { insuranceModeOf, monthlyInsuranceFor, monthlyInsuranceIsEstimate, upfrontInsuranceFor } from './stateHoldingCosts';
+import { withEstimates } from './closingEstimates'; // circular with closingEstimates → calculations; only called at run time
 
 /** Purchase and rehab financing % — the rehab % falls back to the purchase % on deals saved before it existed. */
 export const financingPercents = (i: Pick<LoanInputs, 'useCustomFinancing' | 'customFinancingPercentage' | 'financingPercentage' | 'rehabFinancingPercentage'>) => {
@@ -1165,7 +1166,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75, 
     // Sensitivity Analysis
     // Purchase rows re-run the whole deal (loan, points, buy-side transfer tax, title, interest move with price)
     purchaseSensitivityScenarios: withSensitivity
-      ? generatePurchaseSensitivity(purchasePrice, netProfit, arv, (price) => calculateLoan({ ...inputs, purchasePrice: price }, maxLTVPercent, false).netProfit)
+      // Each row is the deal at that price: the "$34 = old default" test only matches the base price, so pin the
+      // base's placeholder status, and refresh price-driven estimates (prepaid interest, prorations) like the app does
+      ? generatePurchaseSensitivity(purchasePrice, netProfit, arv, (price) => calculateLoan(
+          withEstimates({ ...inputs, purchasePrice: price, monthlyInsuranceEstimated: monthlyInsuranceIsEstimate(inputs) }), maxLTVPercent, false).netProfit)
       : [],
     rehabSensitivityScenarios: generateRehabSensitivity(rehabBudget, netProfit, arv),
 

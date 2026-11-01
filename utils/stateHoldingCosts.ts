@@ -106,12 +106,15 @@ export const insuranceModeOf = (i: InsuranceInputs): InsuranceMode =>
   i.insurancePaymentMode ??
   ((i.insuranceCost || 0) > 0 && !i.estimatedFields?.includes('insuranceCost') && !i.includeMonthlyInsurance ? 'UPFRONT' : 'MONTHLY');
 
-/** Monthly premium used: the user's number, or the builder's-risk estimate when it's blank / the old $34-style default. */
-export const monthlyInsuranceFor = (i: InsuranceInputs) => {
+/** Saved monthly insurance is a placeholder (not a quote): flagged estimate, blank, or the old $34-style default for this price. */
+export const monthlyInsuranceIsEstimate = (i: InsuranceInputs) => {
   const m = i.monthlyInsurance || 0;
-  const placeholder = i.monthlyInsuranceEstimated || m === 0 || m === legacyHomeownerInsurance(i.purchasePrice, i.state || '');
-  return placeholder ? estimateMonthlyInsurance(i.purchasePrice, i.rehabBudget, i.insuranceRatePercent ?? BUILDERS_RISK_RATE) : m;
+  return !!i.monthlyInsuranceEstimated || m === 0 || m === legacyHomeownerInsurance(i.purchasePrice, i.state || '');
 };
+
+/** Monthly premium used: the user's number, or the builder's-risk estimate when it's a placeholder. */
+export const monthlyInsuranceFor = (i: InsuranceInputs) =>
+  monthlyInsuranceIsEstimate(i) ? estimateMonthlyInsurance(i.purchasePrice, i.rehabBudget, i.insuranceRatePercent ?? BUILDERS_RISK_RATE) : (i.monthlyInsurance || 0);
 
 /** Premium paid at closing: the user's number, or the builder's-risk term estimate. */
 export const upfrontInsuranceFor = (i: InsuranceInputs) =>

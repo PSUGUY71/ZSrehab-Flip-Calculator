@@ -1,7 +1,7 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, financingPercents } from '../utils/calculations';
-import { likelyMissingCosts } from '../utils/closingEstimates';
+import { likelyMissingCosts, prepaidInterestDaysLabel } from '../utils/closingEstimates';
 import { ResultRow } from './ResultRow';
 import { FeeBreakdownItem } from './FeeBreakdownItem';
 import { HelpTooltip } from './HelpTooltip';
@@ -37,9 +37,9 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         )}
         {missing.length > 0 && (
           <div className="mb-3 text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 print:hidden">
-            <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} not entered</span> — usually charged on a financed flip:
+            <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} to check</span> — usually charged on a financed flip:
             <ul className="mt-1 list-disc list-inside">
-              {missing.map((m) => <li key={m.field}>{m.label}: not entered — likely due ({m.hint})</li>)}
+              {missing.map((m) => <li key={m.field}>{m.label}: {m.message}</li>)}
             </ul>
           </div>
         )}
@@ -116,7 +116,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <span className="text-lg sm:text-xl font-bold text-amber-600">
                   {formatCurrency(
                     results.monthlyPayment +
-                    (results.insuranceMode === 'MONTHLY' ? (inputs.monthlyInsurance || 0) : 0) +
+                    results.monthlyInsuranceUsed + // same insurance the totals use (0 unless paid monthly)
                     (inputs.includeMonthlyTaxes ? (inputs.monthlyTaxes || 0) : 0)
                   )}
                 </span>
@@ -133,7 +133,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               {results.insuranceMode === 'MONTHLY' && (
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-600">Insurance</span>
-                  <span className="text-gray-700 font-medium">{formatCurrency(inputs.monthlyInsurance || 0)}</span>
+                  <span className="text-gray-700 font-medium">{formatCurrency(results.monthlyInsuranceUsed)}</span>
                 </div>
               )}
               {inputs.includeMonthlyTaxes && (
@@ -221,7 +221,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
         <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
         <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
-        <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
+        <FeeBreakdownItem label={est('prepaidInterestAtClosing') ? `Prepaid Interest (${prepaidInterestDaysLabel(inputs.closingDate)})` : 'Prepaid Interest (to end of month)'} value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
         <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
         <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />
@@ -292,7 +292,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label="HOA Capital Contribution" value={results.hoaCapitalContribution} />
           <FeeBreakdownItem label="Lienable Utilities" value={results.lienableUtilities} />
           <FeeBreakdownItem label="Home Warranty" value={results.homeWarranty} />
-          <FeeBreakdownItem label="Prepaid Interest (to end of month)" value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
+          <FeeBreakdownItem label={est('prepaidInterestAtClosing') ? `Prepaid Interest (${prepaidInterestDaysLabel(inputs.closingDate)})` : 'Prepaid Interest (to end of month)'} value={results.prepaidInterestAtClosing} estimated={est('prepaidInterestAtClosing')} />
           <FeeBreakdownItem label={isHideout ? "1103 Title Search" : "Title Search"} value={results.titleSearchFee} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1301 Owner's Title Policy" : "Owner's Title Policy"} value={results.ownersTitlePolicy} alwaysShow={isHideout} />
           <FeeBreakdownItem label={isHideout ? "1305 Capital Improvement" : "Capital Improvement"} value={results.capitalImprovementFee} alwaysShow={isHideout} />

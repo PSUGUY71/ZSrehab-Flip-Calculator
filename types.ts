@@ -494,7 +494,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   wireFee: 0,
   otherLenderFees: 0,
   
-  closingDate: new Date().toISOString().split('T')[0], // Today's date
+  closingDate: '', // blank until known — prepaid interest then assumes 15 days
   
   transferTaxRate: 0, 
   titleInsuranceRate: 0,

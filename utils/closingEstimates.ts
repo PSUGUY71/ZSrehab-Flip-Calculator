@@ -8,7 +8,7 @@
 import { LoanInputs } from '../types';
 import { getCountyThirdPartyCosts } from './thirdPartyCosts';
 import { getStateDefaults } from './stateDefaults';
-import { annualPropertyTax, builderRiskTermPremium, BUILDERS_RISK_RATE, estimateMonthlyInsurance, insuranceModeOf, monthlyInsuranceFor } from './stateHoldingCosts';
+import { annualPropertyTax, builderRiskTermPremium, insuranceModeOf, monthlyInsuranceIsEstimate } from './stateHoldingCosts';
 import { financingPercents, financedLoan } from './calculations';
 
 // Fields filled from the county cost table
@@ -29,25 +29,21 @@ export const ESTIMATE_FIELDS = [
 ] as const;
 
 /**
- * Costs nearly every financed flip pays. Any still at $0 is flagged "not entered — likely due" with a typical range.
- * Prepaid interest is only expected when there's a loan and a rate.
+ * Costs nearly every financed flip pays. Any still at $0 is flagged "not entered — likely due" with a typical range;
+ * insurance running on the builder's-risk estimate is flagged "get a quote". Prepaid interest only with a loan and a rate.
  */
-export const likelyMissingCosts = (inp: LoanInputs): { field: string; label: string; hint: string }[] => {
+export const likelyMissingCosts = (inp: LoanInputs): { field: string; label: string; message: string }[] => {
   const financed = financedLoan(inp.purchasePrice, 0, financingPercents(inp)) > 0 && (inp.interestRate || 0) > 0;
-  const rate = inp.insuranceRatePercent ?? BUILDERS_RISK_RATE;
   const mode = insuranceModeOf(inp);
-  // Insurance is "not entered" when the active mode is running on the builder's-risk estimate
-  const insuranceMissing = mode === 'UPFRONT' ? !(inp.insuranceCost > 0) || !!inp.estimatedFields?.includes('insuranceCost')
-    : mode === 'MONTHLY' ? monthlyInsuranceFor(inp) === estimateMonthlyInsurance(inp.purchasePrice, inp.rehabBudget, rate) : false;
+  const insuranceOnEstimate = mode === 'UPFRONT' ? !(inp.insuranceCost > 0) || !!inp.estimatedFields?.includes('insuranceCost')
+    : mode === 'MONTHLY' ? monthlyInsuranceIsEstimate(inp) : false;
+  const notEntered = (range: string) => `not entered — likely due (${range})`;
   const list = [
-    { field: 'appraisalCost', label: 'Appraisal', hint: 'typically $450–$800', missing: !(inp.appraisalCost > 0) },
-    { field: 'inspectionCost', label: 'Inspection', hint: 'typically $350–$600', missing: !(inp.inspectionCost > 0) },
+    { field: 'appraisalCost', label: 'Appraisal', message: notEntered('typically $450–$800'), missing: !(inp.appraisalCost > 0) },
+    { field: 'inspectionCost', label: 'Inspection', message: notEntered('typically $350–$600'), missing: !(inp.inspectionCost > 0) },
     { field: mode === 'UPFRONT' ? 'insuranceCost' : 'monthlyInsurance', label: mode === 'UPFRONT' ? 'Insurance premium at closing' : 'Monthly insurance',
-      hint: `using builder's-risk estimate ${'$' + (mode === 'UPFRONT'
-        ? builderRiskTermPremium(inp.purchasePrice, inp.rehabBudget, rate, inp.holdingPeriodMonths)
-        : estimateMonthlyInsurance(inp.purchasePrice, inp.rehabBudget, rate) + '/mo').toLocaleString()} (0.5%–1%/yr of price + rehab) — get a quote`,
-      missing: insuranceMissing },
-    ...(financed ? [{ field: 'prepaidInterestAtClosing', label: 'Prepaid interest', hint: 'loan at closing × rate ÷ 365 × days to month-end', missing: !(inp.prepaidInterestAtClosing > 0) }] : []),
+      message: "using builder's-risk estimate — get a quote", missing: insuranceOnEstimate },
+    ...(financed ? [{ field: 'prepaidInterestAtClosing', label: 'Prepaid interest', message: notEntered('loan at closing × rate ÷ 365 × days to month-end'), missing: !(inp.prepaidInterestAtClosing > 0) }] : []),
   ];
   return list.filter((c) => c.missing).map(({ missing, ...c }) => c);
 };
@@ -71,6 +67,11 @@ const remaining = (closingDate?: string) => {
     monthDays: daysInclusive(d, monthEnd),
   };
 };
+
+/** Days of prepaid interest: closing date through month-end, or 15 with no date. */
+export const prepaidInterestDays = (closingDate?: string) => remaining(closingDate).monthDays;
+export const prepaidInterestDaysLabel = (closingDate?: string) =>
+  `${prepaidInterestDays(closingDate)} days${isNaN(new Date(closingDate + 'T00:00:00').getTime()) ? ', no closing date' : ' to month-end'}`;
 
 /** Estimated dollar value for every estimate field, from the current deal. */
 export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number> => {
