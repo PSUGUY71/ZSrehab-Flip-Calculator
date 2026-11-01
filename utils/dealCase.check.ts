@@ -29,6 +29,7 @@ export const deal = {
   monthlyElectric: 548, monthlyInternet: 0, monthlyPropane: 0,
   sellingCommissionRate: 0, sellingSellerAgentCommissionRate: 0, sellingBuyerAgentCommissionRate: 2.5,
   sellingTransferTaxRate: 1, sellingLegalFees: 0,
+  insurancePaymentMode: 'NONE', // the $51,864 holding figure has no insurance
 } as LoanInputs;
 
 const r = calculateLoan(deal);
@@ -89,12 +90,15 @@ eq(taxTreatmentRate({ holdingPeriodMonths: 6, taxTreatment: 'DEALER' }).rate, 27
 eq(builderRiskAnnualPremium(430000, 144000), 4305, "builder's risk premium = 574,000 × 0.75%");
 eq(estimateMonthlyInsurance(430000, 144000), 359, 'monthly insurance estimate (was $34 homeowner average)');
 eq(estimateMonthlyInsurance(430000, 144000, 1), Math.round(5740 / 12), 'user-editable rate (1%)');
-const insured = { ...deal, includeMonthlyInsurance: true, monthlyInsurance: 359 } as LoanInputs;
+const insured = { ...deal, insurancePaymentMode: 'MONTHLY', includeMonthlyInsurance: true, monthlyInsurance: 359 } as LoanInputs;
 eq(calculateLoan(insured).totalHoldingCosts, 51864 + 359 * 12, 'monthly insurance counts in holding');
-const prepaidIns = calculateLoan({ ...insured, insuranceCost: 4305 });
-eq(prepaidIns.totalCashToClose, 53310.52 + 4305, 'premium paid at closing adds to Due at Closing');
-eq(prepaidIns.holdingBreakdown.insurance, 0, 'prepaid 12-month premium → no monthly insurance in a 12-month hold');
-eq(calculateLoan({ ...insured, insuranceCost: 4305, holdingPeriodMonths: 14 }).holdingBreakdown.insurance, 2 * 359, 'months 13–14 charged monthly');
+// Either/or (2026-11-01 v2): a premium typed in the closing field is ignored while paying monthly, and vice versa
+const bothEntered = calculateLoan({ ...insured, insuranceCost: 4305 });
+eq(bothEntered.totalCashToClose, 53310.52, 'paid monthly → closing premium NOT in Due at Closing');
+eq(bothEntered.holdingBreakdown.insurance, 359 * 12, 'paid monthly → monthly insurance only');
+const upfront = calculateLoan({ ...insured, insurancePaymentMode: 'UPFRONT', insuranceCost: 4305 });
+eq(upfront.totalCashToClose, 53310.52 + 4305, 'paid upfront → premium in Due at Closing');
+eq(upfront.holdingBreakdown.insurance, 0, 'paid upfront → no monthly insurance');
 
 // --- 5. Closing cost gaps ---
 const pa = { ...deal, state: 'PA' } as LoanInputs;
@@ -104,8 +108,10 @@ eq(computeEstimates(pa).insuranceCost, 4305, 'insurance premium estimate');
 const withPrepaid = calculateLoan({ ...deal, prepaidInterestAtClosing: 1471 });
 eq(withPrepaid.totalCashToClose, 53310.52 + 1471, 'prepaid interest is in Due at Closing');
 const missing = likelyMissingCosts(deal).map((m) => m.field).sort().join(',');
-is(missing === 'appraisalCost,inspectionCost,insuranceCost,prepaidInterestAtClosing', `4 likely costs not entered (${missing})`);
-is(likelyMissingCosts({ ...deal, appraisalCost: 600, inspectionCost: 450, insuranceCost: 4305, prepaidInterestAtClosing: 1471 }).length === 0, 'none flagged once entered');
+is(missing === 'appraisalCost,inspectionCost,prepaidInterestAtClosing', `3 likely costs not entered with insurance set to None (${missing})`);
+is(likelyMissingCosts({ ...deal, insurancePaymentMode: 'UPFRONT' }).some((m) => m.field === 'insuranceCost'), 'upfront premium not entered → flagged');
+is(likelyMissingCosts({ ...deal, insurancePaymentMode: 'MONTHLY' }).some((m) => m.field === 'monthlyInsurance'), 'monthly on the estimate → flagged');
+is(likelyMissingCosts({ ...deal, insurancePaymentMode: 'UPFRONT', appraisalCost: 600, inspectionCost: 450, insuranceCost: 4305, prepaidInterestAtClosing: 1471 }).length === 0, 'none flagged once entered');
 is(!likelyMissingCosts({ ...deal, interestRate: 0 }).some((m) => m.field === 'prepaidInterestAtClosing'), 'no prepaid interest flag without a rate');
 
 // --- 6. Total Project Costs = costs in the Profit Calculation ---
@@ -117,7 +123,7 @@ eq(projectCosts(r), 705000 - 430000 - 144000 - r.netProfit, 'Total Project Costs
 eq(r.netProfit, 34150.48, 'net profit');
 // Messier deal: concession, prepaid inspections, insurance, dues, agent split — still adds up
 const messy = calculateLoan({ ...deal, sellerConcessionRate: 2, appraisalCost: 600, inspectionCost: 450, radonInspection: 150,
-  insuranceCost: 4305, includeMonthlyInsurance: true, monthlyInsurance: 359, holdingPeriodMonths: 15,
+  insurancePaymentMode: 'MONTHLY', insuranceCost: 4305, includeMonthlyInsurance: true, monthlyInsurance: 359, holdingPeriodMonths: 15,
   includeYearlyDues: true, yearlyDues: 1200, includeMonthlyTaxes: true, monthlyTaxes: 360, weAreTheRealEstateAgent: true } as LoanInputs);
 eq(projectCosts(messy), 705000 - 430000 - 144000 - messy.netProfit, 'messy deal: Total Project Costs still = ARV − price − rehab − profit');
 // Prepaid inspection/appraisal are your cash — they now come out of profit (they were in Total Paid Out only)
@@ -126,7 +132,7 @@ eq(calculateLoan({ ...deal, appraisalCost: 600 }).netProfit, r.netProfit - 600, 
 // --- 7. Holding breakdown lists every component of the total ---
 const hb = messy.holdingBreakdown;
 eq(hb.interest + hb.utilities + hb.insurance + hb.taxes + hb.water + hb.dues, messy.totalHoldingCosts, 'holding components sum to Total Holding');
-eq(hb.insurance, 359 * 3, 'insurance months 13–15 only');
+eq(hb.insurance, 359 * 15, 'insurance paid monthly all 15 months (closing premium ignored)');
 eq(hb.taxes, 360 * 15, 'taxes line');
 eq(hb.dues, 1200, 'dues line');
 eq(r.holdingBreakdown.interest + r.holdingBreakdown.utilities, 51864, 'reference: interest 45,288 + utilities 6,576');

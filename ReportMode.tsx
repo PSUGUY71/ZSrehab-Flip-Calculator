@@ -554,7 +554,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <div className="text-right">
                     <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
                     <div className="text-[9px] text-gray-600 print:text-[8px]">
-                      {formatCurrency(results.holdingBreakdown.insurance)} total{results.insuranceMonthsPrepaid > 0 ? ` (first ${results.insuranceMonthsPrepaid} mo prepaid at closing)` : ''}
+                      {formatCurrency(results.holdingBreakdown.insurance)} total{results.insuranceMode !== 'MONTHLY' ? ' (premium paid upfront at closing instead)' : ''}
                     </div>
                   </div>
                 </div>
@@ -623,8 +623,10 @@ export const ReportMode: React.FC<ReportModeProps> = ({
             {/* Grand Total */}
             <div className="border-t border-gray-300 pt-2 mt-2 flex justify-between items-center">
               <div className="flex flex-col">
-                <span className="font-bold text-blue-900 uppercase">Grand Total (Annual)</span>
-                <span className="text-[9px] text-gray-500 print:text-[8px]">Includes one-time fees (water & dues)</span>
+                <span className="font-bold text-blue-900 uppercase">Total Over Hold</span>
+                {(results.yearlyWaterCost > 0 || results.yearlyDuesCost > 0) && (
+                  <span className="text-[9px] text-gray-500 print:text-[8px]">Includes one-time fees (water & dues)</span>
+                )}
               </div>
               <div className="text-right">
                 <div className="font-bold text-blue-700 text-sm print:text-xs">{formatCurrency(results.totalHoldingCosts)}</div>

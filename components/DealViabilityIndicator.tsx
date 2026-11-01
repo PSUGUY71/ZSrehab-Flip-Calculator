@@ -1,4 +1,5 @@
 import React from 'react';
+import { dealVerdict } from '../utils/dealVerdict';
 
 interface DealViabilityProps {
   profitMargin: number | null;
@@ -8,6 +9,8 @@ interface DealViabilityProps {
   arv: number | null;
   purchasePrice: number | null;
   afterTaxProfit: number | null;
+  cashIssue?: string | null; // "Short $X — cash runs out in month N" → always RED
+  marginTarget?: number; // % of ARV (Settings, default 12)
 }
 
 export const DealViabilityIndicator: React.FC<DealViabilityProps> = ({
@@ -15,45 +18,12 @@ export const DealViabilityIndicator: React.FC<DealViabilityProps> = ({
   irr,
   seventyPercentRuleMet,
   ltv,
-  arv,
-  purchasePrice,
   afterTaxProfit,
+  cashIssue,
+  marginTarget,
 }) => {
-  // Determine viability status
-  let status: 'green' | 'yellow' | 'red' = 'yellow';
-  const issues: string[] = [];
-
-  // Check profit margin (target: > 20%)
-  if (profitMargin !== null && profitMargin < 0.20) {
-    issues.push(`Profit margin ${(profitMargin * 100).toFixed(1)}% (target: 20%+)`);
-  }
-
-  // Check IRR (target: > 20%)
-  if (irr !== null && irr < 0.20) {
-    issues.push(`IRR ${(irr * 100).toFixed(1)}% (target: 20%+)`);
-  }
-
-  // Check 70% rule
-  if (!seventyPercentRuleMet) {
-    issues.push('70% Rule not met');
-  }
-
-  // Check LTV (target: < 75%)
-  if (ltv !== null && ltv > 75) {
-    issues.push(`LTV ${ltv.toFixed(1)}% (target: < 75%)`);
-  }
-
-  // Check for negative profit
-  if (afterTaxProfit !== null && afterTaxProfit < 0) {
-    issues.push('Deal results in loss');
-    status = 'red';
-  } else if (issues.length === 0 && profitMargin !== null && irr !== null) {
-    // All metrics pass
-    status = 'green';
-  } else if (issues.length > 0) {
-    // Some issues but not critical
-    status = issues.length > 2 ? 'red' : 'yellow';
-  }
+  // Rules live in utils/dealVerdict.ts (tested)
+  const { status, issues } = dealVerdict({ profitMargin, irr, seventyPercentRuleMet, ltv, afterTaxProfit, cashIssue, marginTarget });
 
   const statusColors = {
     green: {

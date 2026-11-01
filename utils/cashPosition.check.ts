@@ -22,6 +22,7 @@ const deal = {
   interestRate: 0,
   sellingCommissionRate: 0, sellingSellerAgentCommissionRate: 0, sellingBuyerAgentCommissionRate: 0,
   sellingTransferTaxRate: 0, sellingLegalFees: 76539,
+  insurancePaymentMode: 'NONE', // this deal's holding figure has no insurance
 } as LoanInputs;
 
 const r = calculateLoan(deal);

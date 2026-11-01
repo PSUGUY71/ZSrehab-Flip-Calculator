@@ -2,6 +2,7 @@ import { LoanInputs, CalculatedResults, ProfitScenario } from '../types';
 import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensitivityAnalysis';
 import { paPurchaseTitlePremium, PA_ENDORSEMENT_FEE } from './pennsylvaniaTitleRates';
 import { calculateFlipIRR, formatIRR } from './irrCalculation';
+import { insuranceModeOf, monthlyInsuranceFor, upfrontInsuranceFor } from './stateHoldingCosts';
 
 /** Purchase and rehab financing % — the rehab % falls back to the purchase % on deals saved before it existed. */
 export const financingPercents = (i: Pick<LoanInputs, 'useCustomFinancing' | 'customFinancingPercentage' | 'financingPercentage' | 'rehabFinancingPercentage'>) => {
@@ -22,9 +23,6 @@ export const maxOfferFor = (arv: number, ltv: number, rehabBudget: number, pct: 
 /** ARV needed for the current price to fit the LTV: financed loan ÷ LTV. */
 export const requiredArvFor = (purchasePrice: number, rehabBudget: number, pct: { purchase: number; rehab: number }, ltv: number) =>
   purchasePrice > 0 && ltv > 0 ? financedLoan(purchasePrice, rehabBudget, pct) / ltv : 0;
-
-/** A builder's risk premium paid at closing is a 12-month term. */
-export const PREPAID_INSURANCE_MONTHS = 12;
 
 export type TaxTreatment = 'SHORT_TERM' | 'LONG_TERM' | 'DEALER';
 
@@ -79,7 +77,7 @@ export const cashPosition = (p: {
   };
 };
 
-export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75): CalculatedResults => {
+export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75, withSensitivity = true): CalculatedResults => {
   const {
     appVersion,
     purchasePrice,
@@ -427,8 +425,13 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // In HIDEOUT mode, Legal & Settlement is covered by Walker fees (1101-1107) — zero to prevent double-count
   const legalSettlementAmount = appVersion === 'HIDEOUT' ? 0 : (legalSettlementFees || 0);
 
+  // Insurance is either/or: a premium paid upfront at closing OR a monthly policy — never both
+  const insuranceMode = insuranceModeOf(inputs);
+  const closingInsurance = insuranceMode === 'UPFRONT' ? upfrontInsuranceFor(inputs) : 0;
+  const monthlyInsuranceUsed = insuranceMode === 'MONTHLY' ? monthlyInsuranceFor(inputs) : 0;
+
   // Inspection and Appraisal are prepaid before closing, not included in closing costs
-  const totalThirdPartyFees = 
+  const totalThirdPartyFees =
     (transferTaxCost || 0) + 
     (titleInsuranceCost || 0) + 
     (cplFeeCost || 0) +
@@ -437,7 +440,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalWalkerFees + // HIDEOUT only (zeroed above)
     titleCompanyChargesAmount + // NORMAL only (zeroed above)
     (recordingFees || 0) + 
-    (insuranceCost || 0) + // Insurance is due at closing
+    closingInsurance + // Upfront insurance premium (0 when paid monthly)
     (otherThirdPartyFees || 0) + // Other 3rd party fees
     (calculatedHideoutTransferFee || 0) + // HIDEOUT only (zeroed above)
     (finalHideoutProratedDues || 0) + // HIDEOUT only (zeroed above)
@@ -557,11 +560,9 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // 10. Profitability Analysis
   // Calculate total monthly utilities and optional costs
-  // Insurance premium paid at closing covers the first PREPAID_INSURANCE_MONTHS — monthly insurance only after that
-  const insuranceMonthsPrepaid = (insuranceCost || 0) > 0 ? PREPAID_INSURANCE_MONTHS : 0;
-  const monthlyInsuranceCost = includeMonthlyInsurance ? (monthlyInsurance || 0) : 0;
-  const insuranceForMonth = (m: number) => (m > insuranceMonthsPrepaid ? monthlyInsuranceCost : 0);
-  const holdingInsurance = monthlyInsuranceCost * Math.max(0, holdingPeriodMonths - insuranceMonthsPrepaid);
+  // Monthly insurance only in MONTHLY mode (upfront premium is in closing costs instead)
+  const insuranceForMonth = (_m: number) => monthlyInsuranceUsed;
+  const holdingInsurance = monthlyInsuranceUsed * holdingPeriodMonths;
   // Monthly utilities + taxes (insurance is added month by month above)
   const totalMonthlyUtilities = monthlyElectric +
     monthlyInternet +
@@ -720,8 +721,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     transferTax: transferTaxCost || 0,
     titleInsurance: titleInsuranceCost || 0,
     taxProrations,
-    insurancePremium: insuranceCost || 0,
-    otherClosing: totalClosingCosts - totalLenderFees - (transferTaxCost || 0) - (titleInsuranceCost || 0) - taxProrations - (insuranceCost || 0),
+    insurancePremium: closingInsurance,
+    otherClosing: totalClosingCosts - totalLenderFees - (transferTaxCost || 0) - (titleInsuranceCost || 0) - taxProrations - closingInsurance,
     prepaidInspections: prepaidCosts - (earnestMoneyDeposit || 0),
     sellerConcession: -sellerConcessionAmount,
   };
@@ -1057,7 +1058,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     recordingCost: recordingFees,
     inspectionCost: inspectionCost || 0,
     appraisalCost: appraisalCost || 0,
-    insuranceCost: insuranceCost || 0,
+    insuranceCost: closingInsurance, // premium actually charged at closing (0 when paid monthly)
     otherThirdPartyFees: otherThirdPartyFees || 0,
     
     // Additional Closing Fees (PA BEC form)
@@ -1123,7 +1124,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     holdingBreakdown,
     acquisitionBreakdown,
     totalAcquisitionCosts,
-    insuranceMonthsPrepaid,
+    insuranceMode,
+    monthlyInsuranceUsed,
     cashShortfall,
     cashRunwayMonth,
     monthlyCashOut,
@@ -1161,7 +1163,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     profitScenarios: scenarios,
     
     // Sensitivity Analysis
-    purchaseSensitivityScenarios: generatePurchaseSensitivity(purchasePrice, netProfit, arv),
+    // Purchase rows re-run the whole deal (loan, points, buy-side transfer tax, title, interest move with price)
+    purchaseSensitivityScenarios: withSensitivity
+      ? generatePurchaseSensitivity(purchasePrice, netProfit, arv, (price) => calculateLoan({ ...inputs, purchasePrice: price }, maxLTVPercent, false).netProfit)
+      : [],
     rehabSensitivityScenarios: generateRehabSensitivity(rehabBudget, netProfit, arv),
 
     // Refi

@@ -1,12 +1,17 @@
 import React from 'react';
 import { CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
+import { DEFAULT_MARGIN_TARGET } from '../utils/dealVerdict';
+import { sensitivityHeadline } from '../utils/sensitivityAnalysis';
 
 interface SensitivityAnalysisProps {
   results: CalculatedResults;
+  marginTarget?: number; // % of ARV (Settings, default 12)
 }
 
-export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ results }) => {
+export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ results, marginTarget = DEFAULT_MARGIN_TARGET }) => {
+  // Flag rows whose margin is below the profit-margin target (was a fixed 15%)
+  const below = (margin: number) => margin < marginTarget;
   return (
     <div className="space-y-4">
       {/* Purchase Price Sensitivity */}
@@ -16,7 +21,7 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
             ⚠️ Purchase Price Sensitivity (MOST CRITICAL)
           </div>
           <div className="bg-amber-50 p-2 text-[10px] text-amber-800 text-center border-b border-amber-200">
-            Overpaying by 10% = $15K loss. Purchase mistakes are MORE CRITICAL than ARV misses.
+            {sensitivityHeadline(results.purchaseSensitivityScenarios, 10, 'Overpaying by')} — each row recalculates the whole deal (loan, points, transfer tax, interest).
           </div>
           <div className="overflow-x-auto">
           <div className="min-w-[420px]">
@@ -33,12 +38,12 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               className={`grid grid-cols-5 text-xs text-center p-2 border-b border-gray-100 last:border-0 ${
                 s.percentChange === 0 
                   ? 'bg-amber-50 font-bold' 
-                  : s.isBelowThreshold 
+                  : below(s.margin) 
                     ? 'bg-amber-100 border-l-4 border-amber-500' 
                     : ''
               }`}
             >
-              <div className={s.isBelowThreshold ? 'font-bold text-amber-900' : ''}>{s.label}</div>
+              <div className={below(s.margin) ? 'font-bold text-amber-900' : ''}>{s.label}</div>
               <div>{formatCurrency(s.purchasePrice)}</div>
               <div className={s.profit > 0 ? 'text-amber-700 font-semibold' : 'text-amber-600 font-semibold'}>
                 {formatCurrency(s.profit)}
@@ -46,9 +51,9 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               <div className={s.profitChange >= 0 ? 'text-amber-600' : 'text-amber-500 font-semibold'}>
                 {s.profitChange >= 0 ? '+' : ''}{formatCurrency(s.profitChange)}
               </div>
-              <div className={s.isBelowThreshold ? 'text-amber-700 font-bold' : s.margin >= 15 ? 'text-amber-700' : 'text-amber-600'}>
+              <div className={below(s.margin) ? 'text-amber-700 font-bold' : s.margin >= marginTarget ? 'text-amber-700' : 'text-amber-600'}>
                 {formatPercent(s.margin)}
-                {s.isBelowThreshold && <span className="text-[9px] block text-amber-600">⚠️ Below 15%</span>}
+                {below(s.margin) && <span className="text-[9px] block text-amber-600">⚠️ Below {marginTarget}%</span>}
               </div>
             </div>
           ))}
@@ -64,7 +69,8 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
             Rehab Cost Sensitivity
           </div>
           <div className="bg-amber-50 p-2 text-[10px] text-amber-800 text-center border-b border-amber-200">
-            Rehab overrun 20% = $8K loss (manageable with contingency)
+            {sensitivityHeadline(results.rehabSensitivityScenarios, 20, 'Rehab overrun')}
+            {results.rehabContingency > 0 ? ` (contingency reserve: ${formatCurrency(results.rehabContingency)})` : ''}
           </div>
           <div className="overflow-x-auto">
           <div className="min-w-[420px]">
@@ -81,12 +87,12 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               className={`grid grid-cols-5 text-xs text-center p-2 border-b border-gray-100 last:border-0 ${
                 s.percentChange === 0 
                   ? 'bg-amber-50 font-bold' 
-                  : s.isBelowThreshold 
+                  : below(s.margin) 
                     ? 'bg-amber-100 border-l-4 border-amber-500' 
                     : ''
               }`}
             >
-              <div className={s.isBelowThreshold ? 'font-bold text-amber-900' : ''}>{s.label}</div>
+              <div className={below(s.margin) ? 'font-bold text-amber-900' : ''}>{s.label}</div>
               <div>{formatCurrency(s.rehabCost)}</div>
               <div className={s.profit > 0 ? 'text-amber-700 font-semibold' : 'text-amber-600 font-semibold'}>
                 {formatCurrency(s.profit)}
@@ -94,9 +100,9 @@ export const SensitivityAnalysis: React.FC<SensitivityAnalysisProps> = ({ result
               <div className={s.profitChange >= 0 ? 'text-amber-600' : 'text-amber-500 font-semibold'}>
                 {s.profitChange >= 0 ? '+' : ''}{formatCurrency(s.profitChange)}
               </div>
-              <div className={s.isBelowThreshold ? 'text-amber-700 font-bold' : s.margin >= 15 ? 'text-amber-700' : 'text-amber-600'}>
+              <div className={below(s.margin) ? 'text-amber-700 font-bold' : s.margin >= marginTarget ? 'text-amber-700' : 'text-amber-600'}>
                 {formatPercent(s.margin)}
-                {s.isBelowThreshold && <span className="text-[9px] block text-amber-600">⚠️ Below 15%</span>}
+                {below(s.margin) && <span className="text-[9px] block text-amber-600">⚠️ Below {marginTarget}%</span>}
               </div>
             </div>
           ))}

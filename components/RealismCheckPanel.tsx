@@ -1,6 +1,7 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency } from '../utils/calculations';
+import { cashShortIssue } from '../utils/dealVerdict';
 
 interface RealismCheckPanelProps {
   inputs: LoanInputs;
@@ -15,6 +16,8 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
 
   // Critical Issues
   const criticalIssues: string[] = [];
+  const cashIssue = cashShortIssue(inputs.liquidity, results);
+  if (cashIssue) criticalIssues.push(cashIssue);
   if (results.ltv > 75) {
     criticalIssues.push(`LTV exceeds 75% (${results.ltv.toFixed(2)}%)`);
   }
@@ -55,9 +58,7 @@ export const RealismCheckPanel: React.FC<RealismCheckPanelProps> = ({ inputs, re
 
   // Good indicators
   const goodIndicators: string[] = [];
-  if (results.netProfit > 0) {
-    goodIndicators.push('Positive cash flow');
-  }
+  // (No "positive cash flow" here — a flip has no cash flow until it sells)
   if (results.passes70Rule) {
     goodIndicators.push('Passes 70% Rule');
   }

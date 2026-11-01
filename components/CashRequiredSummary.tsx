@@ -183,7 +183,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
               <div>
                 <div className="text-xs font-bold text-orange-900 uppercase">4. Contingency Reserves</div>
                 <div className="text-[10px] text-orange-700 mt-0.5">
-                  Automatic: 15% of rehab budget, minimum $15,000 (lender requirement)
+                  Automatic: 15% of rehab budget, minimum $15,000 (per lender profile — verify)
                 </div>
               </div>
               <span className="text-base sm:text-lg font-bold text-orange-900">{formatCurrency(contingencyReserves)}</span>

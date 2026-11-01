@@ -83,6 +83,40 @@ export const BUILDERS_RISK_RATE = 0.75;
 export const builderRiskAnnualPremium = (purchasePrice: number, rehabBudget = 0, annualRatePercent = BUILDERS_RISK_RATE) =>
   Math.round(((purchasePrice || 0) + (rehabBudget || 0)) * (annualRatePercent / 100));
 
+/** Upfront premium for the hold: one year minimum, longer holds pay for the full term. */
+export const builderRiskTermPremium = (purchasePrice: number, rehabBudget = 0, annualRatePercent = BUILDERS_RISK_RATE, holdMonths = 12) =>
+  Math.round(builderRiskAnnualPremium(purchasePrice, rehabBudget, annualRatePercent) * Math.max(12, holdMonths || 0) / 12);
+
+/** The old homeowner auto-estimate ($8 per $100k/mo in PA ≈ $34 on $430k) — a saved value equal to it is a placeholder. */
+export const legacyHomeownerInsurance = (purchasePrice: number, state: string) =>
+  Math.round(((purchasePrice || 0) / 100000) * (getStateHoldingCosts(state)?.insurancePerMonthPer100k || 0));
+
+export type InsuranceMode = 'MONTHLY' | 'UPFRONT' | 'NONE';
+type InsuranceInputs = {
+  insurancePaymentMode?: InsuranceMode; includeMonthlyInsurance?: boolean; monthlyInsurance?: number;
+  monthlyInsuranceEstimated?: boolean; insuranceCost?: number; estimatedFields?: string[];
+  purchasePrice: number; rehabBudget: number; insuranceRatePercent?: number; state?: string; holdingPeriodMonths?: number;
+};
+
+/**
+ * Insurance is either/or — never both. Old deals without a choice: a real premium typed at closing (and no monthly
+ * policy) → upfront, otherwise monthly.
+ */
+export const insuranceModeOf = (i: InsuranceInputs): InsuranceMode =>
+  i.insurancePaymentMode ??
+  ((i.insuranceCost || 0) > 0 && !i.estimatedFields?.includes('insuranceCost') && !i.includeMonthlyInsurance ? 'UPFRONT' : 'MONTHLY');
+
+/** Monthly premium used: the user's number, or the builder's-risk estimate when it's blank / the old $34-style default. */
+export const monthlyInsuranceFor = (i: InsuranceInputs) => {
+  const m = i.monthlyInsurance || 0;
+  const placeholder = i.monthlyInsuranceEstimated || m === 0 || m === legacyHomeownerInsurance(i.purchasePrice, i.state || '');
+  return placeholder ? estimateMonthlyInsurance(i.purchasePrice, i.rehabBudget, i.insuranceRatePercent ?? BUILDERS_RISK_RATE) : m;
+};
+
+/** Premium paid at closing: the user's number, or the builder's-risk term estimate. */
+export const upfrontInsuranceFor = (i: InsuranceInputs) =>
+  (i.insuranceCost || 0) > 0 ? i.insuranceCost! : builderRiskTermPremium(i.purchasePrice, i.rehabBudget, i.insuranceRatePercent ?? BUILDERS_RISK_RATE, i.holdingPeriodMonths);
+
 // Replaces the old homeowner average ($8 per $100k/mo ≈ $34/mo on $430k), which is far too low for a vacant rehab
 export const estimateMonthlyInsurance = (purchasePrice: number, rehabBudget = 0, annualRatePercent = BUILDERS_RISK_RATE): number =>
   Math.round(builderRiskAnnualPremium(purchasePrice, rehabBudget, annualRatePercent) / 12);

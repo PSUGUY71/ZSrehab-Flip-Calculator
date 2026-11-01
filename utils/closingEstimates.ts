@@ -8,7 +8,7 @@
 import { LoanInputs } from '../types';
 import { getCountyThirdPartyCosts } from './thirdPartyCosts';
 import { getStateDefaults } from './stateDefaults';
-import { annualPropertyTax, builderRiskAnnualPremium, BUILDERS_RISK_RATE } from './stateHoldingCosts';
+import { annualPropertyTax, builderRiskTermPremium, BUILDERS_RISK_RATE, estimateMonthlyInsurance, insuranceModeOf, monthlyInsuranceFor } from './stateHoldingCosts';
 import { financingPercents, financedLoan } from './calculations';
 
 // Fields filled from the county cost table
@@ -34,16 +34,26 @@ export const ESTIMATE_FIELDS = [
  */
 export const likelyMissingCosts = (inp: LoanInputs): { field: string; label: string; hint: string }[] => {
   const financed = financedLoan(inp.purchasePrice, 0, financingPercents(inp)) > 0 && (inp.interestRate || 0) > 0;
-  const premium = builderRiskAnnualPremium(inp.purchasePrice, inp.rehabBudget, inp.insuranceRatePercent);
+  const rate = inp.insuranceRatePercent ?? BUILDERS_RISK_RATE;
+  const mode = insuranceModeOf(inp);
+  // Insurance is "not entered" when the active mode is running on the builder's-risk estimate
+  const insuranceMissing = mode === 'UPFRONT' ? !(inp.insuranceCost > 0) || !!inp.estimatedFields?.includes('insuranceCost')
+    : mode === 'MONTHLY' ? monthlyInsuranceFor(inp) === estimateMonthlyInsurance(inp.purchasePrice, inp.rehabBudget, rate) : false;
   const list = [
-    { field: 'appraisalCost', label: 'Appraisal', hint: 'typically $450–$800' },
-    { field: 'inspectionCost', label: 'Inspection', hint: 'typically $350–$600' },
-    { field: 'insuranceCost', label: 'Insurance premium at closing', hint: `builder's risk 0.5%–1%/yr of price + rehab (≈ ${'$' + premium.toLocaleString()} at ${inp.insuranceRatePercent ?? BUILDERS_RISK_RATE}%)` },
-    ...(financed ? [{ field: 'prepaidInterestAtClosing', label: 'Prepaid interest', hint: 'loan at closing × rate ÷ 365 × days to month-end' }] : []),
+    { field: 'appraisalCost', label: 'Appraisal', hint: 'typically $450–$800', missing: !(inp.appraisalCost > 0) },
+    { field: 'inspectionCost', label: 'Inspection', hint: 'typically $350–$600', missing: !(inp.inspectionCost > 0) },
+    { field: mode === 'UPFRONT' ? 'insuranceCost' : 'monthlyInsurance', label: mode === 'UPFRONT' ? 'Insurance premium at closing' : 'Monthly insurance',
+      hint: `using builder's-risk estimate ${'$' + (mode === 'UPFRONT'
+        ? builderRiskTermPremium(inp.purchasePrice, inp.rehabBudget, rate, inp.holdingPeriodMonths)
+        : estimateMonthlyInsurance(inp.purchasePrice, inp.rehabBudget, rate) + '/mo').toLocaleString()} (0.5%–1%/yr of price + rehab) — get a quote`,
+      missing: insuranceMissing },
+    ...(financed ? [{ field: 'prepaidInterestAtClosing', label: 'Prepaid interest', hint: 'loan at closing × rate ÷ 365 × days to month-end', missing: !(inp.prepaidInterestAtClosing > 0) }] : []),
   ];
-  return list.filter((c) => !((inp as any)[c.field] > 0));
+  return list.filter((c) => c.missing).map(({ missing, ...c }) => c);
 };
 export type EstimateField = typeof ESTIMATE_FIELDS[number];
+// ponytail: a typed $0 in an auto field is re-estimated (can't tell "blank" from "0"); enter $1 to force near-zero.
+export const AUTO_FIELDS = ['prepaidInterestAtClosing'] as const;
 
 const DAY = 86_400_000;
 const daysInclusive = (from: Date, to: Date) => Math.max(0, Math.round((to.getTime() - from.getTime()) / DAY) + 1);
@@ -83,7 +93,7 @@ export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number>
     schoolTaxAtClosing: r(annualTax * TAX_SHARE.school * left.school),
     // Loan at closing × rate ÷ 365 × days to month-end (15 days when no closing date yet)
     prepaidInterestAtClosing: r(loanAtClosing * ((inp.interestRate || 0) / 100) / 365 * left.monthDays),
-    insuranceCost: builderRiskAnnualPremium(price, inp.rehabBudget, inp.insuranceRatePercent),
+    insuranceCost: builderRiskTermPremium(price, inp.rehabBudget, inp.insuranceRatePercent, inp.holdingPeriodMonths),
     ...FLAT,
   };
 };
@@ -93,14 +103,28 @@ export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number>
  * No-op in HIDEOUT mode (real HUD numbers) or before a state is chosen.
  */
 export const withEstimates = (inp: LoanInputs, seed = false): LoanInputs => {
-  if (inp.appVersion === 'HIDEOUT' || !inp.state) return inp;
+  if (inp.appVersion === 'HIDEOUT') return inp;
   const est = new Set(inp.estimatedFields || []);
-  if (seed) ESTIMATE_FIELDS.forEach((f) => { if (!(inp as any)[f]) est.add(f); });
+  // Auto fields estimate themselves whenever blank — no state needed (prepaid interest is just loan × rate × days)
+  AUTO_FIELDS.forEach((f) => { if (!(inp as any)[f]) est.add(f); });
+  if (!inp.state) {
+    // Without a state only the auto fields can be estimated
+    [...est].forEach((f) => { if (!(AUTO_FIELDS as readonly string[]).includes(f)) est.delete(f); });
+  } else if (seed) ESTIMATE_FIELDS.forEach((f) => { if (!(inp as any)[f]) est.add(f); });
   if (est.size === 0 && !inp.estimatedFields) return inp;
   const values = computeEstimates(inp);
   const updated: any = { ...inp, estimatedFields: [...est] };
   est.forEach((f) => { if (f in values) updated[f] = values[f as EstimateField]; });
   return updated;
+};
+
+/** withEstimates(), but returns the SAME object when nothing changed — safe to run from an effect on every render. */
+export const refreshEstimates = (inp: LoanInputs): LoanInputs => {
+  const next = withEstimates(inp);
+  if (next === inp) return inp;
+  const same = (next.estimatedFields || []).join() === (inp.estimatedFields || []).join() &&
+    ESTIMATE_FIELDS.every((f) => Object.is((next as any)[f], (inp as any)[f])); // Object.is: NaN = NaN, no effect loop
+  return same ? inp : next;
 };
 
 /** Field typed by the user → it's a real number now. */

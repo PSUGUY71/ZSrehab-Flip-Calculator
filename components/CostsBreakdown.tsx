@@ -59,7 +59,7 @@ export const CostsBreakdown: React.FC<CostsBreakdownProps> = ({ results, inputs 
         <div className="space-y-1 text-xs">
           <Row label="Loan Interest (progressive draws)" value={h.interest} />
           <Row label="Utilities (electric, internet, propane)" value={h.utilities} />
-          <Row label={`Insurance${results.insuranceMonthsPrepaid > 0 ? ` (after ${results.insuranceMonthsPrepaid} mo prepaid at closing)` : ''}`} value={h.insurance} />
+          <Row label="Insurance (paid monthly)" value={h.insurance} />
           <Row label="Property Taxes" value={h.taxes} />
           <Row label="Water / Sewer (yearly)" value={h.water} />
           <Row label="Dues (yearly)" value={h.dues} />

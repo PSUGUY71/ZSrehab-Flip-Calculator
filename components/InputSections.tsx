@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
-import { formatCurrency, financingPercents, financedLoan, requiredArvFor, taxTreatmentRate, TaxTreatment, PREPAID_INSURANCE_MONTHS } from '../utils/calculations';
+import { formatCurrency, financingPercents, financedLoan, requiredArvFor, taxTreatmentRate, TaxTreatment } from '../utils/calculations';
 import { RehabLineItems } from './RehabLineItems';
 import { HelpTooltip } from './HelpTooltip';
 import { estimateHoldingCosts, BUILDERS_RISK_RATE, builderRiskAnnualPremium } from '../utils/stateHoldingCosts';
@@ -190,6 +190,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       if (!inputs.includeMonthlyInsurance && inputs.monthlyInsurance === 0) {
         onInputChange('includeMonthlyInsurance', true);
         onInputChange('monthlyInsurance', estimates.monthlyInsurance);
+        onInputChange('monthlyInsuranceEstimated', true);
       }
       
       if (!inputs.includeMonthlyTaxes && inputs.monthlyTaxes === 0) {
@@ -1237,7 +1238,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               estimated={isEst('insuranceCost')}
               onChange={(v) => onInputChange('insuranceCost', v)}
               prefix="$"
-              helpText={`First-year / term builder's risk premium, paid at closing (counts in Cash to Close). Covers the first ${PREPAID_INSURANCE_MONTHS} months — monthly holding insurance only counts after that. Estimate: (purchase + rehab) × ${inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE}%/yr = ${formatCurrency(builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE))}.`}
+              helpText={`Term builder's risk premium. Only counted when Insurance is set to "Paid upfront at closing" (Holding Cost Options) — then it's in Closing Costs / Due at Closing and no monthly insurance is charged. Currently: ${results.insuranceMode === 'UPFRONT' ? 'paid upfront' : results.insuranceMode === 'MONTHLY' ? 'paid monthly (this field is ignored)' : 'none'}.`}
             />
             <InputGroup 
               label="Transfer Tax Rate" 
@@ -2169,52 +2170,76 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           {/* Optional Monthly Costs */}
           <div className="mt-4 space-y-3">
             <h3 className="text-xs font-bold text-gray-600 uppercase mb-2">Holding Cost Options</h3>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="includeMonthlyInsurance"
-                checked={inputs.includeMonthlyInsurance}
-                onChange={(e) => onInputChange('includeMonthlyInsurance', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="includeMonthlyInsurance" className="text-sm font-semibold text-gray-700 cursor-pointer flex-1">
-                Add Monthly Insurance
-                <span className="text-xs text-blue-600 font-normal ml-2">
-                  (Builder's risk est: {formatCurrency(Math.round(builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE) / 12))}/mo)
-                </span>
-              </label>
-            </div>
-            {inputs.includeMonthlyInsurance && (() => {
+            {/* Insurance — either/or: paid monthly OR paid upfront at closing, never both */}
+            {(() => {
               const rate = inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE;
               const annual = builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, rate);
               const monthlyEst = Math.round(annual / 12);
+              const mode = results.insuranceMode;
+              const setMode = (m: 'MONTHLY' | 'UPFRONT' | 'NONE') => {
+                onInputChange('insurancePaymentMode', m);
+                onInputChange('includeMonthlyInsurance', m === 'MONTHLY');
+              };
+              const usingEstimate = mode === 'MONTHLY' && Math.abs(results.monthlyInsuranceUsed - monthlyEst) < 0.5;
               return (
-              <div className="ml-6 space-y-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <InputGroup
-                    label="Monthly Insurance"
-                    id="monthlyInsurance"
-                    value={inputs.monthlyInsurance}
-                    onChange={(v) => {
-                      const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
-                      onInputChange('monthlyInsurance', Math.max(0, numValue));
-                    }}
-                    prefix="$"
-                    helpText={`Builder's risk / vacant-property policy, not a homeowner policy. Basis: (purchase ${formatCurrency(inputs.purchasePrice)} + rehab ${formatCurrency(inputs.rehabBudget)}) × ${rate}%/yr = ${formatCurrency(annual)}/yr ≈ ${formatCurrency(monthlyEst)}/mo. Typical 0.5%–1%/yr. If you prepay a premium at closing, those months aren't charged again here.`}
-                  />
-                  <InputGroup
-                    label="Insurance Rate %/yr"
-                    id="insuranceRatePercent"
-                    value={rate}
-                    onChange={(v) => onInputChange('insuranceRatePercent', v)}
-                    suffix="%"
-                    helpText="Builder's risk / vacant rate on purchase + rehab per year (typical 0.5%–1%)"
-                  />
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-gray-700">
+                  Insurance <span className="text-xs text-blue-600 font-normal ml-1">(builder's risk est: {formatCurrency(monthlyEst)}/mo · {formatCurrency(annual)}/yr)</span>
                 </div>
-                {Math.abs((inputs.monthlyInsurance || 0) - monthlyEst) > 1 && monthlyEst > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {([['MONTHLY', 'Paid monthly'], ['UPFRONT', 'Paid upfront at closing'], ['NONE', 'None (blanket policy)']] as const).map(([m, label]) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMode(m)}
+                      className={`flex-1 py-1.5 px-2 rounded-md text-xs font-semibold ${mode === m ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {mode === 'MONTHLY' && (
+                    <InputGroup
+                      label="Monthly Insurance"
+                      id="monthlyInsurance"
+                      value={results.monthlyInsuranceUsed}
+                      estimated={usingEstimate}
+                      onChange={(v) => {
+                        const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
+                        onInputChange('monthlyInsurance', Math.max(0, numValue));
+                        onInputChange('monthlyInsuranceEstimated', false);
+                      }}
+                      prefix="$"
+                      helpText={`Builder's risk / vacant-property policy, not a homeowner policy. Basis: (purchase ${formatCurrency(inputs.purchasePrice)} + rehab ${formatCurrency(inputs.rehabBudget)}) × ${rate}%/yr = ${formatCurrency(annual)}/yr ≈ ${formatCurrency(monthlyEst)}/mo. Typical 0.5%–1%/yr. Blank or the old homeowner default → this estimate is used.`}
+                    />
+                  )}
+                  {mode === 'UPFRONT' && (
+                    <InputGroup
+                      label="Premium Paid at Closing"
+                      id="insuranceCostUpfront"
+                      value={results.insuranceCost}
+                      estimated={!(inputs.insuranceCost > 0) || isEst('insuranceCost')}
+                      onChange={(v) => onInputChange('insuranceCost', v)}
+                      prefix="$"
+                      helpText={`Term builder's risk premium, in Closing Costs and Due at Closing. Estimate: ${formatCurrency(annual)}/yr × max(12, ${inputs.holdingPeriodMonths || 0}) months ÷ 12. No monthly insurance is charged in this mode.`}
+                    />
+                  )}
+                  {mode !== 'NONE' && (
+                    <InputGroup
+                      label="Insurance Rate %/yr"
+                      id="insuranceRatePercent"
+                      value={rate}
+                      onChange={(v) => onInputChange('insuranceRatePercent', v)}
+                      suffix="%"
+                      helpText="Builder's risk / vacant rate on purchase + rehab per year (typical 0.5%–1%)"
+                    />
+                  )}
+                </div>
+                {mode === 'MONTHLY' && !usingEstimate && monthlyEst > 0 && (
                   <button
                     type="button"
-                    onClick={() => onInputChange('monthlyInsurance', monthlyEst)}
+                    onClick={() => { onInputChange('monthlyInsurance', monthlyEst); onInputChange('monthlyInsuranceEstimated', true); }}
                     className="text-[11px] text-blue-700 underline"
                   >
                     Use builder's risk estimate ({formatCurrency(monthlyEst)}/mo)
@@ -2661,13 +2686,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               <div className="flex justify-between items-center text-sm pt-2 border-t border-blue-200">
                 <div className="flex flex-col">
                   <span className="text-gray-700 font-semibold">Total Monthly Cost</span>
-                  <span className="text-[10px] text-gray-500">Payment + Electric (Insurance & Taxes in Payment)</span>
+                  <span className="text-[10px] text-gray-500">Payment + Electric{inputs.loanType !== 'HARD_MONEY' && inputs.includePITI ? ' (Insurance & Taxes in Payment)' : ''}</span>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-blue-600 text-base">
                     {formatCurrency(
-                      results.monthlyPayment + 
-                      (inputs.includeMonthlyInsurance ? (inputs.monthlyInsurance || 0) : 0) + 
+                      results.monthlyPayment +
+                      (results.insuranceMode === 'MONTHLY' ? (inputs.monthlyInsurance || 0) : 0) +
                       (inputs.includeMonthlyTaxes ? (inputs.monthlyTaxes || 0) : 0) +
                       (inputs.monthlyElectric || 0)
                     )}
@@ -2699,8 +2724,10 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               {/* Grand Total */}
               <div className="border-t border-blue-300 pt-2 mt-2 flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span className="font-bold text-blue-900 uppercase text-sm">Grand Total (Annual)</span>
-                  <span className="text-[10px] text-gray-500">Includes one-time fees (water & dues)</span>
+                  <span className="font-bold text-blue-900 uppercase text-sm">Total Over Hold</span>
+                  {(results.yearlyWaterCost > 0 || results.yearlyDuesCost > 0) && (
+                    <span className="text-[10px] text-gray-500">Includes one-time fees (water & dues)</span>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-blue-700 text-lg">{formatCurrency(results.totalHoldingCosts)}</div>

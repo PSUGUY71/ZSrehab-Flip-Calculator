@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { AIProvider, PROVIDERS, KEY_FIELD, DEFAULT_OMNIROUTE_URL, getAIConfig } from '../utils/aiProvider';
 import { listModels } from '../utils/aiClient';
+import { DEFAULT_MARGIN_TARGET } from '../utils/dealVerdict';
 
 export interface UserPreferences {
   displayName: string;
@@ -31,6 +32,7 @@ export interface UserPreferences {
   rentcastApiKey?: string; // RentCast property records (free plan 50/month); Philadelphia lookups need no key
   // App Mode
   hideoutModeEnabled: boolean; // Show Hideout version selector in nav
+  targetProfitMarginPercent?: number; // Net profit ÷ ARV target for the verdict + sensitivity tables (default 12)
 }
 
 interface UserSettingsProps {
@@ -596,6 +598,28 @@ export const UserSettings: React.FC<UserSettingsProps> = ({
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">Used for after-tax profit calculations</p>
+            </div>
+
+            <div>
+              <label htmlFor="marginTarget" className="block text-xs font-semibold text-gray-700 mb-1">
+                Profit Margin Target (% of ARV)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  id="marginTarget"
+                  type="range"
+                  min="0"
+                  max="40"
+                  step="1"
+                  value={formData.targetProfitMarginPercent ?? DEFAULT_MARGIN_TARGET}
+                  onChange={(e) => handleChange('targetProfitMarginPercent', parseInt(e.target.value))}
+                  className="flex-1"
+                />
+                <span className="text-sm font-bold text-amber-600 w-12 text-right">
+                  {formData.targetProfitMarginPercent ?? DEFAULT_MARGIN_TARGET}%
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Deal verdict and sensitivity tables flag net profit below this share of ARV</p>
             </div>
 
             <div>

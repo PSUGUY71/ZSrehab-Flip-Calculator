@@ -134,8 +134,10 @@ export interface LoanInputs {
   // Additional Costs
   inspectionCost: number; // Property inspection cost
   appraisalCost: number; // Property appraisal cost
-  insuranceCost: number; // Insurance premium paid at closing (first-year / term builder's risk) — covers the first 12 months
+  insuranceCost: number; // Insurance premium paid upfront at closing (first-year / term builder's risk) — only counted in UPFRONT mode
   insuranceRatePercent?: number; // Builder's risk / vacant rate on (purchase + rehab) per year (default 0.75)
+  insurancePaymentMode?: 'MONTHLY' | 'UPFRONT' | 'NONE'; // Paid monthly vs paid upfront at closing (never both); NONE = blanket policy
+  monthlyInsuranceEstimated?: boolean; // monthlyInsurance holds the builder's-risk estimate (cleared when the user types one)
   otherThirdPartyFees: number; // Catch-all for other 3rd party fees
 
   // Third-Party Cost Range Estimator
@@ -375,7 +377,8 @@ export interface CalculatedResults {
   holdingBreakdown: { interest: number; utilities: number; insurance: number; taxes: number; water: number; dues: number }; // sums to totalHoldingCosts
   acquisitionBreakdown: { lenderFees: number; transferTax: number; titleInsurance: number; taxProrations: number; insurancePremium: number; otherClosing: number; prepaidInspections: number; sellerConcession: number };
   totalAcquisitionCosts: number; // Sum of acquisitionBreakdown; + holding + exit = ARV − price − rehab − net profit
-  insuranceMonthsPrepaid: number; // Months covered by the insurance premium paid at closing (not charged again monthly)
+  insuranceMode: 'MONTHLY' | 'UPFRONT' | 'NONE'; // Insurance is either/or — see insuranceModeOf()
+  monthlyInsuranceUsed: number; // Monthly premium counted in holding (0 unless MONTHLY)
   cashRunwayMonth: number | null; // Month the money runs out (0 = short at closing), null if it lasts
   monthlyCashOut: number[]; // Your cash spent each month after closing
   rehabContingency: number; // 15% of rehab budget (automatic)

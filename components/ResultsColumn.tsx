@@ -12,6 +12,7 @@ import { SellerNetAnalysis } from './SellerNetAnalysis';
 import { CashRequiredSummary } from './CashRequiredSummary';
 import { RealismCheckPanel } from './RealismCheckPanel';
 import { DealViabilityIndicator } from './DealViabilityIndicator';
+import { cashShortIssue } from '../utils/dealVerdict';
 
 interface LenderComparisonResult {
   lenderUpfrontFeesAdjusted: number;
@@ -38,6 +39,7 @@ interface ResultsColumnProps {
   bestOverallLender?: string | null;
   originalBaselineLenderName?: string | null;
   onToggleContingency?: () => void;
+  marginTarget?: number; // profit margin target % of ARV (Settings)
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
   onRestoreBaseline?: () => void;
@@ -60,6 +62,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   bestOverallLender,
   originalBaselineLenderName,
   onToggleContingency,
+  marginTarget,
   onAddLender,
   onApplyLender,
   onRestoreBaseline,
@@ -82,6 +85,8 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
           arv={inputs.arv}
           purchasePrice={inputs.purchasePrice}
           afterTaxProfit={results.netProfitAfterTax}
+          cashIssue={cashShortIssue(inputs.liquidity, results)}
+          marginTarget={marginTarget}
         />
 
         {/* Eligibility Alert */}
@@ -143,7 +148,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
 
         {/* Sensitivity Analysis */}
         <div className="bg-gray-50 rounded-xl p-2">
-          <SensitivityAnalysis results={results} />
+          <SensitivityAnalysis results={results} marginTarget={marginTarget} />
         </div>
 
         {/* Seller Net Analysis */}

@@ -109,14 +109,14 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-700">Monthly Payment</span>
-                <span className="text-[10px] text-gray-500">Interest + Insurance + Taxes</span>
+                <span className="text-sm font-semibold text-gray-700">Monthly Carrying Cost</span>
+                <span className="text-[10px] text-gray-500">Loan payment{results.insuranceMode === 'MONTHLY' ? ' + insurance' : ''}{inputs.includeMonthlyTaxes ? ' + taxes' : ''}</span>
               </div>
               <div className="text-right">
                 <span className="text-lg sm:text-xl font-bold text-amber-600">
                   {formatCurrency(
-                    results.monthlyPayment + 
-                    (inputs.includeMonthlyInsurance ? (inputs.monthlyInsurance || 0) : 0) + 
+                    results.monthlyPayment +
+                    (results.insuranceMode === 'MONTHLY' ? (inputs.monthlyInsurance || 0) : 0) +
                     (inputs.includeMonthlyTaxes ? (inputs.monthlyTaxes || 0) : 0)
                   )}
                 </span>
@@ -130,7 +130,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                 <span className="text-gray-600">Interest</span>
                 <span className="text-gray-700 font-medium">{formatCurrency(results.monthlyPayment)}</span>
               </div>
-              {inputs.includeMonthlyInsurance && (
+              {results.insuranceMode === 'MONTHLY' && (
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-600">Insurance</span>
                   <span className="text-gray-700 font-medium">{formatCurrency(inputs.monthlyInsurance || 0)}</span>

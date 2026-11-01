@@ -134,7 +134,7 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
         {/* Every other component of Total Holding (results.holdingBreakdown sums to it) */}
         {([
           ['Utilities', results.holdingBreakdown.utilities, 'electric, internet, propane'],
-          ['Insurance', results.holdingBreakdown.insurance, results.insuranceMonthsPrepaid > 0 ? `after ${results.insuranceMonthsPrepaid} mo prepaid at closing` : 'monthly policy'],
+          ['Insurance', results.holdingBreakdown.insurance, `${formatCurrency(results.monthlyInsuranceUsed)} / mo`],
           ['Property Taxes', results.holdingBreakdown.taxes, 'monthly'],
           ['Water / Sewer', results.holdingBreakdown.water, 'yearly'],
           ['Dues', results.holdingBreakdown.dues, 'yearly'],

@@ -4,7 +4,7 @@ import { calculateLoan, financingPercents, financedLoan } from './utils/calculat
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
-import { applyCountyCosts, withEstimates, markReal } from './utils/closingEstimates';
+import { applyCountyCosts, withEstimates, markReal, refreshEstimates } from './utils/closingEstimates';
 import { getAIConfig } from './utils/aiProvider';
 import { paTransferTaxShares } from './utils/paTransferTax';
 import type { DocImportKind } from './components/LenderDocImportModal';
@@ -498,6 +498,7 @@ const App: React.FC = () => {
         if (!prev.includeMonthlyInsurance && prev.monthlyInsurance === 0) {
           updated.includeMonthlyInsurance = true;
           updated.monthlyInsurance = estimateMonthlyInsurance(prev.purchasePrice, prev.rehabBudget, prev.insuranceRatePercent);
+          updated.monthlyInsuranceEstimated = true; // follows price / rehab until the user types a number
           changed = true;
         }
         
@@ -512,6 +513,11 @@ const App: React.FC = () => {
       });
     }
   }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice]);
+
+  // Loaded / restored / cloned deals get their auto estimates too (e.g. prepaid interest) — no-op when nothing changes
+  useEffect(() => {
+    setInputs((prev) => refreshEstimates(prev));
+  }, [inputs]);
 
   // --- CALCULATIONS ---
   const results = useMemo(() => calculateLoan(inputs), [inputs]);
@@ -1438,6 +1444,7 @@ const App: React.FC = () => {
             bestCashToClose={bestCashToClose}
             bestOverallLender={bestOverallLender}
             originalBaselineLenderName={originalBaselineLenderName}
+            marginTarget={userPreferences.targetProfitMarginPercent}
             onToggleContingency={() => setInputs((p) => ({ ...p, includeContingencyInCashNeeded: !p.includeContingencyInCashNeeded }))}
             onAddLender={handleAddLender}
             onApplyLender={handleApplyLender}
