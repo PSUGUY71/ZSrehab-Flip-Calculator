@@ -134,7 +134,8 @@ export interface LoanInputs {
   // Additional Costs
   inspectionCost: number; // Property inspection cost
   appraisalCost: number; // Property appraisal cost
-  insuranceCost: number; // Insurance cost
+  insuranceCost: number; // Insurance premium paid at closing (first-year / term builder's risk) — covers the first 12 months
+  insuranceRatePercent?: number; // Builder's risk / vacant rate on (purchase + rehab) per year (default 0.75)
   otherThirdPartyFees: number; // Catch-all for other 3rd party fees
 
   // Third-Party Cost Range Estimator
@@ -371,6 +372,8 @@ export interface CalculatedResults {
   requiredLiquidity: number; // Lender's minimum proof of funds — NOT your total cash need
   totalCashNeeded: number; // EMD + other prepaid + due at closing + rehab not covered by loan + holding costs (+ contingency if toggled)
   cashShortfall: number; // totalCashNeeded − liquidity (0 if you have enough)
+  holdingBreakdown: { interest: number; utilities: number; insurance: number; taxes: number; water: number; dues: number }; // sums to totalHoldingCosts
+  insuranceMonthsPrepaid: number; // Months covered by the insurance premium paid at closing (not charged again monthly)
   cashRunwayMonth: number | null; // Month the money runs out (0 = short at closing), null if it lasts
   monthlyCashOut: number[]; // Your cash spent each month after closing
   rehabContingency: number; // 15% of rehab budget (automatic)

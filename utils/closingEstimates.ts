@@ -8,7 +8,8 @@
 import { LoanInputs } from '../types';
 import { getCountyThirdPartyCosts } from './thirdPartyCosts';
 import { getStateDefaults } from './stateDefaults';
-import { annualPropertyTax } from './stateHoldingCosts';
+import { annualPropertyTax, builderRiskAnnualPremium, BUILDERS_RISK_RATE } from './stateHoldingCosts';
+import { financingPercents, financedLoan } from './calculations';
 
 // Fields filled from the county cost table
 export const COUNTY_FIELDS = [
@@ -23,9 +24,25 @@ const FLAT = { domesticLienSearch: 50, patriotActSearch: 25, radonInspection: 15
 export const ESTIMATE_FIELDS = [
   ...COUNTY_FIELDS,
   'countyTaxProration', 'municipalTaxProration', 'schoolTaxAtClosing',
-  'prepaidInterestAtClosing',
+  'prepaidInterestAtClosing', 'insuranceCost',
   'domesticLienSearch', 'patriotActSearch', 'radonInspection',
 ] as const;
+
+/**
+ * Costs nearly every financed flip pays. Any still at $0 is flagged "not entered — likely due" with a typical range.
+ * Prepaid interest is only expected when there's a loan and a rate.
+ */
+export const likelyMissingCosts = (inp: LoanInputs): { field: string; label: string; hint: string }[] => {
+  const financed = financedLoan(inp.purchasePrice, 0, financingPercents(inp)) > 0 && (inp.interestRate || 0) > 0;
+  const premium = builderRiskAnnualPremium(inp.purchasePrice, inp.rehabBudget, inp.insuranceRatePercent);
+  const list = [
+    { field: 'appraisalCost', label: 'Appraisal', hint: 'typically $450–$800' },
+    { field: 'inspectionCost', label: 'Inspection', hint: 'typically $350–$600' },
+    { field: 'insuranceCost', label: 'Insurance premium at closing', hint: `builder's risk 0.5%–1%/yr of price + rehab (≈ ${'$' + premium.toLocaleString()} at ${inp.insuranceRatePercent ?? BUILDERS_RISK_RATE}%)` },
+    ...(financed ? [{ field: 'prepaidInterestAtClosing', label: 'Prepaid interest', hint: 'loan at closing × rate ÷ 365 × days to month-end' }] : []),
+  ];
+  return list.filter((c) => !((inp as any)[c.field] > 0));
+};
 export type EstimateField = typeof ESTIMATE_FIELDS[number];
 
 const DAY = 86_400_000;
@@ -51,8 +68,8 @@ export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number>
   const price = inp.purchasePrice || 0;
   const annualTax = annualPropertyTax(inp).amount; // listing's tax bill, else county rate × price, else state rate
   const left = remaining(inp.closingDate);
-  const financing = inp.useCustomFinancing ? inp.customFinancingPercentage : inp.financingPercentage;
-  const loanAtClosing = price * ((financing || 0) / 100);
+  // Loan funded at closing = the purchase part only (rehab comes later in draws)
+  const loanAtClosing = financedLoan(price, 0, financingPercents(inp));
   const r = Math.round;
   return {
     inspectionCost: c.inspectionCost,
@@ -64,7 +81,9 @@ export const computeEstimates = (inp: LoanInputs): Record<EstimateField, number>
     countyTaxProration: r(annualTax * TAX_SHARE.county * left.year),
     municipalTaxProration: r(annualTax * TAX_SHARE.municipal * left.year),
     schoolTaxAtClosing: r(annualTax * TAX_SHARE.school * left.school),
-    prepaidInterestAtClosing: r(loanAtClosing * ((inp.interestRate || 0) / 100) / 360 * left.monthDays),
+    // Loan at closing × rate ÷ 365 × days to month-end (15 days when no closing date yet)
+    prepaidInterestAtClosing: r(loanAtClosing * ((inp.interestRate || 0) / 100) / 365 * left.monthDays),
+    insuranceCost: builderRiskAnnualPremium(price, inp.rehabBudget, inp.insuranceRatePercent),
     ...FLAT,
   };
 };

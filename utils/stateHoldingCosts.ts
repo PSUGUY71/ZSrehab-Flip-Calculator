@@ -78,12 +78,14 @@ export const getStateHoldingCosts = (state: string): StateHoldingCosts | null =>
   return HOLDING_COSTS_BY_STATE[state] || HOLDING_COSTS_BY_STATE['PA']; // Default to PA if state not found
 };
 
-export const estimateMonthlyInsurance = (purchasePrice: number, state: string): number => {
-  const stateCosts = getStateHoldingCosts(state);
-  if (!stateCosts) return 0;
-  // Calculate: (purchasePrice / 100000) * insurancePerMonthPer100k
-  return Math.round((purchasePrice / 100000) * stateCosts.insurancePerMonthPer100k);
-};
+/** Builder's risk / vacant-property insurance: typically 0.5%–1% of (purchase + rehab) per year. */
+export const BUILDERS_RISK_RATE = 0.75;
+export const builderRiskAnnualPremium = (purchasePrice: number, rehabBudget = 0, annualRatePercent = BUILDERS_RISK_RATE) =>
+  Math.round(((purchasePrice || 0) + (rehabBudget || 0)) * (annualRatePercent / 100));
+
+// Replaces the old homeowner average ($8 per $100k/mo ≈ $34/mo on $430k), which is far too low for a vacant rehab
+export const estimateMonthlyInsurance = (purchasePrice: number, rehabBudget = 0, annualRatePercent = BUILDERS_RISK_RATE): number =>
+  Math.round(builderRiskAnnualPremium(purchasePrice, rehabBudget, annualRatePercent) / 12);
 
 /**
  * Yearly property tax for the deal: the actual bill if the user entered it (from the listing), otherwise
@@ -129,8 +131,10 @@ export const estimateHoldingCosts = (
   existingMonthlyElectric: number = 0,
   county?: string,
   actualAnnualTax?: number,
+  rehabBudget = 0,
+  insuranceRatePercent = BUILDERS_RISK_RATE,
 ): HoldingCostEstimates => {
-  const monthlyInsurance = estimateMonthlyInsurance(purchasePrice, state);
+  const monthlyInsurance = estimateMonthlyInsurance(purchasePrice, rehabBudget, insuranceRatePercent);
   const monthlyTaxes = estimateMonthlyTax(purchasePrice, state, county, actualAnnualTax);
   // Use existing electric if provided, otherwise estimate based on region
   const monthlyUtilities = existingMonthlyElectric > 0 

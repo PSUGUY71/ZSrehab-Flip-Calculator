@@ -1,6 +1,8 @@
 // Unit tests on the reference deal: rehab financing %, max offer, required ARV, total cash needed / runway, taxes.
 // Run: npm test
 import { calculateLoan, financingPercents, financedLoan, maxOfferFor, requiredArvFor, taxTreatmentRate } from './calculations';
+import { builderRiskAnnualPremium, estimateMonthlyInsurance } from './stateHoldingCosts';
+import { computeEstimates, likelyMissingCosts } from './closingEstimates';
 import { DEFAULT_INPUTS, LoanInputs } from '../types';
 
 let failed = 0;
@@ -82,6 +84,29 @@ is(calculateLoan({ ...deal, taxTreatment: 'LONG_TERM' }).taxTreatmentUsed === 'S
 eq(calculateLoan({ ...deal, holdingPeriodMonths: 13 }).effectiveTaxRate, 15 + 3.07, '13-month hold defaults to long-term 15% + 3.07%');
 eq(taxTreatmentRate({ holdingPeriodMonths: 6, taxTreatment: 'DEALER', includeSelfEmploymentTax: true }).rate, 24 + 3.07 + 15.3, 'dealer + SE tax');
 eq(taxTreatmentRate({ holdingPeriodMonths: 6, taxTreatment: 'DEALER' }).rate, 27.07, 'dealer without SE tax');
+
+// --- 4. Insurance: builder's risk on (price + rehab), premium at closing ---
+eq(builderRiskAnnualPremium(430000, 144000), 4305, "builder's risk premium = 574,000 × 0.75%");
+eq(estimateMonthlyInsurance(430000, 144000), 359, 'monthly insurance estimate (was $34 homeowner average)');
+eq(estimateMonthlyInsurance(430000, 144000, 1), Math.round(5740 / 12), 'user-editable rate (1%)');
+const insured = { ...deal, includeMonthlyInsurance: true, monthlyInsurance: 359 } as LoanInputs;
+eq(calculateLoan(insured).totalHoldingCosts, 51864 + 359 * 12, 'monthly insurance counts in holding');
+const prepaidIns = calculateLoan({ ...insured, insuranceCost: 4305 });
+eq(prepaidIns.totalCashToClose, 53310.52 + 4305, 'premium paid at closing adds to Due at Closing');
+eq(prepaidIns.holdingBreakdown.insurance, 0, 'prepaid 12-month premium → no monthly insurance in a 12-month hold');
+eq(calculateLoan({ ...insured, insuranceCost: 4305, holdingPeriodMonths: 14 }).holdingBreakdown.insurance, 2 * 359, 'months 13–14 charged monthly');
+
+// --- 5. Closing cost gaps ---
+const pa = { ...deal, state: 'PA' } as LoanInputs;
+eq(computeEstimates({ ...pa, closingDate: '2026-11-21' }).prepaidInterestAtClosing, Math.round(387000 * 0.0925 / 365 * 10), 'prepaid interest = 387,000 × 9.25% ÷ 365 × 10 days (Nov 21–30)');
+eq(computeEstimates({ ...pa, closingDate: '' }).prepaidInterestAtClosing, Math.round(387000 * 0.0925 / 365 * 15), 'no closing date → 15 days');
+eq(computeEstimates(pa).insuranceCost, 4305, 'insurance premium estimate');
+const withPrepaid = calculateLoan({ ...deal, prepaidInterestAtClosing: 1471 });
+eq(withPrepaid.totalCashToClose, 53310.52 + 1471, 'prepaid interest is in Due at Closing');
+const missing = likelyMissingCosts(deal).map((m) => m.field).sort().join(',');
+is(missing === 'appraisalCost,inspectionCost,insuranceCost,prepaidInterestAtClosing', `4 likely costs not entered (${missing})`);
+is(likelyMissingCosts({ ...deal, appraisalCost: 600, inspectionCost: 450, insuranceCost: 4305, prepaidInterestAtClosing: 1471 }).length === 0, 'none flagged once entered');
+is(!likelyMissingCosts({ ...deal, interestRate: 0 }).some((m) => m.field === 'prepaidInterestAtClosing'), 'no prepaid interest flag without a rate');
 
 if (failed) { console.error(`${failed} check(s) failed`); process.exit(1); }
 console.log('All deal-case checks passed');

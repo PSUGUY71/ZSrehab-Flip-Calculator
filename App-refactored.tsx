@@ -497,7 +497,7 @@ const App: React.FC = () => {
         // Auto-check insurance if unchecked and no value set
         if (!prev.includeMonthlyInsurance && prev.monthlyInsurance === 0) {
           updated.includeMonthlyInsurance = true;
-          updated.monthlyInsurance = estimateMonthlyInsurance(prev.purchasePrice, prev.state);
+          updated.monthlyInsurance = estimateMonthlyInsurance(prev.purchasePrice, prev.rehabBudget, prev.insuranceRatePercent);
           changed = true;
         }
         

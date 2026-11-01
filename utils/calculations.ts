@@ -23,6 +23,9 @@ export const maxOfferFor = (arv: number, ltv: number, rehabBudget: number, pct: 
 export const requiredArvFor = (purchasePrice: number, rehabBudget: number, pct: { purchase: number; rehab: number }, ltv: number) =>
   purchasePrice > 0 && ltv > 0 ? financedLoan(purchasePrice, rehabBudget, pct) / ltv : 0;
 
+/** A builder's risk premium paid at closing is a 12-month term. */
+export const PREPAID_INSURANCE_MONTHS = 12;
+
 export type TaxTreatment = 'SHORT_TERM' | 'LONG_TERM' | 'DEALER';
 
 /**
@@ -553,10 +556,15 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
 
   // 10. Profitability Analysis
   // Calculate total monthly utilities and optional costs
-  const totalMonthlyUtilities = monthlyElectric + 
-    monthlyInternet + 
-    monthlyPropane + 
-    (includeMonthlyInsurance ? monthlyInsurance : 0) + 
+  // Insurance premium paid at closing covers the first PREPAID_INSURANCE_MONTHS — monthly insurance only after that
+  const insuranceMonthsPrepaid = (insuranceCost || 0) > 0 ? PREPAID_INSURANCE_MONTHS : 0;
+  const monthlyInsuranceCost = includeMonthlyInsurance ? (monthlyInsurance || 0) : 0;
+  const insuranceForMonth = (m: number) => (m > insuranceMonthsPrepaid ? monthlyInsuranceCost : 0);
+  const holdingInsurance = monthlyInsuranceCost * Math.max(0, holdingPeriodMonths - insuranceMonthsPrepaid);
+  // Monthly utilities + taxes (insurance is added month by month above)
+  const totalMonthlyUtilities = monthlyElectric +
+    monthlyInternet +
+    monthlyPropane +
     (includeMonthlyTaxes ? monthlyTaxes : 0);
   
   // Calculate yearly costs (one-time costs added to grand total)
@@ -618,10 +626,20 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     ? totalInterestCosts / holdingPeriodMonths 
     : 0;
   
-  const monthlyUtilitiesCost = totalMonthlyUtilities;
-  const monthlyHoldingCost = monthlyInterestPayment + totalMonthlyUtilities;
-  // Total holding costs = interest + monthly utilities × months + yearly costs (one-time)
-  const totalHoldingCosts = totalInterestCosts + (totalMonthlyUtilities * holdingPeriodMonths) + yearlyWaterCost + yearlyDuesCost;
+  const avgInsurance = holdingPeriodMonths > 0 ? holdingInsurance / holdingPeriodMonths : 0;
+  const monthlyUtilitiesCost = totalMonthlyUtilities + avgInsurance;
+  const monthlyHoldingCost = monthlyInterestPayment + monthlyUtilitiesCost;
+  // Total holding costs = interest + monthly utilities × months + insurance (after any prepaid term) + yearly costs
+  const totalHoldingCosts = totalInterestCosts + (totalMonthlyUtilities * holdingPeriodMonths) + holdingInsurance + yearlyWaterCost + yearlyDuesCost;
+  // Every piece of totalHoldingCosts, so cards can list them and add up to the total
+  const holdingBreakdown = {
+    interest: totalInterestCosts,
+    utilities: ((monthlyElectric || 0) + (monthlyInternet || 0) + (monthlyPropane || 0)) * holdingPeriodMonths,
+    insurance: holdingInsurance,
+    taxes: (includeMonthlyTaxes ? (monthlyTaxes || 0) : 0) * holdingPeriodMonths,
+    water: yearlyWaterCost,
+    dues: yearlyDuesCost,
+  };
 
   let totalExitCosts = 0;
   let refinanceLoanAmount = 0;
@@ -873,7 +891,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const drawDone = (m: number) => (m >= holdingPeriodMonths ? 1 : Math.min(Math.max(m - 1, 0) * 0.25, 1));
   for (let m = 1; m <= holdingPeriodMonths; m++) {
     monthlyCashOut.push(
-      monthlyInterestPayments[m - 1] + totalMonthlyUtilities + (yearlyWaterCost + yearlyDuesCost) / holdingPeriodMonths +
+      monthlyInterestPayments[m - 1] + totalMonthlyUtilities + insuranceForMonth(m) + (yearlyWaterCost + yearlyDuesCost) / holdingPeriodMonths +
       (rehabOutOfPocket + contingencyInCash) * (drawDone(m) - drawDone(m - 1)),
     );
   }
@@ -1085,6 +1103,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalInterestCosts,
     requiredLiquidity,
     totalCashNeeded,
+    holdingBreakdown,
+    insuranceMonthsPrepaid,
     cashShortfall,
     cashRunwayMonth,
     monthlyCashOut,

@@ -1,16 +1,16 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
-import { formatCurrency, financingPercents, financedLoan, requiredArvFor, taxTreatmentRate, TaxTreatment } from '../utils/calculations';
+import { formatCurrency, financingPercents, financedLoan, requiredArvFor, taxTreatmentRate, TaxTreatment, PREPAID_INSURANCE_MONTHS } from '../utils/calculations';
 import { RehabLineItems } from './RehabLineItems';
 import { HelpTooltip } from './HelpTooltip';
-import { estimateHoldingCosts } from '../utils/stateHoldingCosts';
+import { estimateHoldingCosts, BUILDERS_RISK_RATE, builderRiskAnnualPremium } from '../utils/stateHoldingCosts';
 import { getAllStateCodes, getStateName, getStateDefaults, applyStateDefaults } from '../utils/stateDefaults';
 import { analyzeRehabBudget } from '../utils/rehabBudgetAnalysis';
 import { getLoanTypeDefaults, calculatePMI } from '../utils/loanTypeDefaults';
 import { validateLoanInputs } from '../utils/inputValidator';
 import { getCountiesForState, getCountyThirdPartyCosts } from '../utils/thirdPartyCosts';
-import { ESTIMATE_FIELDS } from '../utils/closingEstimates';
+import { ESTIMATE_FIELDS, likelyMissingCosts } from '../utils/closingEstimates';
 import { paMunicipalitiesWithVariation, paTransferTaxTotal } from '../utils/paTransferTax';
 import { lookupProperty, buildLookupAddress } from '../utils/propertyLookup';
 import { ValidationAlert } from './ValidationAlert';
@@ -181,7 +181,9 @@ export const InputSections: React.FC<InputSectionsProps> = ({
         inputs.state,
         inputs.monthlyElectric,
         inputs.county,
-        inputs.annualPropertyTax
+        inputs.annualPropertyTax,
+        inputs.rehabBudget,
+        inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE
       );
 
       // Only auto-populate if values are currently zero/unchecked
@@ -217,11 +219,13 @@ export const InputSections: React.FC<InputSectionsProps> = ({
         inputs.state,
         inputs.monthlyElectric,
         inputs.county,
-        inputs.annualPropertyTax
+        inputs.annualPropertyTax,
+        inputs.rehabBudget,
+        inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE
       );
     }
     return null;
-  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice, inputs.monthlyElectric, inputs.county, inputs.annualPropertyTax]);
+  }, [inputs.holdingPeriodMonths, inputs.state, inputs.purchasePrice, inputs.monthlyElectric, inputs.county, inputs.annualPropertyTax, inputs.rehabBudget, inputs.insuranceRatePercent]);
 
   // Check if holding costs are too low (validation)
   const monthlyHoldingCostTotal = useMemo(() => {
@@ -1132,10 +1136,19 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           )}
         </div>
         <div className="p-4 sm:p-6 grid gap-4 sm:gap-6">
+          {(() => {
+            const missing = likelyMissingCosts(inputs);
+            return missing.length > 0 && (
+              <div className="text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} not entered:</span>{' '}
+                {missing.map((m) => `${m.label} (${m.hint})`).join(' · ')}
+              </div>
+            );
+          })()}
           <div className="grid grid-cols-2 gap-6">
             {appVersion !== 'HIDEOUT' && (
-            <InputGroup 
-              label="Title Ins. Rate" 
+            <InputGroup
+              label="Title Ins. Rate"
               id="title" 
               value={inputs.titleInsuranceRate} 
               onChange={(v) => onInputChange('titleInsuranceRate', v)} 
@@ -1217,13 +1230,14 @@ export const InputSections: React.FC<InputSectionsProps> = ({
             />
           </div>
           <div className="grid grid-cols-2 gap-6">
-            <InputGroup 
-              label="Insurance Cost" 
-              id="insuranceCost" 
-              value={inputs.insuranceCost} 
-              onChange={(v) => onInputChange('insuranceCost', v)} 
+            <InputGroup
+              label="Insurance Premium Paid at Closing"
+              id="insuranceCost"
+              value={inputs.insuranceCost}
+              estimated={isEst('insuranceCost')}
+              onChange={(v) => onInputChange('insuranceCost', v)}
               prefix="$"
-              helpText="Insurance cost"
+              helpText={`First-year / term builder's risk premium, paid at closing (counts in Cash to Close). Covers the first ${PREPAID_INSURANCE_MONTHS} months — monthly holding insurance only counts after that. Estimate: (purchase + rehab) × ${inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE}%/yr = ${formatCurrency(builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE))}.`}
             />
             <InputGroup 
               label="Transfer Tax Rate" 
@@ -1433,7 +1447,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   estimated={isEst('prepaidInterestAtClosing')}
                   onChange={(v) => onInputChange('prepaidInterestAtClosing', v)}
                   prefix="$"
-                  helpText={`Prepaid interest from settlement date through end of month. Formula: (Loan × Rate / 360) × days remaining in month. Estimated daily rate: ${inputs.interestRate > 0 && inputs.purchasePrice > 0 ? '$' + ((inputs.purchasePrice * (inputs.interestRate / 100)) / 360).toFixed(2) + '/day' : 'enter purchase price & rate'}. (PA BEC 6G)`}
+                  helpText={`Prepaid interest from settlement through end of month, due at closing. Formula: loan at closing × rate ÷ 365 × days left in the month (15 days if no closing date). Daily: ${inputs.interestRate > 0 && inputs.purchasePrice > 0 ? '$' + (financedLoan(inputs.purchasePrice, 0, financingPercents(inputs)) * (inputs.interestRate / 100) / 365).toFixed(2) + '/day' : 'enter purchase price & rate'}. (PA BEC 6G)`}
                 />
               </div>
             </div>
@@ -2165,28 +2179,50 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               />
               <label htmlFor="includeMonthlyInsurance" className="text-sm font-semibold text-gray-700 cursor-pointer flex-1">
                 Add Monthly Insurance
-                {holdingCostEstimates && (
-                  <span className="text-xs text-blue-600 font-normal ml-2">
-                    (Est: {formatCurrency(holdingCostEstimates.monthlyInsurance)}/mo - {inputs.state} state average)
-                  </span>
-                )}
+                <span className="text-xs text-blue-600 font-normal ml-2">
+                  (Builder's risk est: {formatCurrency(Math.round(builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE) / 12))}/mo)
+                </span>
               </label>
             </div>
-            {inputs.includeMonthlyInsurance && (
-              <div className="ml-6">
-                <InputGroup 
-                  label="Monthly Insurance" 
-                  id="monthlyInsurance" 
-                  value={inputs.monthlyInsurance} 
-                  onChange={(v) => {
-                    const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
-                    onInputChange('monthlyInsurance', Math.max(0, numValue));
-                  }} 
-                  prefix="$"
-                  helpText={`Monthly insurance cost during holding period. ${holdingCostEstimates ? `State-based estimate: ${formatCurrency(holdingCostEstimates.monthlyInsurance)}/mo for ${inputs.state}.` : 'Typical range: $150-$200/month for vacant/rehab properties.'}`}
-                />
+            {inputs.includeMonthlyInsurance && (() => {
+              const rate = inputs.insuranceRatePercent ?? BUILDERS_RISK_RATE;
+              const annual = builderRiskAnnualPremium(inputs.purchasePrice, inputs.rehabBudget, rate);
+              const monthlyEst = Math.round(annual / 12);
+              return (
+              <div className="ml-6 space-y-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <InputGroup
+                    label="Monthly Insurance"
+                    id="monthlyInsurance"
+                    value={inputs.monthlyInsurance}
+                    onChange={(v) => {
+                      const numValue = typeof v === 'string' ? parseFloat(v) || 0 : v;
+                      onInputChange('monthlyInsurance', Math.max(0, numValue));
+                    }}
+                    prefix="$"
+                    helpText={`Builder's risk / vacant-property policy, not a homeowner policy. Basis: (purchase ${formatCurrency(inputs.purchasePrice)} + rehab ${formatCurrency(inputs.rehabBudget)}) × ${rate}%/yr = ${formatCurrency(annual)}/yr ≈ ${formatCurrency(monthlyEst)}/mo. Typical 0.5%–1%/yr. If you prepay a premium at closing, those months aren't charged again here.`}
+                  />
+                  <InputGroup
+                    label="Insurance Rate %/yr"
+                    id="insuranceRatePercent"
+                    value={rate}
+                    onChange={(v) => onInputChange('insuranceRatePercent', v)}
+                    suffix="%"
+                    helpText="Builder's risk / vacant rate on purchase + rehab per year (typical 0.5%–1%)"
+                  />
+                </div>
+                {Math.abs((inputs.monthlyInsurance || 0) - monthlyEst) > 1 && monthlyEst > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onInputChange('monthlyInsurance', monthlyEst)}
+                    className="text-[11px] text-blue-700 underline"
+                  >
+                    Use builder's risk estimate ({formatCurrency(monthlyEst)}/mo)
+                  </button>
+                )}
               </div>
-            )}
+              );
+            })()}
             
             <div className="flex items-center gap-2">
               <input

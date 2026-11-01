@@ -343,7 +343,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               <FeeBreakdownItem label={`Endorsements (${inputs.numberOfEndorsements || 0} @ $50)`} value={results.endorsementCost} />
                 <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} />
                 <FeeBreakdownItem label="Recording" value={results.recordingCost} />
-              <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
+              <FeeBreakdownItem label="Insurance Premium (paid at closing)" value={results.insuranceCost} />
               <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
                 <FeeBreakdownItem label="Walker & Walker Fees" value={results.totalWalkerFees} />
                     <FeeBreakdownItem label="Hideout Transfer" value={results.hideoutTransferCost} />
@@ -554,7 +554,7 @@ export const ReportMode: React.FC<ReportModeProps> = ({
                   <div className="text-right">
                     <div className="font-bold text-gray-900">{formatCurrency(inputs.monthlyInsurance)}</div>
                     <div className="text-[9px] text-gray-600 print:text-[8px]">
-                      {formatCurrency(inputs.monthlyInsurance * inputs.holdingPeriodMonths)} total
+                      {formatCurrency(results.holdingBreakdown.insurance)} total{results.insuranceMonthsPrepaid > 0 ? ` (first ${results.insuranceMonthsPrepaid} mo prepaid at closing)` : ''}
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, financingPercents } from '../utils/calculations';
+import { likelyMissingCosts } from '../utils/closingEstimates';
 import { ResultRow } from './ResultRow';
 import { FeeBreakdownItem } from './FeeBreakdownItem';
 import { HelpTooltip } from './HelpTooltip';
@@ -15,6 +16,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
   const est = (field: string) => !isHideout && !!inputs.estimatedFields?.includes(field);
   const estimateCount = isHideout ? 0 : (inputs.estimatedFields?.length || 0);
   const pct = financingPercents(inputs);
+  const missing = likelyMissingCosts(inputs);
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="bg-gray-900 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-white rounded-t-xl">
@@ -33,11 +35,19 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             Replace them with real numbers in Detailed HUD Charges for an exact figure.
           </div>
         )}
+        {missing.length > 0 && (
+          <div className="mb-3 text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 print:hidden">
+            <span className="font-bold">{missing.length} likely cost{missing.length > 1 ? 's' : ''} not entered</span> — usually charged on a financed flip:
+            <ul className="mt-1 list-disc list-inside">
+              {missing.map((m) => <li key={m.field}>{m.label}: not entered — likely due ({m.hint})</li>)}
+            </ul>
+          </div>
+        )}
         <ResultRow
           label="Total Loan Amount"
-          value={results.requestedLoanAmount} 
-          isTotal 
-          subtext="Total Cost × Financing% (actual loan based on financing terms)"
+          value={results.requestedLoanAmount}
+          isTotal
+          subtext={`Purchase × ${pct.purchase}% + Rehab × ${pct.rehab}%`}
         />
         {results.qualifiedLoanAmount !== results.requestedLoanAmount && (
           <div className="text-xs text-gray-500 italic mb-2">
@@ -196,7 +206,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
         <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} alwaysShow={isHideout} />
         {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
         <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
-        <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
+        <FeeBreakdownItem label="Insurance Premium (paid at closing)" value={results.insuranceCost} estimated={est('insuranceCost')} />
         <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
         <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
         <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} estimated={est('surveyFee')} />
@@ -267,7 +277,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <FeeBreakdownItem label={isHideout ? `1106 Endorsements (${inputs.numberOfEndorsements || 0} @ $50)` : `Endorsements (${inputs.numberOfEndorsements || 0} @ $100)`} value={results.endorsementCost} alwaysShow={isHideout} />
           {!isHideout && <FeeBreakdownItem label="Legal & Settlement" value={results.legalSettlementCost} estimated={est('legalSettlementFees')} />}
           <FeeBreakdownItem label="Recording" value={results.recordingCost} estimated={est('recordingFees')} />
-          <FeeBreakdownItem label="Insurance" value={results.insuranceCost} />
+          <FeeBreakdownItem label="Insurance Premium (paid at closing)" value={results.insuranceCost} estimated={est('insuranceCost')} />
           <FeeBreakdownItem label="Other 3rd Party Fees" value={results.otherThirdPartyFees} />
           <FeeBreakdownItem label="Mechanics Lien Insurance" value={results.mechanicsLienInsurance} />
           <FeeBreakdownItem label="Survey Fee" value={results.surveyFee} estimated={est('surveyFee')} />
