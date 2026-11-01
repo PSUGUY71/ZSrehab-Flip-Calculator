@@ -414,9 +414,15 @@ export const ReportMode: React.FC<ReportModeProps> = ({
               </div>
               
                 <div className="flex justify-between text-[10px] text-gray-500 mt-1">
-                  <span>Req. Liquidity:</span>
+                  <span>Lender Min. Liquidity:</span>
                   <span className={inputs.liquidity >= results.requiredLiquidity ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
                     {formatCurrency(results.requiredLiquidity)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                  <span>Total Cash Needed (project):</span>
+                  <span className={inputs.liquidity >= results.totalCashNeeded ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
+                    {formatCurrency(results.totalCashNeeded)}
                   </span>
                 </div>
               </div>

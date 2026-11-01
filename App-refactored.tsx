@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { DEFAULT_INPUTS, LoanInputs, SavedDeal, User, LenderOption } from './types';
-import { calculateLoan } from './utils/calculations';
+import { calculateLoan, financingPercents, financedLoan } from './utils/calculations';
 import { calculateLoanForLender } from './utils/lenderComparison';
 import { validateLoanInputs, hasValidationErrors } from './utils/inputValidator';
 import { getHoldingCostTemplate } from './utils/holdingCostTemplates';
@@ -432,10 +432,11 @@ const App: React.FC = () => {
     const hasDealData = totalProjectCost > 0 && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0);
     
     if (allFeesZero && hasDealData) {
-      const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
-      
+      const pct = financingPercents(inputs);
+      const financingPercent = pct.purchase;
+
       if (financingPercent > 0) {
-        const loanAmount = totalProjectCost * (financingPercent / 100);
+        const loanAmount = financedLoan(inputs.purchasePrice, inputs.rehabBudget, pct);
         const pointsTotal = loanAmount * 0.03; // 3% default
         
         // Only apply if points total is meaningful (> $50 to catch small deals too)
@@ -484,7 +485,7 @@ const App: React.FC = () => {
         }
       }
     }
-  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage, inputs.underwritingFee, inputs.processingFee, inputs.docPrepFee, inputs.wireFee, inputs.otherLenderFees]);
+  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage, inputs.rehabFinancingPercentage, inputs.underwritingFee, inputs.processingFee, inputs.docPrepFee, inputs.wireFee, inputs.otherLenderFees]);
 
   // Auto-check and populate insurance/taxes when holding period > 3 months
   useEffect(() => {
@@ -1437,6 +1438,7 @@ const App: React.FC = () => {
             bestCashToClose={bestCashToClose}
             bestOverallLender={bestOverallLender}
             originalBaselineLenderName={originalBaselineLenderName}
+            onToggleContingency={() => setInputs((p) => ({ ...p, includeContingencyInCashNeeded: !p.includeContingencyInCashNeeded }))}
             onAddLender={handleAddLender}
             onApplyLender={handleApplyLender}
             onRestoreBaseline={handleRestoreBaseline}

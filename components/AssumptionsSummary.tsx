@@ -168,7 +168,7 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
               <div className="text-lg font-bold text-green-700 mt-1">
                 {formatCurrency(results.netProfitAfterTax)}
               </div>
-              <div className="text-xs text-gray-600 mt-1">Tax Rate: {inputs.capitalGainsTaxRate}%</div>
+              <div className="text-xs text-gray-600 mt-1">Tax Rate: {(results.effectiveTaxRate || 0).toFixed(2)}% (est.)</div>
             </div>
             <div className="bg-white p-3 rounded border border-red-400">
               <div className="text-xs text-red-700 font-bold uppercase">IRR</div>
@@ -276,7 +276,7 @@ export const AssumptionsSummary: React.FC<AssumptionsSummaryProps> = ({ inputs, 
             </div>
             <div className="bg-gray-50 p-3 rounded">
               <div className="font-bold text-gray-700">Capital Gains Tax</div>
-              <div className="text-gray-900">{inputs.capitalGainsTaxRate}%</div>
+              <div className="text-gray-900">{(results.effectiveTaxRate || 0).toFixed(2)}% (est.)</div>
             </div>
             <div className="bg-gray-50 p-3 rounded">
               <div className="font-bold text-gray-700">Appraisal / Appraised Value</div>

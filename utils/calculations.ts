@@ -3,6 +3,46 @@ import { generatePurchaseSensitivity, generateRehabSensitivity } from './sensiti
 import { paPurchaseTitlePremium, PA_ENDORSEMENT_FEE } from './pennsylvaniaTitleRates';
 import { calculateFlipIRR, formatIRR } from './irrCalculation';
 
+/** Purchase and rehab financing % — the rehab % falls back to the purchase % on deals saved before it existed. */
+export const financingPercents = (i: Pick<LoanInputs, 'useCustomFinancing' | 'customFinancingPercentage' | 'financingPercentage' | 'rehabFinancingPercentage'>) => {
+  const purchase = (i.useCustomFinancing ? i.customFinancingPercentage : i.financingPercentage) || 0;
+  return { purchase, rehab: i.rehabFinancingPercentage ?? purchase };
+};
+
+/** The loan the lender sizes — ONE formula for total loan, LTV, max offer, required ARV and draws: price × purchase% + rehab × rehab%. */
+export const financedLoan = (purchasePrice: number, rehabBudget: number, pct: { purchase: number; rehab: number }) =>
+  (purchasePrice || 0) * (pct.purchase / 100) + (rehabBudget || 0) * (pct.rehab / 100);
+
+/** Highest price whose financed loan still fits under ARV × LTV: (ARV × LTV − rehab × rehab%) ÷ purchase%. */
+export const maxOfferFor = (arv: number, ltv: number, rehabBudget: number, pct: { purchase: number; rehab: number }) => {
+  const room = arv * ltv - (rehabBudget || 0) * (pct.rehab / 100);
+  return pct.purchase > 0 ? room / (pct.purchase / 100) : room;
+};
+
+/** ARV needed for the current price to fit the LTV: financed loan ÷ LTV. */
+export const requiredArvFor = (purchasePrice: number, rehabBudget: number, pct: { purchase: number; rehab: number }, ltv: number) =>
+  purchasePrice > 0 && ltv > 0 ? financedLoan(purchasePrice, rehabBudget, pct) / ltv : 0;
+
+export type TaxTreatment = 'SHORT_TERM' | 'LONG_TERM' | 'DEALER';
+
+/**
+ * Tax on the flip profit — an estimate, confirm with a CPA.
+ * Short-term = federal bracket + state (default when held ≤ 12 months). Long-term (only if held > 12 months) =
+ * LTCG rate + state. Dealer = federal bracket + state (+ 15.3% SE tax if on).
+ * ponytail: flat rates on the whole profit — no brackets, SE wage base or 92.35% SE factor; add if users need it.
+ */
+export const taxTreatmentRate = (i: Pick<LoanInputs, 'holdingPeriodMonths'> & Partial<LoanInputs>) => {
+  const longAllowed = (i.holdingPeriodMonths || 0) > 12;
+  const picked = i.taxTreatment || (longAllowed ? 'LONG_TERM' : 'SHORT_TERM');
+  const treatment: TaxTreatment = picked === 'LONG_TERM' && !longAllowed ? 'SHORT_TERM' : picked;
+  const federal = i.federalTaxBracket ?? 24;
+  const state = i.stateIncomeTaxRate ?? 3.07;
+  const lt = i.longTermCapGainsRate ?? 15;
+  const se = treatment === 'DEALER' && i.includeSelfEmploymentTax ? 15.3 : 0;
+  const rate = (treatment === 'LONG_TERM' ? lt : federal) + state + se;
+  return { treatment, rate, federal, state, longTerm: lt, se, longAllowed };
+};
+
 /** Down payment on the purchase: price − financed purchase amount − seller buy-back note. The EMD is NOT taken out here. */
 export const purchaseGap = (purchasePrice: number, financingPercent: number, sellerBuyBackAmount = 0) =>
   Math.max(0, purchasePrice - purchasePrice * (financingPercent / 100) - (sellerBuyBackAmount || 0));
@@ -161,25 +201,17 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   const totalProjectCost = purchasePrice + rehabBudget;
   const maxLoanBasedOnARV = arv * MAX_LTV_PERCENT;
   
-  // Get financing percentage (use custom if enabled, otherwise use selected percentage)
-  const financingPercent = useCustomFinancing 
-    ? customFinancingPercentage 
-    : financingPercentage;
-  
-  // Calculate loan amount based on financing percentage
-  // Loan amount = min(Total Cost × Financing%, ARV × LTV%)
-  // This ensures loan doesn't exceed ARV limit, but respects financing percentage
-  const loanAmountByFinancing = totalProjectCost * (financingPercent / 100);
+  // Purchase financing % and rehab financing % (separate inputs)
+  const pct = financingPercents(inputs);
+  const financingPercent = pct.purchase;
+  const rehabFinancingPercent = pct.rehab;
+
+  // Loan = min(price × purchase% + rehab × rehab%, ARV × LTV%)
+  const loanAmountByFinancing = financedLoan(purchasePrice, rehabBudget, pct);
   const qualifiedLoanAmount = Math.min(loanAmountByFinancing, maxLoanBasedOnARV);
-  
-  // Calculate Max Allowable Offer to maintain full funding (stay under selected LTV)
-  // Loan covers: (financingPercent% of purchase) + (100% of rehab)
-  // Constraint: loan ≤ LTV% × ARV
-  // So: (fp/100 × maxPP) + rehab = LTV% × ARV
-  // maxPP = (LTV% × ARV - rehab) / (fp/100)
-  const maxAllowableOffer = financingPercent > 0
-    ? (maxLoanBasedOnARV - rehabBudget) / (financingPercent / 100)
-    : maxLoanBasedOnARV - rehabBudget;
+
+  // Max Allowable Offer: the price at which the same financed loan hits ARV × LTV%
+  const maxAllowableOffer = maxOfferFor(arv, MAX_LTV_PERCENT, rehabBudget, pct);
   
   // 70% Rule: Maximum Purchase Price = (ARV × 0.70) - Rehab Budget
   // This is a common house flipping rule to ensure profitability
@@ -549,8 +581,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     if (month >= 2) {
       // Calculate rehab draw percentage (25%, 50%, 75%, then 100%)
       const rehabDrawPercent = Math.min((month - 1) * 0.25, 1.0);
-      // Rehab loan amount based on financing percentage
-      const rehabLoanAmount = rehabBudget * (financingPercent / 100);
+      // Rehab loan amount based on rehab financing percentage
+      const rehabLoanAmount = rehabBudget * (rehabFinancingPercent / 100);
       // Total drawn amount = purchase loan + (rehab loan × draw percentage)
       drawnAmount = purchaseLoanAmount + (rehabLoanAmount * rehabDrawPercent);
     }
@@ -648,7 +680,7 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     totalExitCosts = refiPointsCost + refinanceFixedFees;
   }
 
-  // Rehab the loan doesn't cover is your cash: loan funds financing% of price + rehab (capped at ARV × LTV), so
+  // Rehab the loan doesn't cover is your cash: loan funds price × purchase% + rehab × rehab% (capped at ARV × LTV), so
   // rehab + financed purchase − loan is paid out of pocket (here it grows when the ARV cap binds on overruns).
   const rehabOutOfPocket = Math.max(0, rehabBudget + purchasePrice * (financingPercent / 100) - qualifiedLoanAmount);
   // Cash invested = Gap (incl. EMD) + Closing − Concessions + rehab out of pocket
@@ -663,8 +695,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // Capital Gains Tax Calculation
   // Capital gains tax is applied to the net profit (gain on sale)
   // Default rate is 20% for self-employed (long-term capital gains)
-  const taxRate = inputs.capitalGainsTaxRate || 20;
-  const estimatedCapitalGainsTax = netProfit > 0 ? (netProfit * (taxRate / 100)) : 0;
+  const tax = taxTreatmentRate(inputs);
+  const estimatedCapitalGainsTax = netProfit > 0 ? (netProfit * (tax.rate / 100)) : 0;
   const netProfitAfterTax = netProfit - estimatedCapitalGainsTax;
   
   // Closing Table Profit = Net Profit + Holding Costs (Adding it back because we assume we don't count it for this metric)
@@ -829,7 +861,33 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
   // 12. Proof of Funds / Liquidity — Gap (before EMD) + Closing Costs + max(15% of rehab, $15k), see cashPosition()
   const rehabContingency = cash.rehabReserve;
   const requiredLiquidity = cash.requiredLiquidity;
-  
+
+  // Your total cash over the project (not the lender minimum): paid before/at closing + rehab the loan doesn't
+  // cover + every holding cost (+ the rehab contingency if the user counts it).
+  const contingencyInCash = inputs.includeContingencyInCashNeeded ? rehabContingency : 0;
+  const totalCashNeeded = cash.totalPaidOut + rehabOutOfPocket + totalHoldingCosts + contingencyInCash;
+  const cashShortfall = Math.max(0, totalCashNeeded - (liquidity || 0));
+  // Month-by-month spending after closing — interest_m + monthly utilities/ins./taxes + yearly items spread evenly +
+  // your rehab share on the same 25%/month draw schedule as the loan. Sums to totalCashNeeded − totalPaidOut.
+  const monthlyCashOut: number[] = [];
+  const drawDone = (m: number) => (m >= holdingPeriodMonths ? 1 : Math.min(Math.max(m - 1, 0) * 0.25, 1));
+  for (let m = 1; m <= holdingPeriodMonths; m++) {
+    monthlyCashOut.push(
+      monthlyInterestPayments[m - 1] + totalMonthlyUtilities + (yearlyWaterCost + yearlyDuesCost) / holdingPeriodMonths +
+      (rehabOutOfPocket + contingencyInCash) * (drawDone(m) - drawDone(m - 1)),
+    );
+  }
+  // First month the money runs out (0 = short at closing, null = it lasts)
+  let cashRunwayMonth: number | null = null;
+  if (cashShortfall > 0) {
+    let left = (liquidity || 0) - cash.totalPaidOut;
+    if (left < 0) cashRunwayMonth = 0;
+    else for (let m = 1; m <= holdingPeriodMonths && cashRunwayMonth === null; m++) {
+      left -= monthlyCashOut[m - 1];
+      if (left < -0.005) cashRunwayMonth = m;
+    }
+  }
+
   // Emergency buffer: 5-10% of total deal cost (suggested, not required by lender)
   const totalDealCost = purchasePrice + rehabBudget;
   const emergencyBuffer5Percent = totalDealCost * 0.05;
@@ -1026,6 +1084,10 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     rehabOutOfPocket,
     totalInterestCosts,
     requiredLiquidity,
+    totalCashNeeded,
+    cashShortfall,
+    cashRunwayMonth,
+    monthlyCashOut,
     rehabContingency,
     emergencyBuffer5Percent,
     emergencyBuffer10Percent,
@@ -1047,6 +1109,8 @@ export const calculateLoan = (inputs: LoanInputs, maxLTVPercent: number = 0.75):
     sellingHideoutTransferFee: sellingHideoutTransferAmount,
     netProfit,
     estimatedCapitalGainsTax,
+    effectiveTaxRate: tax.rate,
+    taxTreatmentUsed: tax.treatment,
     netProfitAfterTax,
     closingTableProfit,
     roi,

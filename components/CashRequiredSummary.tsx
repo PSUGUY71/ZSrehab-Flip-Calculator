@@ -5,9 +5,10 @@ import { formatCurrency } from '../utils/calculations';
 interface CashRequiredSummaryProps {
   inputs: LoanInputs;
   results: CalculatedResults;
+  onToggleContingency?: () => void;
 }
 
-export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs, results }) => {
+export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs, results, onToggleContingency }) => {
   // Use results for accurate totals (includes points)
   const totalLenderFees = results.totalLenderFees || 0;
   
@@ -48,7 +49,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
 
   // Determine color coding
   const isUnrealistic = inputs.interestRate === 0 || (holdingCosts === 0 && (inputs.holdingPeriodMonths || 0) > 3);
-  const hasInsufficientLiquidity = inputs.liquidity > 0 && inputs.liquidity < totalLiquidityNeeded;
+  const hasInsufficientLiquidity = inputs.liquidity > 0 && inputs.liquidity < Math.max(totalLiquidityNeeded, results.totalCashNeeded || 0);
   
   let boxColor = 'border-amber-300 bg-white';
   let titleColor = 'text-gray-900';
@@ -231,29 +232,63 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           )}
         </div>
 
-        {/* Total Liquidity Needed */}
+        {/* Total Cash Needed Over Project — your real requirement */}
         <div className="border-t-2 border-amber-400 pt-4 mt-4">
           <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg p-4 text-white">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div className="flex flex-col">
-                <span className="text-base sm:text-lg font-bold uppercase mb-1">YOU NEED THIS MUCH:</span>
-                <span className="text-xs text-gray-300 mt-0.5">
-                  Minimum liquidity required by lender
-                </span>
+                <span className="text-base sm:text-lg font-bold uppercase mb-1">Total Cash Needed Over Project:</span>
                 <span className="text-[10px] text-gray-400 mt-1">
-                  Formula: Gap (before EMD) + Closing Costs + max(15% of Rehab, $15k)
+                  EMD {formatCurrency(earnestMoney)}
+                  {results.totalPaidOut - earnestMoney - dueAtClosing > 0.005 && <> + Other prepaid {formatCurrency(results.totalPaidOut - earnestMoney - dueAtClosing)}</>}
+                  {' '}+ Due at closing {formatCurrency(dueAtClosing)} + Rehab not covered {formatCurrency(results.rehabOutOfPocket)} + Holding {formatCurrency(holdingCosts)}
+                  {inputs.includeContingencyInCashNeeded && <> + Contingency {formatCurrency(rehabContingency)}</>}
                 </span>
+                {onToggleContingency && (
+                  <label className="text-[10px] text-gray-300 mt-1 flex items-center gap-1 cursor-pointer print:hidden">
+                    <input type="checkbox" checked={!!inputs.includeContingencyInCashNeeded} onChange={onToggleContingency} />
+                    Include rehab contingency ({formatCurrency(rehabContingency)})
+                  </label>
+                )}
               </div>
               <div className="text-right">
-                <span className="text-2xl sm:text-3xl font-bold">{formatCurrency(totalLiquidityNeeded)}</span>
+                <span className="text-2xl sm:text-3xl font-bold">{formatCurrency(results.totalCashNeeded)}</span>
                 <div className="text-xs text-gray-300 mt-1">
                   {inputs.liquidity > 0 && (
-                    <span className={inputs.liquidity >= totalLiquidityNeeded ? 'text-green-400' : 'text-red-400'}>
+                    <span className={inputs.liquidity >= results.totalCashNeeded ? 'text-green-400' : 'text-red-400'}>
                       You have: {formatCurrency(inputs.liquidity)}
                     </span>
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {inputs.liquidity > 0 && results.cashShortfall > 0 && (
+            <div className="mt-3 p-3 bg-red-50 border-2 border-red-400 rounded-lg text-xs text-red-800">
+              <div className="font-bold text-sm">⚠️ Short {formatCurrency(results.cashShortfall)} over the project</div>
+              <div className="mt-1">
+                {results.cashRunwayMonth === 0
+                  ? `Your ${formatCurrency(inputs.liquidity)} doesn't cover what's due by closing (${formatCurrency(results.totalPaidOut)}).`
+                  : results.cashRunwayMonth
+                    ? `Cash runway: your money runs out in month ${results.cashRunwayMonth} of ${holdingMonths} (holding costs + your rehab share after closing).`
+                    : 'Your cash lasts through the hold, but not the full total above.'}
+              </div>
+            </div>
+          )}
+
+          {/* Lender minimum — what the lender wants to see, not your total requirement */}
+          <div className="mt-3 bg-white border border-gray-300 rounded-lg p-3">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+              <div>
+                <span className="text-sm font-bold text-gray-800">Lender minimum liquidity:</span>
+                <span className="text-[10px] text-gray-500 block mt-0.5">
+                  Proof of funds the lender asks for — not your total cash requirement. Gap (before EMD) + Closing Costs + max(15% of Rehab, $15k)
+                </span>
+              </div>
+              <span className={`text-lg font-bold ${inputs.liquidity > 0 && inputs.liquidity < totalLiquidityNeeded ? 'text-red-600' : 'text-gray-900'}`}>
+                {formatCurrency(totalLiquidityNeeded)}
+              </span>
             </div>
           </div>
           
@@ -266,7 +301,7 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
                   <span className="text-xs text-yellow-700 block mt-0.5">Recommended total cash reserves</span>
                 </div>
                 <span className="text-lg sm:text-xl font-bold text-yellow-900">
-                  {formatCurrency(totalLiquidityNeeded + emergencyBuffer5Percent)}
+                  {formatCurrency(results.totalCashNeeded + emergencyBuffer5Percent)}
                 </span>
               </div>
             </div>
@@ -279,9 +314,9 @@ export const CashRequiredSummary: React.FC<CashRequiredSummaryProps> = ({ inputs
           </div>
         )}
 
-        {hasInsufficientLiquidity && (
+        {inputs.liquidity > 0 && inputs.liquidity < totalLiquidityNeeded && (
           <div className="mt-3 p-2 bg-gray-100 border border-gray-300 rounded text-xs text-gray-700">
-            ⚠️ Your liquidity ({formatCurrency(inputs.liquidity)}) is below required ({formatCurrency(totalLiquidityNeeded)}). Consider more cash reserves.
+            ⚠️ Your liquidity ({formatCurrency(inputs.liquidity)}) is below the lender minimum ({formatCurrency(totalLiquidityNeeded)}). Lenders may not approve.
           </div>
         )}
       </div>

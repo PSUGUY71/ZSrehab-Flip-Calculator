@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { LoanInputs, CalculatedResults, RehabLineItem } from '../types';
 import { InputGroup } from './InputGroup';
-import { formatCurrency } from '../utils/calculations';
+import { formatCurrency, financingPercents, financedLoan, requiredArvFor, taxTreatmentRate, TaxTreatment } from '../utils/calculations';
 import { RehabLineItems } from './RehabLineItems';
 import { HelpTooltip } from './HelpTooltip';
 import { estimateHoldingCosts } from '../utils/stateHoldingCosts';
@@ -65,6 +65,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
   // --- Automatic property tax lookup: once a full address is typed, fetch the real tax bill (free for
   // Philadelphia, RentCast elsewhere when a key is set). Never overwrites a number the user typed. ---
+  const [customRehabPct, setCustomRehabPct] = useState(false);
   const [taxLookup, setTaxLookup] = useState<{ status: 'idle' | 'loading' | 'found' | 'none' | 'error'; message?: string }>({ status: 'idle' });
   const lastTaxLookupRef = useRef(''); // address + whether a key was available — a newly added key retries
   const lookupKey = `${inputs.address}|${inputs.zipCode}|${inputs.state}|${rentcastApiKey ? 'key' : ''}`;
@@ -125,10 +126,9 @@ export const InputSections: React.FC<InputSectionsProps> = ({
 
   // Calculate suggested lender fees (3% of loan amount for hard money)
   const suggestedLenderFees = useMemo(() => {
-    const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
-    if (financingPercent > 0 && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0)) {
-      const totalProjectCost = inputs.purchasePrice + inputs.rehabBudget;
-      const loanAmount = totalProjectCost * (financingPercent / 100);
+    const pct = financingPercents(inputs);
+    if (pct.purchase > 0 && (inputs.purchasePrice > 0 || inputs.rehabBudget > 0)) {
+      const loanAmount = financedLoan(inputs.purchasePrice, inputs.rehabBudget, pct);
       const pointsTotal = loanAmount * 0.03; // 3% default
       
       return {
@@ -142,7 +142,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
       };
     }
     return null;
-  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage]);
+  }, [inputs.purchasePrice, inputs.rehabBudget, inputs.financingPercentage, inputs.useCustomFinancing, inputs.customFinancingPercentage, inputs.rehabFinancingPercentage]);
 
   // Check if all lender fees are zero
   const allFeesZero = inputs.underwritingFee === 0 && inputs.processingFee === 0 && 
@@ -489,6 +489,53 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                 />
               </div>
             )}
+            {/* Rehab financing — separate from the purchase %; drives loan, LTV, max offer, required ARV and draws */}
+            {(() => {
+              const rehabPct = financingPercents(inputs).rehab;
+              const isPreset = [100, 90, 80].includes(rehabPct) && !customRehabPct;
+              return (
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <label className="text-xs font-semibold text-gray-600 block mb-2">Rehab Financed %:</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[100, 90, 80].map((percent) => (
+                      <button
+                        key={percent}
+                        onClick={() => { setCustomRehabPct(false); onInputChange('rehabFinancingPercentage', percent); }}
+                        className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                          isPreset && rehabPct === percent ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {percent}%
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setCustomRehabPct(true)}
+                      className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-all ${
+                        !isPreset ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-400' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Custom
+                    </button>
+                  </div>
+                  {!isPreset && (
+                    <div className="mt-2">
+                      <InputGroup
+                        label="Custom Rehab Financed %"
+                        id="rehabFinancingPercentage"
+                        type="number"
+                        value={rehabPct}
+                        onChange={(v) => onInputChange('rehabFinancingPercentage', v)}
+                        suffix="%"
+                        helpText="Share of the rehab budget the lender funds through draws (0-100)"
+                      />
+                    </div>
+                  )}
+                  <div className="text-[10px] text-gray-500 mt-2">
+                    Loan = {formatCurrency(inputs.purchasePrice)} × {financingPercents(inputs).purchase}% + {formatCurrency(inputs.rehabBudget)} × {rehabPct}% = {formatCurrency(financedLoan(inputs.purchasePrice, inputs.rehabBudget, financingPercents(inputs)))}
+                  </div>
+                </div>
+              );
+            })()}
         </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
@@ -887,16 +934,10 @@ export const InputSections: React.FC<InputSectionsProps> = ({
           
           {(() => {
             const exceedsMax = inputs.purchasePrice > maxOfferResults.maxAllowableOffer;
-            const financingPct = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
-            // Calculate required ARV for each percentage to make current purchase price work
-            // Loan = (financingPct% × purchasePrice) + (100% × rehabBudget)
-            // Constraint: Loan ≤ LTV% × ARV
-            // Required ARV = ((financingPct% × purchasePrice) + rehabBudget) / LTV%
-            const calculateRequiredARV = (ltvPercent: number) => {
-              if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
-              const loanAmount = (inputs.purchasePrice * (financingPct / 100)) + inputs.rehabBudget;
-              return loanAmount / ltvPercent;
-            };
+            const pct = financingPercents(inputs);
+            const financingPct = pct.purchase;
+            // Required ARV = (price × purchase% + rehab × rehab%) ÷ LTV%
+            const calculateRequiredARV = (ltvPercent: number) => requiredArvFor(inputs.purchasePrice, inputs.rehabBudget, pct, ltvPercent);
             
             return (
               <div className={`${exceedsMax ? 'bg-gray-50 border-2 border-gray-300' : 'bg-gray-50 border border-gray-200'} rounded p-3 space-y-2`}>
@@ -938,12 +979,12 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <span>{formatCurrency(maxOfferResults.maxLoanAmountDollars)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-600">
-                  <span>Less: Rehab Budget (100%)</span>
-                  <span>-{formatCurrency(inputs.rehabBudget)}</span>
+                  <span>Less: Financed Rehab ({pct.rehab}%)</span>
+                  <span>-{formatCurrency(inputs.rehabBudget * pct.rehab / 100)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-gray-600">
-                  <span>÷ Financing Rate</span>
-                  <span>{(() => { const fp = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage; return `${fp}%`; })()}</span>
+                  <span>÷ Purchase Financing</span>
+                  <span>{financingPct}%</span>
                 </div>
                 
                 {/* Always show current ARV and required ARV for each percentage */}
@@ -958,8 +999,8 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   <div className="text-[10px] font-medium text-center border-b pb-1.5 mb-1.5">
                     <span className="font-bold">Current Est. ARV: {formatCurrency(inputs.arv || 0)}</span>
                   </div>
-                  <div className="text-[10px] font-medium mt-2">Required ARV for each percentage (Purchase Price: {formatCurrency(inputs.purchasePrice)}, Financing: {financingPct}%):</div>
-                  <div className="text-[9px] text-gray-500 italic">Formula: ({financingPct}% × {formatCurrency(inputs.purchasePrice)} + {formatCurrency(inputs.rehabBudget)}) ÷ LTV% = ({formatCurrency(inputs.purchasePrice * financingPct / 100)} + {formatCurrency(inputs.rehabBudget)}) ÷ LTV%</div>
+                  <div className="text-[10px] font-medium mt-2">Required ARV for each percentage (Purchase Price: {formatCurrency(inputs.purchasePrice)}, Financing: {financingPct}% purchase / {pct.rehab}% rehab):</div>
+                  <div className="text-[9px] text-gray-500 italic">Formula: ({financingPct}% × {formatCurrency(inputs.purchasePrice)} + {pct.rehab}% × {formatCurrency(inputs.rehabBudget)}) ÷ LTV% = ({formatCurrency(inputs.purchasePrice * financingPct / 100)} + {formatCurrency(inputs.rehabBudget * pct.rehab / 100)}) ÷ LTV%</div>
                   <div className="grid grid-cols-2 gap-1.5 mt-1">
                     {ltvOptions.map((option) => {
                       const requiredARV = calculateRequiredARV(option.value);
@@ -2326,17 +2367,58 @@ export const InputSections: React.FC<InputSectionsProps> = ({
               </label>
             </div>
             
-            {/* Capital Gains Tax Rate - Always shown (after-tax profit is now default) */}
-            <div>
-              <InputGroup 
-                label="Capital Gains Tax Rate %" 
-                id="capitalGainsTaxRate" 
-                value={inputs.capitalGainsTaxRate || 20} 
-                onChange={(v) => onInputChange('capitalGainsTaxRate', v)} 
-                suffix="%"
-                helpText="Capital gains tax rate on profit from sale. Default 20% for self-employed (long-term gains). Adjust for your actual tax situation."
-              />
-            </div>
+            {/* Tax Treatment — replaces the old flat 20% capital gains rate */}
+            {(() => {
+              const tax = taxTreatmentRate(inputs);
+              const options: { value: TaxTreatment; label: string }[] = [
+                { value: 'SHORT_TERM', label: 'Short-term / ordinary income' },
+                { value: 'LONG_TERM', label: 'Long-term capital gains' },
+                { value: 'DEALER', label: 'Dealer / self-employment' },
+              ];
+              return (
+                <div className="space-y-3">
+                  <div>
+                    <label htmlFor="taxTreatment" className="text-xs font-semibold text-gray-600 block mb-1">Tax Treatment</label>
+                    <select
+                      id="taxTreatment"
+                      value={tax.treatment}
+                      onChange={(e) => onInputChange('taxTreatment', e.target.value)}
+                      className="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white"
+                    >
+                      {options.map((o) => (
+                        <option key={o.value} value={o.value} disabled={o.value === 'LONG_TERM' && !tax.longAllowed}>
+                          {o.label}{o.value === 'LONG_TERM' && !tax.longAllowed ? ' (needs hold > 12 months)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {inputs.taxTreatment === 'LONG_TERM' && !tax.longAllowed && (
+                      <div className="text-[10px] text-amber-700 mt-1">Hold is 12 months or less — taxed as short-term.</div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {tax.treatment === 'LONG_TERM' ? (
+                      <InputGroup label="Long-Term Cap Gains %" id="longTermCapGainsRate" value={tax.longTerm}
+                        onChange={(v) => onInputChange('longTermCapGainsRate', v)} suffix="%" helpText="Federal long-term capital gains rate (0, 15 or 20%)" />
+                    ) : (
+                      <InputGroup label="Federal Bracket %" id="federalTaxBracket" value={tax.federal}
+                        onChange={(v) => onInputChange('federalTaxBracket', v)} suffix="%" helpText="Your federal ordinary income bracket — flips held a year or less are taxed like wages" />
+                    )}
+                    <InputGroup label="State Income Tax %" id="stateIncomeTaxRate" value={tax.state}
+                      onChange={(v) => onInputChange('stateIncomeTaxRate', v)} suffix="%" helpText="PA personal income tax is a flat 3.07%" />
+                  </div>
+                  {tax.treatment === 'DEALER' && (
+                    <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                      <input type="checkbox" checked={!!inputs.includeSelfEmploymentTax}
+                        onChange={(e) => onInputChange('includeSelfEmploymentTax', e.target.checked)} />
+                      Add 15.3% self-employment tax
+                    </label>
+                  )}
+                  <div className="text-[10px] text-gray-500">
+                    Combined rate used: <strong>{tax.rate.toFixed(2)}%</strong> — estimate, confirm with CPA.
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           
           {/* Monthly Holding Cost Summary */}
@@ -2707,9 +2789,7 @@ export const InputSections: React.FC<InputSectionsProps> = ({
                   
                   // Calculate and update typical lender fees (3% of loan for hard money, etc.)
                   if (inputs.purchasePrice > 0 || inputs.rehabBudget > 0) {
-                    const totalProjectCost = (inputs.purchasePrice || 0) + (inputs.rehabBudget || 0);
-                    const financingPercent = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
-                    const estimatedLoanAmount = totalProjectCost * (financingPercent / 100);
+                    const estimatedLoanAmount = financedLoan(inputs.purchasePrice, inputs.rehabBudget, financingPercents(inputs));
                     const typicalFeesAmount = estimatedLoanAmount * defaults.typicalFees;
                     
                     // Distribute typical fees across lender fee fields

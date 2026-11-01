@@ -37,6 +37,7 @@ interface ResultsColumnProps {
   bestCashToClose?: number | null;
   bestOverallLender?: string | null;
   originalBaselineLenderName?: string | null;
+  onToggleContingency?: () => void;
   onAddLender: () => void;
   onApplyLender: (lender: LenderOption) => void;
   onRestoreBaseline?: () => void;
@@ -58,6 +59,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
   bestCashToClose,
   bestOverallLender,
   originalBaselineLenderName,
+  onToggleContingency,
   onAddLender,
   onApplyLender,
   onRestoreBaseline,
@@ -69,7 +71,7 @@ export const ResultsColumn: React.FC<ResultsColumnProps> = ({
     <div className="w-full lg:w-1/2 space-y-6">
       <div className="lg:sticky lg:top-24 space-y-6">
         {/* Cash Required Summary */}
-        <CashRequiredSummary inputs={inputs} results={results} />
+        <CashRequiredSummary inputs={inputs} results={results} onToggleContingency={onToggleContingency} />
 
         {/* Deal Viability Indicator - HIGHEST PRIORITY */}
         <DealViabilityIndicator

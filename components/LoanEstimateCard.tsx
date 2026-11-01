@@ -1,6 +1,6 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
-import { formatCurrency } from '../utils/calculations';
+import { formatCurrency, financingPercents } from '../utils/calculations';
 import { ResultRow } from './ResultRow';
 import { FeeBreakdownItem } from './FeeBreakdownItem';
 import { HelpTooltip } from './HelpTooltip';
@@ -14,6 +14,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
   const isHideout = inputs.appVersion === 'HIDEOUT';
   const est = (field: string) => !isHideout && !!inputs.estimatedFields?.includes(field);
   const estimateCount = isHideout ? 0 : (inputs.estimatedFields?.length || 0);
+  const pct = financingPercents(inputs);
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200">
       <div className="bg-gray-900 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-white rounded-t-xl">
@@ -50,7 +51,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
             <HelpTooltip
               title="Max Allowable Offer"
               description="Lenders typically allow loans up to 75% of the after-repair value. If your ARV is $250k, the max loan is $187.5k. Subtract your rehab budget ($40k) to get max purchase price ($147.5k). This may limit your financing options if exceeded."
-              formula="1. Maximum Loan Allowed: ARV × 75% 2. Less: Rehab Budget 3. Result: Max Purchase Price"
+              formula="(ARV × 75% − Rehab × Rehab Financing %) ÷ Purchase Financing %"
             />
           </div>
           <div className="space-y-1.5 text-xs text-gray-700">
@@ -59,11 +60,15 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               <span className="font-medium">ARV × 75% = {formatCurrency(inputs.arv)} × 0.75 = {formatCurrency(inputs.arv * 0.75)}</span>
             </div>
             <div className="flex justify-between">
-              <span>2. Less: Rehab Budget</span>
-              <span className="font-medium text-amber-600">-{formatCurrency(inputs.rehabBudget)}</span>
+              <span>2. Less: Financed Rehab ({pct.rehab}% of {formatCurrency(inputs.rehabBudget)})</span>
+              <span className="font-medium text-amber-600">-{formatCurrency(inputs.rehabBudget * pct.rehab / 100)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>3. ÷ Purchase Financing</span>
+              <span className="font-medium">{pct.purchase}%</span>
             </div>
             <div className="flex justify-between pt-1 border-t border-amber-200 font-bold text-sm">
-              <span>3. Result:</span>
+              <span>4. Result:</span>
               <span className="text-amber-700">{formatCurrency(results.maxAllowableOffer)} (maximum you can offer)</span>
             </div>
             <div className="pt-2 mt-2 border-t border-amber-200">
@@ -82,8 +87,9 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
               )}
             </div>
             <div className="text-[10px] text-gray-600 mt-2 pt-2 border-t border-blue-200">
-              <strong>Note:</strong> Your LTV ({results.ltarv.toFixed(2)}%) is {results.ltarv <= 75 ? 'LOWER' : 'HIGHER'} than the 75% lender limit. 
-              {results.ltarv > 75 && ' This may limit your financing options.'}
+              {/* Same test as the max-offer status above: price ≤ max offer ⇔ financed loan ≤ 75% of ARV */}
+              <strong>Note:</strong> Your LTV ({results.ltv.toFixed(2)}%) is {results.ltv <= 75 ? 'LOWER' : 'HIGHER'} than the 75% lender limit.
+              {results.ltv > 75 && ' This may limit your financing options.'}
             </div>
           </div>
         </div>
@@ -377,7 +383,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex justify-between items-start mb-2">
               <div className="flex flex-col">
-                <span className="text-xs font-semibold text-gray-700">Required Liquidity Evidence (Lender Requirement)</span>
+                <span className="text-xs font-semibold text-gray-700">Lender Minimum Liquidity (proof of funds — not your total cash need)</span>
                 <HelpTooltip
                   title="Required Liquidity Evidence"
                   description="Lenders want proof (bank statements) that you have the whole down payment — including the EMD you already paid — plus closing costs and a rehab reserve. This verifies you're not borrowing the down payment."
@@ -399,7 +405,7 @@ export const LoanEstimateCard: React.FC<LoanEstimateCardProps> = ({ inputs, resu
                   : 'bg-amber-50 text-amber-800 border border-amber-200'
               }`}>
                 {inputs.liquidity >= results.requiredLiquidity ? (
-                  <span>✓ Your liquid savings ({formatCurrency(inputs.liquidity)}) meet the requirement.</span>
+                  <span>✓ Your liquid savings ({formatCurrency(inputs.liquidity)}) meet the lender's minimum. Your total cash over the project is {formatCurrency(results.totalCashNeeded)} (see Cash You'll Need).</span>
                 ) : (
                   <span>⚠️ Your liquid savings ({formatCurrency(inputs.liquidity)}) are below required ({formatCurrency(results.requiredLiquidity)}). Lenders may not approve.</span>
                 )}

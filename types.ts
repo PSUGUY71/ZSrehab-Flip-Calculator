@@ -67,7 +67,8 @@ export interface LoanInputs {
   financingPercentage: number; // Financing percentage (100, 95, 90, 85, 80, or custom)
   useCustomFinancing: boolean; // Whether using custom financing percentage
   customFinancingPercentage: number; // Custom financing percentage value
-  
+  rehabFinancingPercentage?: number; // % of rehab the lender funds (100/90/80/custom). Missing on old deals → same as financing %
+
   // Work-Backward Mode (Max Offer Calculation)
   useWorkBackwardMode: boolean; // Toggle for backward calculation mode
   workBackwardModeType: 'ROI' | 'LTC'; // Which metric to target
@@ -82,6 +83,7 @@ export interface LoanInputs {
   ficoScore: number;
   experienceLevel: number; // Number of past deals
   liquidity: number; // Cash on hand
+  includeContingencyInCashNeeded?: boolean; // Count the rehab contingency in "Total Cash Needed Over Project"
 
   // Loan Settings (defaults available)
   loanType: 'HARD_MONEY' | 'CONVENTIONAL' | 'PORTFOLIO' | 'OTHER';
@@ -228,7 +230,12 @@ export interface LoanInputs {
   sellerBuyBackAmount: number; // Seller holds note/finances part of purchase, reduces down payment
   
   // Tax Settings
-  capitalGainsTaxRate: number; // Capital gains tax rate (default 20% for self-employed)
+  capitalGainsTaxRate: number; // Legacy (no longer used — see taxTreatment)
+  taxTreatment?: 'SHORT_TERM' | 'LONG_TERM' | 'DEALER'; // Default: short-term if hold ≤ 12 months, else long-term
+  federalTaxBracket?: number; // Ordinary income bracket % (default 24)
+  stateIncomeTaxRate?: number; // State income tax % (default PA 3.07)
+  longTermCapGainsRate?: number; // Long-term capital gains % (default 15)
+  includeSelfEmploymentTax?: boolean; // Dealer: add 15.3% SE tax
   showAfterTaxProfit: boolean; // Toggle to show/hide after-tax profit calculation
 }
 
@@ -361,7 +368,11 @@ export interface CalculatedResults {
   totalPaidOut: number; // Prepaid costs + Cash to Close
   
   // Proof of Funds Requirements
-  requiredLiquidity: number;
+  requiredLiquidity: number; // Lender's minimum proof of funds — NOT your total cash need
+  totalCashNeeded: number; // EMD + other prepaid + due at closing + rehab not covered by loan + holding costs (+ contingency if toggled)
+  cashShortfall: number; // totalCashNeeded − liquidity (0 if you have enough)
+  cashRunwayMonth: number | null; // Month the money runs out (0 = short at closing), null if it lasts
+  monthlyCashOut: number[]; // Your cash spent each month after closing
   rehabContingency: number; // 15% of rehab budget (automatic)
   emergencyBuffer5Percent: number; // 5% of total deal cost (suggested)
   emergencyBuffer10Percent: number; // 10% of total deal cost (suggested)
@@ -391,6 +402,8 @@ export interface CalculatedResults {
   // Tax Calculations
   estimatedCapitalGainsTax: number; // Estimated tax on profit
   netProfitAfterTax: number; // Net profit after capital gains tax
+  effectiveTaxRate: number; // Combined % used for the estimate (see taxTreatmentRate)
+  taxTreatmentUsed: 'SHORT_TERM' | 'LONG_TERM' | 'DEALER';
   
   roi: number;
   projectRoi: number;
@@ -441,6 +454,7 @@ export const DEFAULT_INPUTS: LoanInputs = {
   financingPercentage: 100, // Default 100% financing
   useCustomFinancing: false,
   customFinancingPercentage: 100,
+  rehabFinancingPercentage: 90,
   useWorkBackwardMode: false,
   workBackwardModeType: 'ROI',
   targetRoi: 20, // Default 20% ROI target

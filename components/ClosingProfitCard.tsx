@@ -3,6 +3,8 @@ import { LoanInputs, CalculatedResults } from '../types';
 import { formatCurrency, formatPercent } from '../utils/calculations';
 import { HelpTooltip } from './HelpTooltip';
 
+const TAX_LABEL: Record<string, string> = { SHORT_TERM: 'Short-term / ordinary', LONG_TERM: 'Long-term cap gains', DEALER: 'Dealer' };
+
 interface ClosingProfitCardProps {
   inputs: LoanInputs;
   results: CalculatedResults;
@@ -154,14 +156,14 @@ export const ClosingProfitCard: React.FC<ClosingProfitCardProps> = ({ inputs, re
     {/* After-Tax Profit Section - NOW ALWAYS SHOWN (default for investors) */}
     {results.estimatedCapitalGainsTax > 0 && (
       <div className="mt-3 pt-2 border-t-2 border-gray-200 bg-gray-100/40 rounded p-2 print:mt-1 print:pt-1">
-        <div className="text-xs font-bold text-teal-900 uppercase mb-2">NET PROFIT AFTER TAXES (What You Keep)</div>
+        <div className="text-xs font-bold text-teal-900 uppercase mb-2">NET PROFIT AFTER TAXES <span className="normal-case font-normal">(estimate — confirm with CPA)</span></div>
         <div className="space-y-1 text-xs text-teal-800">
           <div className="flex justify-between">
             <span className="opacity-70">Net Profit (Before Tax):</span>
             <span className="font-bold">{formatCurrency(results.netProfit)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="opacity-70">Est. Capital Gains Tax ({inputs.capitalGainsTaxRate || 20}%):</span>
+            <span className="opacity-70">Est. Tax — {TAX_LABEL[results.taxTreatmentUsed] || 'Short-term'} ({(results.effectiveTaxRate || 0).toFixed(2)}%):</span>
             <span className="font-bold text-red-600">-{formatCurrency(results.estimatedCapitalGainsTax)}</span>
           </div>
           <div className="border-t border-teal-300 pt-1 mt-1 flex flex-col sm:flex-row sm:justify-between font-bold text-teal-900 text-sm sm:text-base gap-1">

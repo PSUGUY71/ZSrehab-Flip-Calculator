@@ -1,6 +1,6 @@
 import React from 'react';
 import { LoanInputs, CalculatedResults } from '../types';
-import { formatCurrency } from '../utils/calculations';
+import { formatCurrency, financingPercents, requiredArvFor } from '../utils/calculations';
 
 interface MaxOfferCardProps {
   inputs: LoanInputs;
@@ -18,17 +18,9 @@ export const MaxOfferCard: React.FC<MaxOfferCardProps> = ({ inputs, results, max
   ];
 
   const exceedsMax = inputs.purchasePrice > results.maxAllowableOffer;
-  const financingPct = inputs.useCustomFinancing ? inputs.customFinancingPercentage : inputs.financingPercentage;
-  
-  // Calculate required ARV for each percentage to make current purchase price work
-  // Loan = (financingPct% × purchasePrice) + (100% × rehabBudget)
-  // Constraint: Loan ≤ LTV% × ARV
-  // Required ARV = ((financingPct% × purchasePrice) + rehabBudget) / LTV%
-  const calculateRequiredARV = (ltvPercent: number) => {
-    if (inputs.purchasePrice <= 0 || ltvPercent <= 0) return 0;
-    const loanAmount = (inputs.purchasePrice * (financingPct / 100)) + (inputs.rehabBudget || 0);
-    return loanAmount / ltvPercent;
-  };
+  // Required ARV = (price × purchase% + rehab × rehab%) ÷ LTV%
+  const calculateRequiredARV = (ltvPercent: number) =>
+    requiredArvFor(inputs.purchasePrice, inputs.rehabBudget, financingPercents(inputs), ltvPercent);
 
   return (
     <div className={`p-4 rounded-lg shadow-sm border-2 ${exceedsMax ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'}`}>
